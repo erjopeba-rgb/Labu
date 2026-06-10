@@ -1,0 +1,330 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - T&eacute;rminos y Condiciones</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <style>
+        body {
+            min-height: 100vh;
+            background: var(--bg-dark, #0f0f0f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .tyc-container {
+            max-width: 720px;
+            width: 100%;
+        }
+
+        .tyc-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .tyc-header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary, #fff);
+            margin-bottom: 0.5rem;
+        }
+
+        .tyc-header p {
+            color: var(--gray, #888);
+            font-size: 0.95rem;
+        }
+
+        .tyc-card {
+            background: var(--bg-card, #1a1a1a);
+            border: 1px solid var(--border, #2a2a2a);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tyc-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary, #ccc);
+            line-height: 1.7;
+            font-size: 0.9rem;
+        }
+
+        .tyc-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tyc-scroll::-webkit-scrollbar-track {
+            background: var(--bg-dark, #0f0f0f);
+            border-radius: 3px;
+        }
+
+        .tyc-scroll::-webkit-scrollbar-thumb {
+            background: var(--border, #2a2a2a);
+            border-radius: 3px;
+        }
+
+        .tyc-scroll h2 {
+            color: var(--text-primary, #fff);
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.5rem;
+        }
+
+        .tyc-scroll h2:first-child {
+            margin-top: 0;
+        }
+
+        .tyc-scroll p {
+            margin-bottom: 0.75rem;
+        }
+
+        .tyc-scroll ul {
+            padding-left: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .tyc-scroll ul li {
+            margin-bottom: 0.4rem;
+        }
+
+        .tyc-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-dark, #0f0f0f);
+            border-radius: 8px;
+            border: 1px solid var(--border, #2a2a2a);
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .tyc-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            min-width: 18px;
+            cursor: pointer;
+            accent-color: var(--primary, #e63946);
+            margin-top: 2px;
+        }
+
+        .tyc-checkbox label {
+            color: var(--text-secondary, #ccc);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        .btn-aceptar {
+            width: 100%;
+            padding: 0.875rem;
+            background: var(--primary, #e63946);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn-aceptar:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-aceptar:not(:disabled):hover {
+            opacity: 0.9;
+        }
+
+        .msg-error {
+            color: var(--danger, #e63946);
+            font-size: 0.85rem;
+            text-align: center;
+            margin-top: 0.75rem;
+            display: none;
+        }
+
+        .btn-logout {
+            display: block;
+            text-align: center;
+            margin-top: 1rem;
+            color: var(--gray, #888);
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+        }
+
+        .btn-logout:hover {
+            color: var(--text-primary, #fff);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tyc-container">
+        <div class="tyc-header">
+            <div class="logo" style="font-size:1.5rem; font-weight:800; color:var(--primary,#e63946); margin-bottom:1rem;">Labu</div>
+            <h1>T&eacute;rminos y Condiciones</h1>
+            <p>Para continuar, necesit&aacute;s aceptar los t&eacute;rminos actualizados.</p>
+        </div>
+
+        <div class="tyc-card">
+            <div class="tyc-scroll" id="tyc-scroll">
+
+                <h2>1. &iquest;Qu&eacute; es Labu?</h2>
+                <p>Labu es una plataforma digital que conecta a personas con necesidades en su hogar (&ldquo;Due&ntilde;os&rdquo;) con trabajadores capacitados que pueden resolver esos problemas (&ldquo;Trabajadores&rdquo;). Funciona de manera similar a una aplicaci&oacute;n de servicios bajo demanda: los due&ntilde;os publican trabajos, los trabajadores ofertan, y la plataforma facilita la coordinaci&oacute;n, el pago y la evaluaci&oacute;n mutua.</p>
+                <p>Labu act&uacute;a exclusivamente como intermediario tecnol&oacute;gico. No es empleadora de los trabajadores, ni parte contratante en los acuerdos celebrados entre usuarios. La relaci&oacute;n laboral o civil es directamente entre el Due&ntilde;o y el Trabajador.</p>
+
+                <h2>2. Aceptaci&oacute;n de los T&eacute;rminos</h2>
+                <p>Al registrarte y usar Labu, confirm&aacute;s que le&iacute;ste, entendiste y aceptas estos T&eacute;rminos y Condiciones en su totalidad. Si no est&aacute;s de acuerdo con alguna parte, deb&eacute;s abstenerte de usar la plataforma. El uso continuado implica aceptaci&oacute;n de cualquier actualizaci&oacute;n posterior.</p>
+
+                <h2>3. Perfiles de Usuario</h2>
+                <p><strong>Perfil Due&ntilde;o:</strong> Los usuarios con perfil Due&ntilde;o pueden publicar trabajos del hogar incluyendo fotograf&iacute;as del problema, descripci&oacute;n detallada, ubicaci&oacute;n geogr&aacute;fica y disponibilidad horaria. Pueden recibir y evaluar ofertas de Trabajadores, aceptarlas o rechazarlas, coordinar el trabajo mediante el sistema de agenda integrado, y confirmar la realizaci&oacute;n del servicio para liberar el pago.</p>
+                <p><strong>Perfil Trabajador:</strong> Los usuarios con perfil Trabajador pueden visualizar los trabajos disponibles en su zona, realizar ofertas indicando presupuesto, d&iacute;as propuestos y un mensaje, gestionar su agenda de disponibilidad semanal, confirmar su llegada al domicilio y subir evidencia fotogr&aacute;fica o en video al finalizar el servicio.</p>
+                <p>Ambos perfiles pueden coexistir en la misma cuenta, permitiendo a los usuarios actuar tanto como Due&ntilde;o como Trabajador seg&uacute;n lo necesiten.</p>
+
+                <h2>4. Verificaci&oacute;n de Identidad y Mayor&iacute;a de Edad</h2>
+                <p>Para registrarte en Labu deb&eacute;s:</p>
+                <ul>
+                    <li>Ser mayor de 18 a&ntilde;os. Al aceptar estos t&eacute;rminos confirm&aacute;s que cumpl&iacute;s este requisito.</li>
+                    <li>Proporcionar informaci&oacute;n real, completa y actualizada al registrarte.</li>
+                    <li>No suplantar la identidad de ninguna persona f&iacute;sica o jur&iacute;dica.</li>
+                    <li>No crear m&uacute;ltiples cuentas para evadir restricciones o sanciones aplicadas a una cuenta anterior.</li>
+                </ul>
+                <p>Labu se reserva el derecho de solicitar documentaci&oacute;n adicional para verificar la identidad de cualquier usuario en cualquier momento. La negativa a presentar dicha documentaci&oacute;n podr&aacute; resultar en la suspensi&oacute;n preventiva de la cuenta.</p>
+
+                <h2>5. Pol&iacute;tica de Pagos y Comisiones</h2>
+                <p>Labu opera bajo un sistema de pago retenido que garantiza la seguridad de ambas partes:</p>
+                <ul>
+                    <li><strong>Retenci&oacute;n del pago:</strong> Al aceptar una oferta y confirmar el horario del trabajo, el Due&ntilde;o realiza el pago correspondiente, el cual queda retenido en la plataforma hasta la confirmaci&oacute;n de finalizaci&oacute;n del servicio.</li>
+                    <li><strong>Liberaci&oacute;n del pago:</strong> Una vez que el Due&ntilde;o confirma que el trabajo fue realizado correctamente, el pago es liberado al Trabajador.</li>
+                    <li><strong>Comisi&oacute;n de plataforma:</strong> Labu retiene el <strong>10% del valor total de cada trabajo</strong> como comisi&oacute;n por el uso del servicio de intermediaci&oacute;n, coordinaci&oacute;n y procesamiento de pagos. Esta comisi&oacute;n se descuenta autom&aacute;ticamente del monto acordado antes de acreditar al Trabajador.</li>
+                    <li><strong>Procesamiento:</strong> Los pagos se procesan a trav&eacute;s de MercadoPago. Al usar la plataforma, tambi&eacute;n aceptas los t&eacute;rminos y condiciones de dicho servicio.</li>
+                    <li><strong>Pagos fuera de la plataforma:</strong> Queda estrictamente prohibido acordar o realizar pagos fuera del sistema de Labu para evadir comisiones. El incumplimiento de esta norma podr&aacute; resultar en la suspensi&oacute;n permanente de ambas cuentas involucradas.</li>
+                </ul>
+
+                <h2>6. Sistema de Disputas y Resoluci&oacute;n de Conflictos</h2>
+                <p>En caso de conflicto entre un Due&ntilde;o y un Trabajador respecto a la calidad, alcance o cumplimiento de un trabajo, el procedimiento ser&aacute; el siguiente:</p>
+                <ul>
+                    <li><strong>Paso 1 &mdash; Comunicaci&oacute;n directa:</strong> Las partes deben intentar resolver el conflicto a trav&eacute;s del chat interno de la plataforma en un plazo de 48 horas desde que surgi&oacute; el desacuerdo.</li>
+                    <li><strong>Paso 2 &mdash; Mediaci&oacute;n de Labu:</strong> Si no se llega a un acuerdo, cualquiera de las partes puede iniciar una disputa formal a trav&eacute;s del soporte de la plataforma. Labu evaluar&aacute; la evidencia disponible (fotograf&iacute;as, historial de chat, calificaciones) dentro de un plazo de hasta 5 d&iacute;as h&aacute;biles.</li>
+                    <li><strong>Paso 3 &mdash; Resoluci&oacute;n:</strong> Labu podr&aacute; decidir liberar el pago total o parcial al Trabajador, reembolsar total o parcialmente al Due&ntilde;o, o distribuir el monto retenido seg&uacute;n su criterio basado en la evidencia.</li>
+                </ul>
+                <p>La decisi&oacute;n de Labu en el proceso de mediaci&oacute;n es final dentro del &aacute;mbito de la plataforma. Las partes conservan el derecho de recurrir a instancias legales externas.</p>
+
+                <h2>7. Moderaci&oacute;n de Servicios y Contenidos</h2>
+                <p>Labu se reserva el derecho de moderar, modificar o eliminar cualquier publicaci&oacute;n, oferta, fotograf&iacute;a o contenido que:</p>
+                <ul>
+                    <li>Sea falso, enga&ntilde;oso, fraudulento o inapropiado.</li>
+                    <li>Incluya contenido ilegal, ofensivo, discriminatorio o que vulnere derechos de terceros.</li>
+                    <li>Corresponda a servicios prohibidos por la legislaci&oacute;n vigente.</li>
+                    <li>Viole las normas de convivencia de la comunidad Labu.</li>
+                    <li>Represente un riesgo para la integridad f&iacute;sica o econ&oacute;mica de otros usuarios.</li>
+                </ul>
+                <p>Las calificaciones y rese&ntilde;as deben ser honestas y basadas en experiencias reales. Manipular el sistema de reputaci&oacute;n (calificaciones falsas, presiones para modificar rese&ntilde;as, acuerdos de calificaci&oacute;n cruzada) es motivo de suspensi&oacute;n o baja definitiva de la cuenta.</p>
+                <p>Labu podr&aacute; suspender preventivamente cuentas bajo investigaci&oacute;n y dar de baja definitivamente aquellas que registren violaciones graves o reiteradas de estas normas.</p>
+
+                <h2>8. Limitaci&oacute;n de Responsabilidad</h2>
+                <p>Labu es una plataforma de intermediaci&oacute;n tecnol&oacute;gica. En consecuencia:</p>
+                <ul>
+                    <li>No garantizamos la calidad, idoneidad t&eacute;cnica ni el resultado de ning&uacute;n trabajo contratado a trav&eacute;s de la plataforma.</li>
+                    <li>No somos responsables por da&ntilde;os materiales, personales o econ&oacute;micos derivados de la ejecuci&oacute;n o no ejecuci&oacute;n de un servicio.</li>
+                    <li>No garantizamos la disponibilidad ininterrumpida de la plataforma ni la exactitud de la informaci&oacute;n proporcionada por los usuarios.</li>
+                    <li>No asumimos responsabilidad por fraudes cometidos entre usuarios que operen fuera del sistema de pagos oficial.</li>
+                    <li>La responsabilidad m&aacute;xima de Labu en cualquier circunstancia se limita al monto de la comisi&oacute;n cobrada en la transacci&oacute;n espec&iacute;fica objeto del reclamo.</li>
+                </ul>
+                <p>Cada usuario acepta utilizar la plataforma bajo su propio riesgo y responsabilidad, tomando las precauciones razonables antes de contratar o aceptar un servicio.</p>
+
+                <h2>9. Pol&iacute;tica de Privacidad</h2>
+                <p>Labu recopila y procesa datos personales de sus usuarios con los siguientes fines:</p>
+                <ul>
+                    <li><strong>Datos recopilados:</strong> nombre, correo electr&oacute;nico, fotograf&iacute;as de perfil y trabajos, ubicaci&oacute;n geogr&aacute;fica, historial de transacciones y calificaciones.</li>
+                    <li><strong>Finalidad:</strong> Brindar el servicio de intermediaci&oacute;n, procesar pagos, resolver disputas, mejorar la plataforma y cumplir con obligaciones legales.</li>
+                    <li><strong>Almacenamiento:</strong> Los datos se almacenan en servidores seguros y no se venden a terceros con fines comerciales.</li>
+                    <li><strong>Compartici&oacute;n:</strong> Podremos compartir datos con proveedores de pago (MercadoPago) y autoridades competentes cuando sea legalmente requerido.</li>
+                    <li><strong>Derechos del usuario:</strong> Pod&eacute;s solicitar el acceso, correcci&oacute;n o eliminaci&oacute;n de tus datos en cualquier momento a trav&eacute;s del soporte de la plataforma.</li>
+                    <li><strong>Ubicaci&oacute;n:</strong> La geolocalización se utiliza únicamente para coordinar la llegada del Trabajador al domicilio del Due&ntilde;o y para mostrar trabajos cercanos. No se almacena de forma continua.</li>
+                </ul>
+
+                <h2>10. Modificaciones y Vigencia</h2>
+                <p>Labu se reserva el derecho de modificar estos T&eacute;rminos y Condiciones en cualquier momento. Ante cambios sustanciales, se notificar&aacute; a los usuarios registrados y se requerir&aacute; una nueva aceptaci&oacute;n para continuar usando la plataforma. La versi&oacute;n vigente siempre estar&aacute; disponible en esta secci&oacute;n. Estos t&eacute;rminos se rigen por la legislaci&oacute;n de la Rep&uacute;blica Argentina.</p>
+
+            </div>
+
+            <div class="tyc-checkbox" onclick="toggleCheck()">
+                <input type="checkbox" id="chk-tyc">
+                <label for="chk-tyc">Le&iacute; y acepto los T&eacute;rminos y Condiciones de Labu.</label>
+            </div>
+
+            <button class="btn-aceptar" id="btn-aceptar" disabled onclick="aceptarTyC()">
+                Aceptar y continuar
+            </button>
+
+            <div class="msg-error" id="msg-error">Ocurri&oacute; un error. Intent&aacute; de nuevo.</div>
+        </div>
+
+        <button class="btn-logout" onclick="cerrarSesion()">Cerrar sesi&oacute;n</button>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script>
+        function toggleCheck() {
+            const chk = document.getElementById('chk-tyc');
+            chk.checked = !chk.checked;
+            document.getElementById('btn-aceptar').disabled = !chk.checked;
+        }
+
+        document.getElementById('chk-tyc').addEventListener('change', function () {
+            document.getElementById('btn-aceptar').disabled = !this.checked;
+        });
+
+        async function aceptarTyC() {
+            const btn = document.getElementById('btn-aceptar');
+            const msgError = document.getElementById('msg-error');
+            btn.disabled = true;
+            btn.textContent = 'Procesando...';
+            msgError.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+                const res = await fetch('/api/auth/aceptar-tyc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success !== false) {
+                    window.location.href = '/pages/feed.html';
+                } else {
+                    throw new Error(data.error || 'Error');
+                }
+            } catch (e) {
+                msgError.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Aceptar y continuar';
+            }
+        }
+
+        function cerrarSesion() {
+            localStorage.removeItem('auth_token');
+            sessionStorage.removeItem('auth_token');
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

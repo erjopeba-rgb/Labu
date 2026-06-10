@@ -1,0 +1,32 @@
+[
+  {
+    "id": "u1",
+    "nombre": "Juan Martínez",
+    "tipo": "trabajador",
+    "rubro": "construccion",
+    "calificacion": 4.8,
+    "totalTrabajos": 156,
+    "ubicacion": {"lat": -34.6037, "lng": -58.3816},
+    "zonasTrabajo": ["Palermo", "Belgrano", "Recoleta"],
+    "avatar": "JM",
+    "verificado": true
+  },
+  {
+    "id": "u2",
+    "nombre": "Carlos Rodríguez",
+    "tipo": "trabajador",
+    "rubro": "electricidad",
+    "calificacion": 4.9,
+    "totalTrabajos": 324,
+    "ubicacion": {"lat": -34.6158, "lng": -58.4333},
+    "avatar": "CR",
+    "verificado": true
+  },
+  {
+    "id": "u3",
+    "nombre": "María González",
+    "tipo": "dueno",
+    "calificacion": 4.7,
+    "avatar": "MG"
+  }
+]

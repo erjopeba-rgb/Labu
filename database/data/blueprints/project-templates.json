@@ -1,0 +1,13 @@
+{
+  "remodelacion_bano": {
+    "nombre": "Remodelación de Baño",
+    "tareas": [
+      {"tarea": "demolicion", "duracion": 2},
+      {"tarea": "plomeria", "duracion": 3},
+      {"tarea": "albanileria", "duracion": 5},
+      {"tarea": "ceramica", "duracion": 3},
+      {"tarea": "pintura", "duracion": 2}
+    ],
+    "duracionTotal": 15
+  }
+}

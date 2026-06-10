@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mi Agenda</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/agenda.css">
+    <link rel="stylesheet" href="/css/disponibilidad.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            </div>
+            <div class="nav-title">&#128197; Mi Agenda</div>
+            <div style="width:100px;"></div>
+        </div>
+    </nav>
+
+    <div class="agenda-layout">
+
+        <!-- Columna izquierda: Disponibilidad + Calendario -->
+        <div>
+            <!-- Disponibilidad Semanal — arriba para visibilidad inmediata -->
+            <div class="card" id="cardDisponibilidad">
+                <div class="disp-section-title">&#128336; Mi Disponibilidad Semanal</div>
+                <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1rem;">
+                    Configurá los d&#237;as y horarios en los que est&#225;s disponible para trabajar.
+                    Estos horarios aparecen cuando ofert&#225;s en un trabajo.
+                </p>
+                <div class="disp-prep-row">
+                    <label class="disp-prep-label" for="inputPreparacion">
+                        Tiempo de preparaci&#243;n al inicio de jornada (minutos)
+                    </label>
+                    <input type="number" id="inputPreparacion" class="disp-prep-input"
+                           min="0" max="120" value="15">
+                </div>
+                <div id="dispForm">
+                    <!-- filled by JS -->
+                </div>
+                <button class="disp-save-btn" id="btnGuardarDisp" onclick="guardarDisponibilidad()">
+                    Guardar Disponibilidad
+                </button>
+            </div>
+
+            <!-- Trabajos Confirmados (reservas) -->
+            <div class="card" id="cardReservasConfirmadas" style="display:none;">
+                <div class="disp-section-title">&#9989; Trabajos Agendados</div>
+                <div id="listaReservasConfirmadas"></div>
+            </div>
+
+            <div class="card">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="statTrabajos">0</div>
+                        <div class="stat-label">Trabajos este mes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statClientes">0</div>
+                        <div class="stat-label">Clientes fijos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="statIngresos">-</div>
+                        <div class="stat-label">Eventos totales</div>
+                    </div>
+                </div>
+
+                <div class="calendar-header">
+                    <h2>Mi Calendario</h2>
+                    <div class="calendar-nav">
+                        <button class="btn-nav" onclick="prevMonth()">&#9664;</button>
+                        <span class="month-year" id="monthYear">-</span>
+                        <button class="btn-nav" onclick="nextMonth()">&#9654;</button>
+                    </div>
+                </div>
+
+                <div class="view-switcher">
+                    <button class="view-btn active" onclick="switchView('month', this)">Mes</button>
+                    <button class="view-btn" onclick="switchView('week', this)">Semana</button>
+                    <button class="view-btn" onclick="switchView('day', this)">D&#237;a</button>
+                </div>
+
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <div class="card">
+                <h4 style="margin-bottom:1rem;">Leyenda</h4>
+                <p style="font-size:0.8rem;color:var(--gray);margin-bottom:0.75rem;font-weight:600;">D&#237;as del calendario</p>
+                <div class="leyenda" style="margin-bottom:1rem;">
+                    <div class="leyenda-item">
+                        <div style="width:18px;height:18px;border-radius:4px;border:2px solid var(--secondary);background:rgba(72,199,142,0.12);flex-shrink:0;"></div>
+                        <span>Disponible</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #e53e3e;background:rgba(229,62,62,0.08);flex-shrink:0;"></div>
+                        <span>No disponible</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div style="width:18px;height:18px;border-radius:4px;border:2px solid #d97706;background:rgba(217,119,6,0.12);flex-shrink:0;"></div>
+                        <span>Trabajo confirmado</span>
+                    </div>
+                </div>
+                <p style="font-size:0.8rem;color:var(--gray);margin-bottom:0.75rem;font-weight:600;">Eventos</p>
+                <div class="leyenda">
+                    <div class="leyenda-item">
+                        <div class="leyenda-dot" style="background:var(--primary);"></div>
+                        <span>Trabajo puntual</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-dot" style="background:var(--secondary);"></div>
+                        <span>Recurrente</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-dot" style="background:var(--warning);"></div>
+                        <span>Mantenimiento</span>
+                    </div>
+                    <div class="leyenda-item">
+                        <div class="leyenda-dot" style="background:var(--gray);"></div>
+                        <span>Otro</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Columna derecha: Sidebar -->
+        <div>
+            <div class="card">
+                <button class="btn-add" onclick="abrirModalEvento()">&#43; Agregar Evento</button>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom:1rem;">&#128203; Pr&#243;ximos Eventos</h3>
+                <div id="proximosEventos">
+                    <div class="empty-events">Sin eventos pr&#243;ximos</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Vista Día (24h) -->
+    <div class="modal" id="modalDia">
+        <div class="modal-content modal-dia-content">
+            <button class="close-btn" onclick="cerrarModalDia()">&#10005;</button>
+            <div class="modal-dia-header">
+                <h3 id="modalDiaTitulo">Martes 5 de Marzo</h3>
+                <button class="btn-add-small" onclick="abrirModalEventoDesdeVista()">&#43; Agregar evento</button>
+            </div>
+            <div class="horario-grid" id="horarioGrid"></div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar Evento -->
+    <div class="modal" id="modalAddEvent">
+        <div class="modal-content">
+            <button class="close-btn" onclick="cerrarModalEvento()">&#10005;</button>
+            <h3 style="margin-bottom:1.5rem;">Agregar Evento</h3>
+
+            <div class="form-group">
+                <label>Tipo de evento</label>
+                <select id="selectTipo">
+                    <option value="trabajo">Trabajo puntual</option>
+                    <option value="recurrente">Trabajo recurrente</option>
+                    <option value="mantenimiento">Mantenimiento</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>T&#237;tulo *</label>
+                <input type="text" id="inputTitulo" placeholder="Ej: Instalaci&#243;n el&#233;ctrica">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Fecha *</label>
+                    <input type="date" id="inputFecha">
+                </div>
+                <div class="form-group">
+                    <label>Hora</label>
+                    <input type="time" id="inputHora">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" id="inputCliente" placeholder="Nombre del cliente">
+            </div>
+
+            <div class="form-group">
+                <label>Ubicaci&#243;n</label>
+                <input type="text" id="inputUbicacion" placeholder="Direcci&#243;n del trabajo">
+            </div>
+
+            <div class="form-group">
+                <label>Notas</label>
+                <textarea id="inputNotas" placeholder="Detalles adicionales..."></textarea>
+            </div>
+
+            <button class="btn-submit" onclick="guardarEvento()">Guardar Evento</button>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/agenda.js"></script>
+    <script src="/js/modules/disponibilidad.js"></script>
+</body>
+</html>

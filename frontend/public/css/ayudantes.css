@@ -1,0 +1,272 @@
+/* ayudantes.css */
+
+body {
+    background: var(--light-gray);
+    padding-top: 60px;
+}
+
+/* ─── NAVBAR ─── */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    z-index: var(--z-fixed);
+    padding: 0.75rem 1rem;
+}
+
+.navbar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.btn-back {
+    padding: 0.5rem 1rem;
+    background: var(--light-gray);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+}
+.btn-back:hover { background: var(--border); }
+
+/* ─── LAYOUT ─── */
+.ayudantes-layout {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.page-header         { margin-bottom: 0.5rem; }
+.page-header h1      { font-size: 2rem; margin-bottom: 0.5rem; }
+.page-header p       { color: var(--gray); }
+
+/* ─── TABS ─── */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+    margin-bottom: 1.5rem;
+}
+
+.tab-btn {
+    padding: 0.65rem 1.2rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    font-family: var(--font-family);
+    color: var(--gray);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all var(--transition);
+    border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.tab-btn:hover { color: var(--primary); background: var(--light-gray); }
+
+.tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: 600;
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ─── TARJETAS ─── */
+.card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ayudante-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.ayudante-avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--white);
+}
+
+.ayudante-info { flex: 1; }
+.ayudante-info h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
+.ayudante-info .meta { font-size: 0.85rem; color: var(--gray); }
+
+.rating { display: flex; align-items: center; gap: 0.3rem; font-size: 0.9rem; }
+.rating .star { color: #f59e0b; }
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.badge-pendiente { background: #fef3c7; color: #92400e; }
+.badge-aceptado  { background: #d1fae5; color: #065f46; }
+.badge-rechazado { background: #fee2e2; color: #991b1b; }
+.badge-abierta   { background: #dbeafe; color: #1e40af; }
+.badge-cubierta  { background: #f3f4f6; color: var(--gray); }
+
+.card-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ─── SOLICITUD CARD ─── */
+.solicitud-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+}
+
+.solicitud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+}
+
+.solicitud-header h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.2rem; }
+.solicitud-header .meta { font-size: 0.85rem; color: var(--gray); }
+
+.solicitud-desc { font-size: 0.9rem; color: var(--dark); margin-bottom: 1rem; }
+
+.solicitud-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.aplicaciones-list {
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.aplicacion-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ─── FORMULARIO CREAR SOLICITUD ─── */
+.form-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+}
+
+.form-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+.form-group { margin-bottom: 1rem; }
+.form-group label { display: block; font-size: 0.9rem; font-weight: 500; margin-bottom: 0.4rem; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-family: var(--font-family);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { outline: none; border-color: var(--primary); }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+.form-error { color: var(--danger); font-size: 0.82rem; margin-top: 0.3rem; display: none; }
+.form-error.visible { display: block; }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--gray);
+}
+
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { margin-bottom: 1rem; }
+
+/* ─── BOTONES ─── */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+}
+
+.btn-primary  { background: var(--primary); color: var(--white); }
+.btn-primary:hover  { opacity: 0.9; }
+.btn-success  { background: #10b981; color: var(--white); }
+.btn-success:hover  { opacity: 0.9; }
+.btn-danger   { background: var(--danger); color: var(--white); }
+.btn-danger:hover   { opacity: 0.9; }
+.btn-outline  { background: transparent; border: 1px solid var(--border); color: var(--dark); }
+.btn-outline:hover  { background: var(--light-gray); }
+.btn-sm       { padding: 0.4rem 0.85rem; font-size: 0.82rem; }
+
+/* ─── TOAST ─── */
+.toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--dark);
+    color: var(--white);
+    padding: 0.85rem 1.4rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.success { background: #10b981; }
+.toast.error   { background: var(--danger); }

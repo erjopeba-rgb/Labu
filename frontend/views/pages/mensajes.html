@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mensajes</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/mensajes.css">
+</head>
+<body>
+
+    <!-- Navbar — componente: /components/navbar.html -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            <div class="nav-search">
+                <span class="nav-search-icon">&#128269;</span>
+                <input type="text" id="navSearchInput" placeholder="Buscar trabajos, profesionales...">
+            </div>
+            <div class="nav-icons">
+                <div class="nav-icon" title="Notificaciones" onclick="App.navigateTo('notificaciones')">
+                    &#128276;
+                    <span class="badge" id="notification-badge"></span>
+                </div>
+                <div class="nav-icon" title="Mensajes" onclick="App.navigateTo('mensajes')">
+                    &#128172;
+                    <span class="badge" id="message-badge"></span>
+                </div>
+                <div class="nav-icon nav-avatar" title="Mi perfil" onclick="App.navigateTo('mi-perfil')" id="navAvatar">&#128100;</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="messages-container">
+
+        <aside class="conversations-sidebar">
+            <div class="sidebar-header">
+                <h2>&#128172; Mensajes</h2>
+                <div class="search-box">
+                    <span class="search-icon">&#128269;</span>
+                    <input type="text" placeholder="Buscar conversaciones..." oninput="filtrarConversaciones(this.value)">
+                </div>
+            </div>
+            <div class="conversations-list" id="conversacionesList">
+                <div class="empty-state">Cargando...</div>
+            </div>
+        </aside>
+
+        <main class="chat-area">
+
+            <div class="empty-chat" id="emptyChatPlaceholder">
+                <div class="empty-icon">&#128172;</div>
+                <p>Seleccion&#225; una conversaci&#243;n para empezar</p>
+            </div>
+
+            <div id="chatHeader" class="chat-header" style="display:none;">
+                <div class="chat-user-info">
+                    <div class="conversation-avatar" id="chatHeaderAvatar">??</div>
+                    <div class="chat-user-details">
+                        <h3 id="chatHeaderNombre">-</h3>
+                        <div class="chat-user-status status-online">En l&#237;nea</div>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button class="action-btn" title="M&#225;s opciones">&#8942;</button>
+                </div>
+            </div>
+
+            <div class="messages-area" id="messagesArea"></div>
+
+            <div class="chat-input">
+                <div class="input-wrapper">
+                    <div class="input-actions">
+                        <button class="input-btn" title="Adjuntar">&#128206;</button>
+                        <button class="input-btn" title="Emoji">&#128522;</button>
+                    </div>
+                    <textarea class="input-field" id="chatInput" placeholder="Escribe un mensaje..." rows="1"></textarea>
+                    <button class="input-btn send-btn" id="btnEnviar" onclick="enviarMensaje()" title="Enviar">&#9992;</button>
+                </div>
+                <div id="typingIndicator" class="typing-indicator" style="display:none; margin-top:0.5rem;">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/mensajes.js"></script>
+</body>
+</html>

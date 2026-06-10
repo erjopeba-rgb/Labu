@@ -1,0 +1,269 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mi Perfil</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/mi-perfil.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+            <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+        </div>
+    </nav>
+
+    <!-- ─── HERO: PORTADA + AVATAR + DATOS ─── -->
+    <div class="profile-hero">
+        <div class="cover-photo" id="coverPhoto">
+            <button class="btn-change-cover">&#128247; Cambiar portada</button>
+        </div>
+        <div class="profile-header-bar">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar" id="profileAvatar">?</div>
+                <button class="btn-change-avatar" title="Cambiar foto">&#128247;</button>
+            </div>
+            <div class="profile-header-info">
+                <div class="profile-name" id="profileNombre">Cargando...</div>
+                <div class="profile-role" id="profileRol">-</div>
+                <div class="profile-email" id="profileEmail">-</div>
+            </div>
+            <div class="profile-header-actions">
+                <button class="btn btn-primary" onclick="document.getElementById('editFormCard').scrollIntoView({behavior:'smooth'})">&#9998; Editar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── BODY: 35% SIDEBAR / 65% MAIN ─── -->
+    <div class="profile-body">
+
+        <!-- ── SIDEBAR 35% ── -->
+        <aside class="profile-sidebar">
+            <div class="card">
+                <h3 class="card-section-title">Estadísticas</h3>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="statTrabajos">0</div>
+                        <div class="stat-label">Trabajos</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="statOfertas">0</div>
+                        <div class="stat-label">Ofertas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="statRating">-</div>
+                        <div class="stat-label">Rating</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="ratingCard" style="display:none;">
+                <h3 class="card-section-title">&#11088; Calificación</h3>
+                <div class="rating-display" id="ratingDisplay"></div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-section-title">Navegación</h3>
+                <div class="quick-link" onclick="window.location.href='/pages/mis-ofertas-laborales.html'">&#128188; Mis Ofertas Laborales</div>
+                <div class="quick-link" onclick="window.location.href='/pages/mis-ofertas.html'">&#128176; Mis Ofertas</div>
+                <div class="quick-link" onclick="window.location.href='/pages/feed.html'">&#128240; Feed</div>
+                <div class="quick-link" data-action="logout" style="color:var(--danger);">&#128682; Cerrar Sesión</div>
+            </div>
+        </aside>
+
+        <!-- Modal verificación de identidad -->
+        <div id="modalVerificacion" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:2rem;width:min(460px,92vw);box-shadow:0 8px 32px rgba(0,0,0,0.2);max-height:90vh;overflow-y:auto;">
+                <h3 style="margin:0 0 0.5rem;">Verificar identidad</h3>
+                <p style="font-size:0.88rem;color:#666;margin-bottom:1.25rem;">
+                    Subí una foto del frente y dorso de tu DNI, y una selfie sosteniéndolo. Las imágenes son revisadas manualmente por el equipo de Labu.
+                </p>
+
+                <div class="form-group">
+                    <label style="font-weight:600;font-size:0.9rem;">DNI Frente *</label>
+                    <input type="file" id="inputDniFrente" accept="image/*" style="margin-top:0.35rem;width:100%;">
+                </div>
+                <div class="form-group" style="margin-top:0.75rem;">
+                    <label style="font-weight:600;font-size:0.9rem;">DNI Dorso *</label>
+                    <input type="file" id="inputDniDorso" accept="image/*" style="margin-top:0.35rem;width:100%;">
+                </div>
+                <div class="form-group" style="margin-top:0.75rem;">
+                    <label style="font-weight:600;font-size:0.9rem;">Selfie sosteniendo el DNI *</label>
+                    <input type="file" id="inputSelfie" accept="image/*" style="margin-top:0.35rem;width:100%;">
+                </div>
+
+                <div id="verifError" class="form-error" style="margin-top:0.75rem;display:none;color:#dc2626;font-size:0.88rem;"></div>
+
+                <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModalVerificacion()">Cancelar</button>
+                    <button class="btn btn-primary" id="btnEnviarVerificacion" onclick="enviarVerificacion()">Enviar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MAIN 65% ── -->
+        <main class="profile-main-content">
+
+            <!-- Editar Perfil -->
+            <div class="card" id="editFormCard">
+                <button class="collapsible-btn" onclick="toggleSection('progresoContent', this)">
+                    Progreso <span class="collapsible-arrow">&#9660;</span>
+                </button>
+                <div id="progresoContent" class="collapsible-content collapsed">Cargando...</div>
+
+                <div id="editPerfilSection">
+                <button class="collapsible-btn" onclick="toggleSection('editPerfilContent', this)" style="margin-top:0.5rem;">
+                    <span>&#9998; Editar Perfil <span id="editPerfilBadge" class="incomplete-badge"></span></span>
+                    <span class="collapsible-arrow">&#9660;</span>
+                </button>
+                <div id="editPerfilContent" class="collapsible-content collapsed">
+                    <div class="form-success" id="editSuccess">&#10003; Perfil guardado correctamente.</div>
+
+                    <!-- ── Datos básicos ── -->
+                    <div class="form-group" data-field="nombre">
+                        <label>Nombre *</label>
+                        <input type="text" id="edit-nombre" placeholder="Tu nombre">
+                        <span class="field-error-msg" id="err-nombre">El nombre no puede estar vacío</span>
+                    </div>
+                    <div class="form-group" data-field="apellido">
+                        <label>Apellido *</label>
+                        <input type="text" id="edit-apellido" placeholder="Tu apellido">
+                        <span class="field-error-msg" id="err-apellido">El apellido no puede estar vacío</span>
+                    </div>
+                    <div class="form-group" data-field="telefono">
+                        <label>Tel&#233;fono *</label>
+                        <input type="text" id="edit-telefono" placeholder="Ej: 11 2345-6789">
+                    </div>
+                    <div class="form-group" data-field="ciudad">
+                        <label>Ciudad *</label>
+                        <input type="text" id="edit-ciudad" placeholder="Tu ciudad">
+                    </div>
+                    <div class="form-group" data-field="provincia">
+                        <label>Provincia *</label>
+                        <input type="text" id="edit-provincia" placeholder="Tu provincia">
+                    </div>
+                    <div class="form-group">
+                        <label>Descripci&#243;n / Bio</label>
+                        <textarea id="edit-descripcion" rows="3" placeholder="Cont&#225; algo sobre vos..."></textarea>
+                    </div>
+
+                    <!-- ── Foto de perfil (solo trabajador) ── -->
+                    <div class="form-group trabajador-field" id="fieldFoto" data-field="foto">
+                        <label>Foto de perfil</label>
+                        <div class="avatar-upload-preview">
+                            <div class="avatar-preview-circle" id="avatarPreviewCircle"></div>
+                            <div>
+                                <input type="file" id="edit-avatar" accept="image/*" onchange="previewAvatar(this)" style="display:none;">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('edit-avatar').click()">&#128247; Elegir foto</button>
+                                <div style="font-size:0.78rem;color:var(--gray);margin-top:0.35rem;">M&#225;x 5 MB. JPG, PNG o WebP.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Campos solo trabajador ── -->
+                    <div class="trabajador-field" id="seccionTrabajador">
+
+                        <div class="form-group" data-field="rubros">
+                            <label>Rubros en los que trabaj&#225;s</label>
+                            <div class="rubros-grid" id="rubrosGrid">
+                                <span style="color:var(--gray);font-size:0.85rem;">Cargando rubros...</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group" data-field="anios_experiencia">
+                            <label>A&#241;os de experiencia</label>
+                            <input type="number" id="edit-anios-experiencia" min="0" max="60" placeholder="Ej: 5">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descripci&#243;n de habilidades y experiencia</label>
+                            <textarea id="edit-descripcion-habilidades" rows="4" placeholder="Describ&#237; detalladamente tu experiencia, especialidades y lo que te diferencia..."></textarea>
+                        </div>
+
+                        <div class="form-group" data-field="zonas">
+                            <label>Zonas donde trabaj&#225;s</label>
+                            <div class="zonas-input-wrapper">
+                                <div class="zonas-tags" id="zonasTags"></div>
+                                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+                                    <input type="text" id="edit-zona-input" placeholder="Ej: Palermo, CABA" style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();agregarZona();}">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="agregarZona()">+ Agregar</button>
+                                </div>
+                                <div style="font-size:0.78rem;color:var(--gray);margin-top:0.35rem;">Presion&#225; Enter o clic en Agregar para a&#241;adir una zona.</div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Herramientas y equipamiento</label>
+                            <textarea id="edit-herramientas" rows="3" placeholder="Ej: Taladro, soldadora, andamio propio, furgoneta..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Disponibilidad general</label>
+                            <select id="edit-disponibilidad-general">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="full_time">Full time (L&#8211;V + S&#225;b)</option>
+                                <option value="part_time">Part time (horario reducido)</option>
+                                <option value="fines_semana">Fines de semana</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" data-field="medio_transporte">
+                            <label>Medio de transporte *
+                                <span class="field-hint">Requerido para poder ofertar</span>
+                            </label>
+                            <select id="edit-medio-transporte">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="auto">&#128664; Auto</option>
+                                <option value="moto">&#127949; Moto</option>
+                                <option value="bici">&#128690; Bicicleta</option>
+                                <option value="caminando">&#127939; Caminando</option>
+                            </select>
+                        </div>
+
+                    </div><!-- /seccionTrabajador -->
+
+                    <button class="btn btn-primary" id="btnGuardar" onclick="guardarPerfil()">Guardar Cambios</button>
+                </div>
+                </div>
+            </div>
+
+            <!-- Verificación de identidad -->
+            <div class="card" id="cardVerificacion">
+                <h3 class="card-section-title">&#9989; Verificación de identidad</h3>
+                <div id="verificacionEstado" style="margin-bottom:1rem;">Cargando...</div>
+                <button class="btn btn-primary btn-sm" id="btnIniciarVerificacion"
+                    style="display:none;" onclick="abrirModalVerificacion()">
+                    Verificar identidad
+                </button>
+            </div>
+
+            <!-- Publicaciones / Muro -->
+            <div class="card">
+                <h2 style="margin-bottom:1.5rem;">&#128247; Publicaciones</h2>
+                <div id="actividadList">
+                    <div class="empty-state">Cargando publicaciones...</div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/mi-perfil.js"></script>
+    <script>
+        function toggleSection(id, btn) {
+            var content = document.getElementById(id);
+            var arrow = btn.querySelector('.collapsible-arrow');
+            var isOpen = !content.classList.contains('collapsed');
+            content.classList.toggle('collapsed', isOpen);
+            arrow.innerHTML = isOpen ? '&#9660;' : '&#9650;';
+        }
+    </script>
+</body>
+</html>

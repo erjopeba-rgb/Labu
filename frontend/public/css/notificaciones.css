@@ -1,0 +1,235 @@
+﻿/* notificaciones.css */
+
+body {
+    background: var(--light-gray);
+    padding-top: 60px;
+}
+
+/* ─── NAVBAR ─── */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    z-index: var(--z-fixed);
+    padding: 0.75rem 1rem;
+}
+
+.navbar-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.btn-back {
+    padding: 0.5rem 1rem;
+    background: var(--light-gray);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+}
+.btn-back:hover { background: var(--border); }
+
+/* ─── LAYOUT ─── */
+.notifications-layout {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.page-header h1 { font-size: 2rem; }
+
+.page-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-actions { display: flex; gap: 1rem; }
+
+
+/* ─── FILTROS ─── */
+.filters-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 0.75rem 1.5rem;
+    background: var(--light-gray);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+}
+.filter-tab:hover  { border-color: var(--primary); }
+.filter-tab.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
+
+/* ─── BOTONES ─── */
+.btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ─── BADGE CONTADOR NO LEÍDAS ─── */
+.badge-counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    height: 1.5rem;
+    background: var(--primary);
+    color: var(--white);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0 0.45rem;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+/* ─── ANIMACIÓN MARKING-READ ─── */
+@keyframes notifMarkRead {
+    0%   { background: #e3f2fd; }
+    60%  { background: #dceefb; }
+    100% { background: transparent; }
+}
+
+.notification-item.marking-read {
+    animation: notifMarkRead 0.4s ease forwards;
+}
+
+/* ─── LISTA ─── */
+.notifications-list { display: flex; flex-direction: column; }
+
+.notification-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: all var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+.notification-item:last-child { border-bottom: none; }
+.notification-item:hover      { background: var(--light-gray); }
+
+.notification-item.unread { background: #e3f2fd; }
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--primary);
+}
+
+/* ─── ICON ─── */
+.notification-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.icon-oferta   { background: #e3f2fd; }
+.icon-mensaje  { background: var(--warning-light); }
+.icon-resena   { background: #fff3e0; }
+.icon-pago     { background: var(--success-light); }
+.icon-trabajo  { background: #e8f5e9; }
+.icon-sistema  { background: var(--light-gray); }
+
+/* ─── CONTENIDO ─── */
+.notification-content { flex: 1; min-width: 0; }
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.notification-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
+.notification-time  { font-size: 0.85rem; color: var(--gray); white-space: nowrap; }
+
+.notification-message {
+    color: var(--dark);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.unread-indicator {
+    width: 10px;
+    height: 10px;
+    background: var(--primary);
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* ─── ACCIONES ─── */
+.notification-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-action-primary           { background: var(--primary); color: var(--white); }
+.btn-action-primary:hover     { background: var(--primary-dark); }
+.btn-action-secondary         { background: var(--light-gray); color: var(--dark); }
+.btn-action-secondary:hover   { background: var(--border); }
+
+/* ─── DATE DIVIDER ─── */
+.date-divider {
+    padding: 0.75rem 1.25rem;
+    background: var(--light-gray);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--gray);
+    border-bottom: 1px solid var(--border);
+}
+
+/* ─── EMPTY STATE ─── */
+.empty-icon  { font-size: 5rem; margin-bottom: 1rem; } /* override: icono más grande en notificaciones */
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .page-header        { flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .notification-item  { flex-direction: column; }
+    .notification-header { flex-direction: column; gap: 0.5rem; }
+    .notification-time  { white-space: normal; }
+}

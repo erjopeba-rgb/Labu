@@ -1,0 +1,544 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labu - Plataforma Integral de Trabajo</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/auth.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: var(--z-fixed);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .header-actions { display: flex; gap: var(--space-md); }
+
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem var(--space-xl);
+            text-align: center;
+            color: var(--white);
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: var(--space-lg);
+            line-height: 1.1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .hero > p {
+            font-size: 1.5rem;
+            margin-bottom: var(--space-2xl);
+            opacity: 0.95;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-register-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.02em;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: var(--space-lg);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .role-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: var(--space-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            cursor: pointer;
+            transition: all var(--transition);
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        .role-icon { font-size: 3rem; margin-bottom: var(--space-md); }
+        .role-card h3 { color: var(--dark); font-size: 1.5rem; margin-bottom: var(--space-sm); }
+        .role-card p { color: var(--gray); font-size: 1rem; margin-bottom: var(--space-lg); }
+
+        .features {
+            background: var(--white);
+            padding: 6rem var(--space-xl);
+        }
+
+        .features-content { max-width: 1200px; margin: 0 auto; }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: var(--space-2xl);
+            color: var(--dark);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-xl);
+        }
+
+        .feature-card {
+            background: var(--light-gray);
+            padding: var(--space-xl);
+            border-radius: var(--radius-md);
+            transition: all var(--transition);
+        }
+
+        .feature-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+        .feature-icon { font-size: 2.5rem; margin-bottom: var(--space-md); }
+        .feature-card h4 { font-size: 1.3rem; margin-bottom: var(--space-sm); color: var(--dark); }
+        .feature-card p { color: var(--gray); font-size: 0.95rem; }
+
+        .footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: var(--space-xl);
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero > p { font-size: 1.2rem; }
+            .header-content { flex-direction: column; gap: var(--space-md); }
+            .hero-cta { flex-direction: column; align-items: center; }
+            .role-card { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Labu</div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="btnLogin">Iniciar Sesión</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>Conectando Trabajo y Talento</h1>
+        <p>La plataforma integral que revoluciona la forma de contratar servicios, gestionar proyectos y conectar profesionales</p>
+        <p class="hero-register-label">¿Cómo querés usar Labu?</p>
+        <div class="hero-cta">
+            <div class="role-card" data-role="dueno">
+                <div class="role-icon">🏠</div>
+                <h3>Soy Dueño</h3>
+                <p>Necesito contratar servicios y gestionar proyectos</p>
+                <button class="btn btn-primary">Empezar</button>
+            </div>
+            <div class="role-card" data-role="trabajador">
+                <div class="role-icon">🔧</div>
+                <h3>Soy Trabajador</h3>
+                <p>Ofrezco mis servicios y habilidades profesionales</p>
+                <button class="btn btn-primary">Empezar</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="features-content">
+            <h2 class="section-title">Todo lo que necesitás en una plataforma</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📸</div>
+                    <h4>Publicar Trabajos</h4>
+                    <p>Describí el problema con foto y ubicación, y recibí ofertas de profesionales en minutos</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💰</div>
+                    <h4>Sistema de Ofertas</h4>
+                    <p>Recibí múltiples cotizaciones y elegí la mejor opción para tu proyecto</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h4>Geolocalización</h4>
+                    <p>Encontrá profesionales y negocios cercanos a tu ubicación</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h4>Proyectos Completos</h4>
+                    <p>Gestioná remodelaciones complejas con múltiples trabajadores y materiales</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⭐</div>
+                    <h4>Calificaciones Bidireccionales</h4>
+                    <p>Sistema de reputación para trabajadores y empleadores</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h4>Servicios Recurrentes</h4>
+                    <p>Agendá mantenimientos semanales con tus trabajadores de confianza</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h4>Pagos con MercadoPago</h4>
+                    <p>El dinero queda retenido en la plataforma hasta que confirmás que el trabajo quedó bien</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h4>Agenda Automática</h4>
+                    <p>Al aceptar una oferta, el sistema asigna el horario óptimo según disponibilidad y ubicación</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💬</div>
+                    <h4>Chat en Tiempo Real</h4>
+                    <p>Comunicate directamente con trabajadores y clientes</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>&copy; 2026 Labu — Road to Type 1 Civilization. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- style="display:none" evita el flash antes de que cargue el CSS -->
+    <div class="modal" id="modalLogin" style="display:none;">
+        <div class="modal-content">
+            <button class="close-btn" id="closeLogin">✕</button>
+
+            <!-- Formulario de login -->
+            <div id="seccionLogin">
+                <h3>Iniciar Sesión</h3>
+                <div class="form-error" id="loginError"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="tu@email.com">
+                        <span class="field-error-msg" id="err-login-email">Ingresá un email válido</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Contraseña</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                        <span class="field-error-msg" id="err-login-password">Mínimo 8 caracteres</span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+                </form>
+                <p style="text-align:center; margin-top: 1rem;">
+                    <a href="#" id="linkOlvidePassword" style="font-size:0.9rem; color: var(--primary);">¿Olvidaste tu contraseña?</a>
+                </p>
+            </div>
+
+            <!-- Formulario de recuperación (oculto por defecto) -->
+            <div id="seccionRecuperacion" style="display:none;">
+                <h3>Recuperar contraseña</h3>
+                <p style="color: var(--gray); font-size:0.9rem; margin-bottom:1rem;">Ingresá tu email y te enviaremos un link para restablecer tu contraseña.</p>
+                <div class="form-error" id="recuperacionError"></div>
+                <div class="form-success" id="recuperacionExito" style="display:none; background:#d4edda; color:#155724; padding:0.75rem 1rem; border-radius:var(--radius-sm); margin-bottom:1rem; font-size:0.9rem;"></div>
+                <form id="forgot-form">
+                    <div class="form-group">
+                        <label for="forgot-email">Email</label>
+                        <input type="email" id="forgot-email" required placeholder="tu@email.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Enviar link</button>
+                </form>
+                <div id="devResetLink" style="display:none; margin-top:0.75rem; padding:0.75rem 1rem; background:#fff3cd; color:#664d03; border:1px solid #ffc107; border-radius:var(--radius-sm); font-size:0.85rem; word-break:break-all;"></div>
+                <p style="text-align:center; margin-top: 1rem;">
+                    <a href="#" id="linkVolverLogin" style="font-size:0.9rem; color: var(--primary);">Volver al login</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="modalRegister" style="display:none;">
+        <div class="modal-content">
+            <button class="close-btn" id="closeRegister">✕</button>
+
+            <!-- Formulario de registro -->
+            <div id="seccionRegistro">
+                <h3>Crear Cuenta</h3>
+                <div class="form-error" id="registerError"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-tipo">¿Cómo vas a usar Labu?</label>
+                        <select id="register-tipo" required>
+                            <option value="">Seleccioná una opción</option>
+                            <option value="dueno">🏠 Dueño — Busco servicios</option>
+                            <option value="trabajador">🔧 Trabajador — Ofrezco servicios</option>
+                            <option value="tienda">🏢 Tienda / Negocio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" required placeholder="tu@email.com">
+                        <span class="field-error-msg" id="err-register-email">Ingresá un email válido</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Contraseña</label>
+                        <input type="password" id="register-password" required minlength="8" placeholder="Mínimo 8 caracteres">
+                        <span class="field-error-msg" id="err-register-password">Mínimo 8 caracteres</span>
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password-confirm">Confirmar contraseña</label>
+                        <input type="password" id="register-password-confirm" required placeholder="Repetí tu contraseña">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-fecha-nacimiento">Fecha de nacimiento</label>
+                        <input type="date" id="register-fecha-nacimiento" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-full">Crear Cuenta</button>
+                </form>
+            </div>
+
+            <!-- Sección post-registro: verificación de email (oculta por defecto) -->
+            <div id="seccionVerificacion" style="display:none; text-align:center;">
+                <div style="font-size:3rem; margin-bottom:1rem;">📧</div>
+                <h3>¡Cuenta creada!</h3>
+                <p style="color: var(--gray); font-size:0.95rem; margin-bottom:1.25rem;">
+                    Revisá tu email para verificar tu cuenta.<br>
+                    El link expira en 24 horas.
+                </p>
+                <div id="devVerifLink" style="display:none; margin-bottom:1rem; padding:0.75rem 1rem; background:#fff3cd; color:#664d03; border:1px solid #ffc107; border-radius:var(--radius-sm); font-size:0.85rem; word-break:break-all; text-align:left;"></div>
+                <button class="btn btn-primary btn-full" onclick="window.location.href='/pages/feed.html'">Ir al feed</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        // Abrir/cerrar modales
+        document.getElementById('btnLogin').addEventListener('click', () => {
+            document.getElementById('modalLogin').style.display = 'flex';
+        });
+        // btnRegister no existe en el header; el registro se abre desde las role-cards
+        // Cerrar modal register y resetear a sección de formulario
+        document.getElementById('closeRegister').addEventListener('click', () => {
+            document.getElementById('modalRegister').style.display = 'none';
+            document.getElementById('seccionVerificacion').style.display = 'none';
+            document.getElementById('seccionRegistro').style.display = 'block';
+            document.getElementById('devVerifLink').style.display = 'none';
+        });
+
+        // Validación inline de campos
+        function _validarCampoEmail(inputId, errId) {
+            var input = document.getElementById(inputId);
+            var err   = document.getElementById(errId);
+            var valido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim());
+            input.classList.toggle('input-error', !valido);
+            err.classList.toggle('visible', !valido);
+            return valido;
+        }
+        function _validarCampoPassword(inputId, errId) {
+            var input = document.getElementById(inputId);
+            var err   = document.getElementById(errId);
+            var valido = input.value.length >= 8;
+            input.classList.toggle('input-error', !valido);
+            err.classList.toggle('visible', !valido);
+            return valido;
+        }
+        function _limpiarError(inputId, errId) {
+            document.getElementById(inputId).classList.remove('input-error');
+            document.getElementById(errId).classList.remove('visible');
+        }
+
+        document.getElementById('login-email').addEventListener('blur', function() { _validarCampoEmail('login-email', 'err-login-email'); });
+        document.getElementById('login-email').addEventListener('input', function() { if (!this.classList.contains('input-error')) return; _validarCampoEmail('login-email', 'err-login-email'); });
+        document.getElementById('login-password').addEventListener('blur', function() { _validarCampoPassword('login-password', 'err-login-password'); });
+        document.getElementById('login-password').addEventListener('input', function() { if (!this.classList.contains('input-error')) return; _validarCampoPassword('login-password', 'err-login-password'); });
+
+        document.getElementById('register-email').addEventListener('blur', function() { _validarCampoEmail('register-email', 'err-register-email'); });
+        document.getElementById('register-email').addEventListener('input', function() { if (!this.classList.contains('input-error')) return; _validarCampoEmail('register-email', 'err-register-email'); });
+        document.getElementById('register-password').addEventListener('blur', function() { _validarCampoPassword('register-password', 'err-register-password'); });
+        document.getElementById('register-password').addEventListener('input', function() { if (!this.classList.contains('input-error')) return; _validarCampoPassword('register-password', 'err-register-password'); });
+
+        // Cerrar al hacer click afuera del modal
+        ['modalLogin', 'modalRegister'].forEach(id => {
+            document.getElementById(id).addEventListener('click', (e) => {
+                if (e.target.id === id) e.target.style.display = 'none';
+            });
+        });
+
+        // Click en role card abre registro con tipo preseleccionado
+        document.querySelectorAll('.role-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.getElementById('register-tipo').value = card.dataset.role;
+                document.getElementById('modalRegister').style.display = 'flex';
+            });
+        });
+
+        // Toggle secciones olvide/login
+        document.getElementById('linkOlvidePassword').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('seccionLogin').style.display = 'none';
+            document.getElementById('seccionRecuperacion').style.display = 'block';
+            document.getElementById('recuperacionError').classList.remove('visible');
+            document.getElementById('recuperacionExito').style.display = 'none';
+            document.getElementById('devResetLink').style.display = 'none';
+        });
+        document.getElementById('linkVolverLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('seccionRecuperacion').style.display = 'none';
+            document.getElementById('seccionLogin').style.display = 'block';
+            document.getElementById('devResetLink').style.display = 'none';
+        });
+
+        // Cerrar modal login y resetear a sección de login
+        document.getElementById('closeLogin').addEventListener('click', () => {
+            document.getElementById('modalLogin').style.display = 'none';
+            document.getElementById('seccionRecuperacion').style.display = 'none';
+            document.getElementById('seccionLogin').style.display = 'block';
+            document.getElementById('devResetLink').style.display = 'none';
+        });
+
+        // RECUPERAR CONTRASEÑA
+        document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const errorEl = document.getElementById('recuperacionError');
+            const exitoEl = document.getElementById('recuperacionExito');
+            errorEl.classList.remove('visible');
+            exitoEl.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
+            try {
+                const res = await fetch('/api/auth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: document.getElementById('forgot-email').value })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    errorEl.textContent = data.error || 'Error al procesar la solicitud';
+                    errorEl.classList.add('visible');
+                } else {
+                    exitoEl.textContent = data.mensaje;
+                    exitoEl.style.display = 'block';
+                    const devEl = document.getElementById('devResetLink');
+                    if (data.dev_reset_link) {
+                        devEl.innerHTML = `<strong>🔗 Link de recuperación (solo en desarrollo):</strong><br><a href="${data.dev_reset_link}" style="color:#0d6efd; text-decoration:underline;">${data.dev_reset_link}</a>`;
+                        devEl.style.display = 'block';
+                    } else {
+                        devEl.style.display = 'none';
+                    }
+                    e.target.reset();
+                }
+            } catch {
+                errorEl.textContent = 'Error de conexión';
+                errorEl.classList.add('visible');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Enviar link';
+        });
+
+        // LOGIN
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const errorEl = document.getElementById('loginError');
+            errorEl.classList.remove('visible');
+            btn.disabled = true;
+            btn.textContent = 'Ingresando...';
+
+            const result = await Auth.login(
+                document.getElementById('login-email').value,
+                document.getElementById('login-password').value
+            );
+
+            if (!result.success) {
+                errorEl.textContent = result.error || 'Error al ingresar';
+                errorEl.classList.add('visible');
+                btn.disabled = false;
+                btn.textContent = 'Entrar';
+            }
+        });
+
+        // REGISTRO
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const errorEl = document.getElementById('registerError');
+            errorEl.classList.remove('visible');
+
+            const pass = document.getElementById('register-password').value;
+            const passConfirm = document.getElementById('register-password-confirm').value;
+
+            if (pass !== passConfirm) {
+                errorEl.textContent = 'Las contraseñas no coinciden';
+                errorEl.classList.add('visible');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creando cuenta...';
+
+            const result = await Auth.register({
+                email: document.getElementById('register-email').value,
+                password: pass,
+                tipo_usuario: document.getElementById('register-tipo').value || 'dueno',
+                fecha_nacimiento: document.getElementById('register-fecha-nacimiento').value
+            });
+
+            if (!result.success) {
+                errorEl.textContent = result.error || 'Error al registrar';
+                errorEl.classList.add('visible');
+                btn.disabled = false;
+                btn.textContent = 'Crear Cuenta';
+            } else {
+                // Mostrar sección de verificación de email
+                document.getElementById('seccionRegistro').style.display = 'none';
+                document.getElementById('seccionVerificacion').style.display = 'block';
+                const devEl = document.getElementById('devVerifLink');
+                if (result.devVerificationLink) {
+                    devEl.innerHTML = `<strong>🔗 Link de verificación (solo en desarrollo):</strong><br><a href="${result.devVerificationLink}" style="color:#0d6efd; text-decoration:underline;">${result.devVerificationLink}</a>`;
+                    devEl.style.display = 'block';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

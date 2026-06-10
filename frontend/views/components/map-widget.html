@@ -1,0 +1,194 @@
+﻿<!--
+  Map Widget Component — Labu
+  Widget de mapa de cercanía con profesionales cercanos y geolocalización.
+  Extraído de: sidebar-right.html, feed.html
+  Requiere en la página: /css/variables.css, /css/global.css
+-->
+
+<div class="map-widget" id="mapWidget">
+
+    <div class="map-header">
+        <h4 class="map-title">&#128205; Mapa de Cercanía</h4>
+        <button class="map-locate-btn" id="mapLocateBtn" onclick="MapWidget.locate()" title="Activar ubicación">
+            &#127759;
+        </button>
+    </div>
+
+    <div class="map-preview" id="mapPreview">
+        <div class="map-placeholder-icon">&#128507;</div>
+        <p class="map-placeholder-text">Activá tu ubicación para ver el mapa</p>
+    </div>
+
+    <div class="nearby-list" id="nearbyList">
+        <div class="nearby-empty">Activá la ubicación para ver profesionales cercanos</div>
+    </div>
+
+</div>
+
+<style>
+/* ── MAP WIDGET ──────────────────────────────────────────── */
+.map-widget {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.map-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0;
+}
+
+.map-locate-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.25rem;
+    border-radius: var(--radius);
+    transition: background var(--transition);
+    line-height: 1;
+}
+
+.map-locate-btn:hover { background: var(--light-gray); }
+
+.map-preview {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--white);
+    overflow: hidden;
+}
+
+.map-placeholder-icon { font-size: 2.5rem; }
+.map-placeholder-text { font-size: 0.75rem; opacity: 0.85; text-align: center; padding: 0 1rem; }
+
+/* ── CERCANOS ────────────────────────────────────────────── */
+.nearby-list { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.nearby-empty {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-align: center;
+    padding: 0.75rem 0;
+    line-height: 1.4;
+}
+
+.nearby-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.nearby-item:hover { background: var(--light-gray); }
+
+.nearby-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.nearby-info { flex: 1; min-width: 0; }
+.nearby-name { font-size: 0.85rem; font-weight: 600; }
+.nearby-rubro { font-size: 0.75rem; color: var(--gray); }
+.nearby-dist { font-size: 0.75rem; color: var(--primary); font-weight: 600; white-space: nowrap; }
+</style>
+
+<script>
+(function () {
+    const MapWidget = {
+        locate() {
+            if (!navigator.geolocation) {
+                this._setPlaceholder('Geolocalización no disponible');
+                return;
+            }
+            const btn = document.getElementById('mapLocateBtn');
+            if (btn) btn.textContent = '⏳';
+
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    this._onLocation(pos.coords.latitude, pos.coords.longitude);
+                    if (btn) btn.textContent = '📍';
+                },
+                () => {
+                    this._setPlaceholder('No se pudo obtener la ubicación');
+                    if (btn) btn.textContent = '🌍';
+                }
+            );
+        },
+
+        _onLocation(lat, lng) {
+            const preview = document.getElementById('mapPreview');
+            if (preview) {
+                preview.innerHTML = `
+                    <div style="font-size:2rem">📍</div>
+                    <p style="font-size:0.75rem;opacity:0.85;">Ubicación activa</p>
+                    <p style="font-size:0.7rem;opacity:0.65;">${lat.toFixed(4)}, ${lng.toFixed(4)}</p>
+                `;
+            }
+            this._loadNearby(lat, lng);
+        },
+
+        async _loadNearby(lat, lng) {
+            const list = document.getElementById('nearbyList');
+            if (!list) return;
+            try {
+                const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+                const res = await fetch(`/api/geo/nearby?lat=${lat}&lng=${lng}`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (!res.ok) return;
+                const workers = await res.json();
+                if (!workers.length) {
+                    list.innerHTML = '<div class="nearby-empty">No hay profesionales cercanos</div>';
+                    return;
+                }
+                list.innerHTML = workers.slice(0, 5).map(w => `
+                    <div class="nearby-item" onclick="window.location.href='/pages/perfil-publico.html?id=${w.id}'">
+                        <div class="nearby-avatar">${(w.nombre || '?').slice(0, 2).toUpperCase()}</div>
+                        <div class="nearby-info">
+                            <div class="nearby-name">${w.nombre || 'Profesional'}</div>
+                            <div class="nearby-rubro">${w.rubro || ''}</div>
+                        </div>
+                        ${w.distancia ? `<div class="nearby-dist">${w.distancia} km</div>` : ''}
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = '<div class="nearby-empty">Error cargando profesionales</div>';
+            }
+        },
+
+        _setPlaceholder(msg) {
+            const el = document.querySelector('#mapPreview .map-placeholder-text');
+            if (el) el.textContent = msg;
+        }
+    };
+
+    window.MapWidget = MapWidget;
+})();
+</script>

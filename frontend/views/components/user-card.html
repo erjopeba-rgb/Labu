@@ -1,0 +1,205 @@
+﻿<!--
+  User Card Component — Labu
+  Tarjeta de profesional: avatar, nombre, rubro, rating, habilidades y acciones.
+  Usada en: busqueda-avanzada
+  Requiere en la página: /css/variables.css, /css/global.css
+
+  JS: UserCard.render(trabajador) → string HTML
+  Campos del objeto trabajador:
+    id, nombre, rubro_nombre|profesion, calificacion_promedio,
+    total_calificaciones, distancia_km, tarifa_hora,
+    anos_experiencia, habilidades[]
+  Callbacks esperados en la página: verPerfil(id), contactar(id)
+-->
+
+<!-- Demo estático -->
+<div class="result-card">
+    <div class="result-header">
+        <div class="result-avatar">JM</div>
+        <div class="result-info">
+            <div class="result-name">Juan Martínez</div>
+            <div class="result-role">Electricista</div>
+            <div class="result-rating">
+                <span class="stars">&#11088;</span>
+                <span>4.8 (34 reseñas)</span>
+            </div>
+        </div>
+    </div>
+    <div class="result-skills">
+        <span class="skill-tag">Instalaciones</span>
+        <span class="skill-tag">Tableros</span>
+        <span class="skill-tag">Domótica</span>
+    </div>
+    <div class="result-details">
+        <div>
+            <div class="detail-icon">&#128176;</div>
+            <div class="detail-label">Tarifa</div>
+            <div class="detail-value">$1.500/h</div>
+        </div>
+        <div>
+            <div class="detail-icon">&#128205;</div>
+            <div class="detail-label">Distancia</div>
+            <div class="detail-value">3.2 km</div>
+        </div>
+        <div>
+            <div class="detail-icon">&#128197;</div>
+            <div class="detail-label">Experiencia</div>
+            <div class="detail-value">8 años</div>
+        </div>
+    </div>
+    <div class="result-actions">
+        <button class="btn-action btn-primary">Ver Perfil</button>
+        <button class="btn-action btn-secondary">&#128172; Mensaje</button>
+    </div>
+</div>
+
+<style>
+/* ── USER CARD (result-card) ─────────────────────────────── */
+.result-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.result-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.result-header  { display: flex; gap: 1rem; margin-bottom: 1rem; }
+
+.result-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.result-info   { flex: 1; }
+.result-name   { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.25rem; }
+.result-role   { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.5rem; }
+.result-rating { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.stars         { color: #ffc107; }
+
+.result-skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+
+.skill-tag {
+    padding: 0.4rem 0.8rem;
+    background: var(--light-gray);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.result-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+.detail-icon  { font-size: 1.2rem; margin-bottom: 0.25rem; }
+.detail-label { font-size: 0.75rem; color: var(--gray); }
+.detail-value { font-weight: bold; font-size: 0.9rem; }
+
+.result-actions { display: flex; gap: 0.75rem; }
+
+.result-actions .btn-action {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.result-actions .btn-primary         { background: var(--primary); color: var(--white); }
+.result-actions .btn-primary:hover   { background: var(--primary-dark); }
+.result-actions .btn-secondary       { background: var(--light-gray); color: var(--dark); }
+.result-actions .btn-secondary:hover { background: var(--border); }
+
+@media (max-width: 768px) {
+    .result-actions { flex-direction: column; }
+    .result-details { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+/**
+ * UserCard — fábrica de tarjetas de profesional.
+ *
+ * Uso:
+ *   grid.innerHTML = trabajadores.map(UserCard.render).join('');
+ */
+const UserCard = {
+    render(t) {
+        const nombre    = t.nombre || 'Profesional';
+        const iniciales = nombre.substring(0, 2).toUpperCase();
+        const rubro     = t.rubro_nombre || t.profesion || '';
+        const rating    = t.calificacion_promedio ? Number(t.calificacion_promedio).toFixed(1) : 'Nuevo';
+        const reviews   = t.total_calificaciones || 0;
+        const distancia = t.distancia_km ? Number(t.distancia_km).toFixed(1) + ' km' : '-';
+        const tarifa    = t.tarifa_hora ? '$' + Number(t.tarifa_hora).toLocaleString('es-AR') + '/h' : 'A convenir';
+        const exp       = t.anos_experiencia ? t.anos_experiencia + ' a&#241;os' : '-';
+
+        const habilidades = (t.habilidades || []).slice(0, 4)
+            .map(h => '<span class="skill-tag">' + h + '</span>')
+            .join('');
+
+        return (
+            '<div class="result-card">' +
+                '<div class="result-header">' +
+                    '<div class="result-avatar">' + iniciales + '</div>' +
+                    '<div class="result-info">' +
+                        '<div class="result-name">' + nombre + '</div>' +
+                        '<div class="result-role">' + rubro + '</div>' +
+                        '<div class="result-rating">' +
+                            '<span class="stars">&#11088;</span>' +
+                            '<span>' + rating + (reviews > 0 ? ' (' + reviews + ' rese&#241;as)' : '') + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+                (habilidades ? '<div class="result-skills">' + habilidades + '</div>' : '') +
+                '<div class="result-details">' +
+                    '<div>' +
+                        '<div class="detail-icon">&#128176;</div>' +
+                        '<div class="detail-label">Tarifa</div>' +
+                        '<div class="detail-value">' + tarifa + '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<div class="detail-icon">&#128205;</div>' +
+                        '<div class="detail-label">Distancia</div>' +
+                        '<div class="detail-value">' + distancia + '</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<div class="detail-icon">&#128197;</div>' +
+                        '<div class="detail-label">Experiencia</div>' +
+                        '<div class="detail-value">' + exp + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="result-actions">' +
+                    '<button class="btn-action btn-primary" onclick="verPerfil(' + t.id + ')">Ver Perfil</button>' +
+                    '<button class="btn-action btn-secondary" onclick="contactar(' + t.id + ')">&#128172; Mensaje</button>' +
+                '</div>' +
+            '</div>'
+        );
+    }
+};
+
+window.UserCard = UserCard;
+</script>

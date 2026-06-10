@@ -1,0 +1,159 @@
+﻿<!--
+  Product Card Component — Labu
+  Tarjeta de producto del marketplace. Muestra imagen/emoji, badge
+  opcional, botón de favorito, info del producto y acciones de compra.
+
+  Extraído de: marketplace.html → .products-grid
+               marketplace.css  → .product-card y secciones relacionadas
+
+  Uso en JS (marketplace.html → buscarProductos / agregarAlCarrito):
+    .product-image      → emoji del producto (p.emoji || '📦')
+    .product-badge      → badge-sale ("-20%") | badge-new ("Nuevo") | ausente
+    .wishlist-btn       → toggle ♡/♥ con .active (color rojo)
+    .product-seller     → p.tienda_nombre
+    .product-name       → p.nombre
+    .product-rating     → calificación + cantidad de reseñas (opcional)
+    .price-current      → p.precio formateado
+    .price-old          → precio original antes de descuento (opcional)
+    .product-stock      → p.stock + clase stock-available | stock-low | stock-out
+    .btn-primary        → onclick="agregarAlCarrito(p.id, p.nombre, p.precio)"
+    .btn-secondary      → ver detalle (👁️)
+
+  Requiere en la página: /css/variables.css, /css/global.css, /css/marketplace.css
+-->
+
+<div class="product-card">
+
+    <div class="product-image">
+        <span class="product-badge badge-sale">-20%</span>
+        <button class="wishlist-btn">&#9825;</button>
+        🧱
+    </div>
+
+    <div class="product-info">
+        <div class="product-seller">&#127970; Ferretería Del Centro</div>
+        <div class="product-name">Cemento Portland Bolsa 50kg</div>
+        <div class="product-rating">
+            <span class="stars">&#11088;&#11088;&#11088;&#11088;&#11088;</span>
+            <span>(124)</span>
+        </div>
+        <div class="product-price">
+            <span class="price-current">$8.500</span>
+            <span class="price-old">$10.625</span>
+        </div>
+        <div class="product-stock">
+            <span class="stock-available">&#10003; En stock</span> &bull; 156 disponibles
+        </div>
+        <div class="product-actions">
+            <button class="btn-primary">&#128722; Agregar</button>
+            <button class="btn-secondary">&#128065;&#65039;</button>
+        </div>
+    </div>
+
+</div>
+
+<style>
+/* ── PRODUCT CARD ─────────────────────────────────────────── */
+.product-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all var(--transition);
+    cursor: pointer;
+    background: var(--white);
+}
+.product-card:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+}
+
+/* ── IMAGEN / EMOJI ───────────────────────────────────────── */
+.product-image {
+    width: 100%;
+    aspect-ratio: 1;
+    background: var(--light-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    position: relative;
+}
+
+/* ── BADGE ────────────────────────────────────────────────── */
+.product-badge {
+    position: absolute;
+    top: 0.75rem; left: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--white);
+}
+.badge-new  { background: var(--secondary); }
+.badge-sale { background: var(--danger); }
+
+/* ── BOTÓN FAVORITO ───────────────────────────────────────── */
+.wishlist-btn {
+    position: absolute;
+    top: 0.75rem; right: 0.75rem;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--white);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+}
+.wishlist-btn:hover  { transform: scale(1.1); }
+.wishlist-btn.active { color: var(--danger); }
+
+/* ── INFO ─────────────────────────────────────────────────── */
+.product-info   { padding: 1.25rem; }
+.product-seller { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.5rem; }
+.product-name   { font-weight: bold; font-size: 1rem; margin-bottom: 0.5rem; line-height: 1.4; }
+
+.product-rating { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; font-size: 0.85rem; }
+.stars          { color: #ffc107; }
+
+.product-price   { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.75rem; }
+.price-current   { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+.price-old       { font-size: 1rem; color: var(--gray); text-decoration: line-through; }
+
+.product-stock   { font-size: 0.85rem; color: var(--gray); margin-bottom: 1rem; }
+.stock-available { color: var(--success); font-weight: 600; }
+.stock-low       { color: var(--warning); font-weight: 600; }
+.stock-out       { color: var(--danger); font-weight: 600; }
+
+/* ── ACCIONES ─────────────────────────────────────────────── */
+.product-actions             { display: flex; gap: 0.5rem; }
+.product-actions .btn-primary  { flex: 1; padding: 0.75rem; }
+.product-actions .btn-secondary { padding: 0.75rem 1rem; }
+
+.btn-primary {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-primary:hover   { background: var(--primary-dark); }
+
+.btn-secondary {
+    background: var(--light-gray);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-secondary:hover { background: var(--border); }
+</style>

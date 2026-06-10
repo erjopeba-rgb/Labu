@@ -1,0 +1,200 @@
+﻿<!--
+  Notification Item Component — Labu
+  Ítem individual de notificación en la lista de notificaciones.
+  Admite 6 tipos de ícono y estado leído/no leído.
+
+  Tipos de ícono (clase en .notification-icon):
+    icon-oferta   → 💰  nueva oferta
+    icon-mensaje  → 💬  nuevo mensaje
+    icon-pago     → 💵  movimiento de pago
+    icon-resena   → ⭐  nueva reseña
+    icon-trabajo  → 📋  actualización de trabajo
+    icon-sistema  → 🔔  notificación del sistema
+
+  Estado no leído:
+    Añadir clase 'unread' a .notification-item
+    Incluir <span class="unread-indicator"></span> en .notification-header
+
+  Uso en JS (notificaciones.js → renderNotificaciones):
+    id="notif-${n.id}"
+    onclick="marcarLeida(n.id)"
+
+  Separador de fecha:
+    <div class="date-divider">Hoy</div>
+
+  Requiere en la página: /css/variables.css, /css/global.css
+-->
+
+<!-- ── Separador de fecha ── -->
+<div class="date-divider">Hoy</div>
+
+<!-- ── Notificación no leída (oferta) ── -->
+<div class="notification-item unread" id="notif-1">
+    <div class="notification-icon icon-oferta">&#128176;</div>
+    <div class="notification-content">
+        <div class="notification-header">
+            <div>
+                <div class="notification-title">Nueva oferta recibida</div>
+                <div class="notification-time">hace 15 minutos</div>
+            </div>
+            <span class="unread-indicator"></span>
+        </div>
+        <div class="notification-message">
+            Carlos López ofertó $95.000 para "Instalación eléctrica en oficina".
+        </div>
+        <div class="notification-actions">
+            <button class="btn-action btn-action-primary">&#128176; Ver oferta</button>
+            <button class="btn-action btn-action-secondary">&#128203; Ver trabajo</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Notificación leída (mensaje) ── -->
+<div class="notification-item" id="notif-2">
+    <div class="notification-icon icon-mensaje">&#128172;</div>
+    <div class="notification-content">
+        <div class="notification-header">
+            <div>
+                <div class="notification-title">Nuevo mensaje</div>
+                <div class="notification-time">hace 1 hora</div>
+            </div>
+        </div>
+        <div class="notification-message">
+            Ana Gómez te envió un mensaje sobre el presupuesto.
+        </div>
+    </div>
+</div>
+
+<!-- ── Separador ── -->
+<div class="date-divider">Ayer</div>
+
+<!-- ── Notificación leída (reseña) ── -->
+<div class="notification-item" id="notif-3">
+    <div class="notification-icon icon-resena">&#11088;</div>
+    <div class="notification-content">
+        <div class="notification-header">
+            <div>
+                <div class="notification-title">Nueva reseña</div>
+                <div class="notification-time">hace 1 día</div>
+            </div>
+        </div>
+        <div class="notification-message">
+            Recibiste una reseña de 5 estrellas de Martín Rodríguez. ¡Felicitaciones!
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── LISTA ────────────────────────────────────────────────── */
+.notifications-list { display: flex; flex-direction: column; }
+
+/* ── ITEM ─────────────────────────────────────────────────── */
+.notification-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+.notification-item:last-child { border-bottom: none; }
+.notification-item:hover      { background: var(--light-gray); }
+
+/* Estado no leído */
+.notification-item.unread { background: #e3f2fd; }
+.notification-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: var(--primary);
+    border-radius: 0 2px 2px 0;
+}
+
+/* ── ICONO ────────────────────────────────────────────────── */
+.notification-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.icon-oferta  { background: #e3f2fd; }
+.icon-mensaje { background: var(--warning-light); }
+.icon-resena  { background: #fff3e0; }
+.icon-pago    { background: var(--success-light); }
+.icon-trabajo { background: #e8f5e9; }
+.icon-sistema { background: var(--light-gray); }
+
+/* ── CONTENIDO ───────────────────────────────────────────── */
+.notification-content { flex: 1; min-width: 0; }
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.4rem;
+}
+
+.notification-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+.notification-time  { font-size: 0.82rem; color: var(--gray); white-space: nowrap; }
+
+.notification-message {
+    color: var(--dark);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+/* ── INDICADOR NO LEÍDO ──────────────────────────────────── */
+.unread-indicator {
+    width: 10px;
+    height: 10px;
+    background: var(--primary);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+}
+
+/* ── BOTONES DE ACCIÓN ───────────────────────────────────── */
+.notification-actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+
+.btn-action {
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-action-primary         { background: var(--primary); color: var(--white); }
+.btn-action-primary:hover   { background: var(--primary-dark); }
+.btn-action-secondary       { background: var(--light-gray); color: var(--dark); }
+.btn-action-secondary:hover { background: var(--border); }
+
+/* ── SEPARADOR DE FECHA ──────────────────────────────────── */
+.date-divider {
+    padding: 0.65rem 1.25rem;
+    background: var(--light-gray);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--gray);
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .notification-item   { flex-direction: column; }
+    .notification-header { flex-direction: column; gap: 0.25rem; }
+    .notification-time   { white-space: normal; }
+}
+</style>

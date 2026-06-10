@@ -1,0 +1,364 @@
+﻿<!--
+  Video Card Component — Labu
+  Dos variantes según contexto:
+
+  1. CATÁLOGO (videos-educativos) — VideoCard.renderCatalog(video, onClick)
+     Usada en: videos-educativos
+     Campos: id, titulo, duracion, categoria, autor_nombre, autor_verificado,
+             vistas, puntaje_promedio, total_resenas, precio,
+             comprado (bool), badge ('popular'|'nuevo'|'premium'|null)
+
+  2. MIS VIDEOS (mis-videos) — VideoCard.renderMis(video, gradients)
+     Usada en: mis-videos
+     Campos: id, titulo, duracion, estado ('publicado'|'en_revision'|borrador),
+             vistas, puntaje_promedio, precio
+
+  Requiere en la página: /css/variables.css, /css/global.css
+-->
+
+<!-- Demo estático — variante catálogo -->
+<div class="video-card">
+    <div class="video-thumbnail">
+        &#128249;
+        <div class="video-duration">12:34</div>
+        <div class="video-badge badge-popular">&#128293; Popular</div>
+        <div class="video-locked">
+            <div class="lock-icon">&#128274;</div>
+            <div class="unlock-price">$850</div>
+        </div>
+    </div>
+    <div class="video-info">
+        <span class="video-category">Electricidad</span>
+        <h3 class="video-title">Instalación de tablero eléctrico paso a paso</h3>
+        <div class="video-author">
+            <div class="author-avatar">CR</div>
+            <div>
+                <div class="author-name">Carlos Rodríguez <span class="author-verified">&#10003;</span></div>
+            </div>
+        </div>
+        <div class="video-stats">
+            <div class="video-views">&#128065;&#65039; 5.8k vistas</div>
+            <div class="video-rating">
+                <span class="star">&#9733;</span> 4.9 (324)
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* ── VIDEO CARD — base compartida ───────────────────────── */
+.video-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+    cursor: pointer;
+    position: relative;
+}
+.video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.video-thumbnail {
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--white);
+    position: relative;
+    overflow: hidden;
+}
+
+.video-duration {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    background: rgba(0,0,0,0.8);
+    color: var(--white);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.video-info     { padding: 1.25rem; }
+.video-title {
+    font-weight: bold;
+    font-size: 1.05rem;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    min-height: 2.5rem;
+}
+.video-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+.video-views, .video-rating { display: flex; align-items: center; gap: 0.25rem; }
+.star { color: #ffd700; }
+
+/* ── VARIANTE CATÁLOGO ──────────────────────────────────── */
+.video-category {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: var(--light-gray);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+}
+
+.video-author      { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-weight: bold;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.author-name     { font-weight: 600; font-size: 0.9rem; }
+.author-verified { color: var(--primary); }
+
+/* Overlay de video bloqueado */
+.video-locked {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.lock-icon    { font-size: 3rem; color: var(--white); }
+.unlock-price {
+    background: #ffd700;
+    color: var(--dark);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Badge de estado del thumbnail */
+.video-badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 1;
+}
+.badge-new     { background: #ff4757; color: var(--white); }
+.badge-popular { background: #ffd700; color: var(--dark); }
+.badge-premium { background: linear-gradient(135deg, #667eea, #764ba2); color: var(--white); }
+
+.owned-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--secondary);
+    color: var(--white);
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 1;
+}
+
+/* ── VARIANTE MIS VIDEOS ────────────────────────────────── */
+.video-status {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 1;
+}
+.status-published { background: #d4edda; color: #155724; }
+.status-draft     { background: #fff3cd; color: #856404; }
+.status-review    { background: #cce5ff; color: #004085; }
+
+.video-price {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--primary);
+    margin-bottom: 0.75rem;
+}
+.video-earnings {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--light-gray);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+.video-actions { display: flex; gap: 0.5rem; }
+.btn-action {
+    flex: 1;
+    padding: 0.6rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-action-primary   { background: var(--primary); color: var(--white); }
+.btn-action-secondary { background: var(--light-gray); color: var(--dark); }
+</style>
+
+<script>
+/**
+ * VideoCard — fábrica de tarjetas de video.
+ *
+ * Variante catálogo (videos-educativos):
+ *   grid.innerHTML = videos.map(v => VideoCard.renderCatalog(v, onClick)).join('');
+ *   onClick: función que recibe (id, comprado)
+ *
+ * Variante mis-videos:
+ *   grid.innerHTML = videos.map((v, i) => VideoCard.renderMis(v, i)).join('');
+ */
+const VideoCard = {
+
+    _GRADIENTS: [
+        'linear-gradient(135deg, #667eea, #764ba2)',
+        'linear-gradient(135deg, #f093fb, #f5576c)',
+        'linear-gradient(135deg, #4facfe, #00f2fe)',
+        'linear-gradient(135deg, #fa709a, #fee140)',
+        'linear-gradient(135deg, #30cfd0, #330867)',
+    ],
+
+    renderCatalog(v, onClick) {
+        const iniciales  = (v.autor_nombre || '??').substring(0, 2).toUpperCase();
+        const verificado = v.autor_verificado ? ' <span class="author-verified">&#10003;</span>' : '';
+        const clickAttr  = onClick
+            ? 'onclick="' + onClick + '(' + v.id + ',' + !!v.comprado + ')"'
+            : '';
+
+        let overlay = '';
+        if (v.comprado) {
+            overlay = '<div class="owned-badge">&#10003; Ya comprado</div>';
+        } else if (v.precio) {
+            overlay = '<div class="video-locked">' +
+                '<div class="lock-icon">&#128274;</div>' +
+                '<div class="unlock-price">$' + Number(v.precio).toLocaleString('es-AR') + '</div>' +
+                '</div>';
+        } else {
+            overlay = '<div class="owned-badge">&#10003; Gratis</div>';
+        }
+
+        let badge = '';
+        if (v.badge === 'nuevo')   badge = '<div class="video-badge badge-new">&#128338; Nuevo</div>';
+        if (v.badge === 'popular') badge = '<div class="video-badge badge-popular">&#128293; Popular</div>';
+        if (v.badge === 'premium') badge = '<div class="video-badge badge-premium">&#128081; Premium</div>';
+
+        const vistas  = v.vistas ? (v.vistas >= 1000 ? (v.vistas / 1000).toFixed(1) + 'k' : v.vistas) : '0';
+        const rating  = v.puntaje_promedio ? v.puntaje_promedio : '-';
+        const resenas = v.total_resenas ? ' (' + v.total_resenas + ')' : '';
+
+        return (
+            '<div class="video-card" ' + clickAttr + '>' +
+                '<div class="video-thumbnail">' +
+                    '&#128249;' +
+                    '<div class="video-duration">' + (v.duracion || '--:--') + '</div>' +
+                    badge +
+                    overlay +
+                '</div>' +
+                '<div class="video-info">' +
+                    '<span class="video-category">' + (v.categoria || '') + '</span>' +
+                    '<h3 class="video-title">' + v.titulo + '</h3>' +
+                    '<div class="video-author">' +
+                        '<div class="author-avatar">' + iniciales + '</div>' +
+                        '<div><div class="author-name">' + (v.autor_nombre || '') + verificado + '</div></div>' +
+                    '</div>' +
+                    '<div class="video-stats">' +
+                        '<div class="video-views">&#128065;&#65039; ' + vistas + ' vistas</div>' +
+                        '<div class="video-rating"><span class="star">&#9733;</span> ' + rating + resenas + '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    },
+
+    _statusBadge(estado) {
+        if (estado === 'publicado')   return '<span class="video-status status-published">&#9989; Publicado</span>';
+        if (estado === 'en_revision') return '<span class="video-status status-review">&#128260; En Revisi&#243;n</span>';
+        return                               '<span class="video-status status-draft">&#128221; Borrador</span>';
+    },
+
+    renderMis(v, index) {
+        const gradient  = this._GRADIENTS[index % this._GRADIENTS.length];
+        const vistas    = (v.vistas || 0).toLocaleString('es-AR');
+        const precio    = '$' + Number(v.precio || 0).toLocaleString('es-AR');
+        const ventas    = v.total_ventas || 0;
+        const ganado    = v.ganancia_total ? '$' + Number(v.ganancia_total).toLocaleString('es-AR') : null;
+        const isDraft   = v.estado !== 'publicado' && v.estado !== 'en_revision';
+
+        const earningsHtml = (!isDraft && ganado)
+            ? '<div class="video-earnings">' +
+                '<span>&#128200; ' + ventas + ' ventas</span>' +
+                '<span style="font-weight:bold;color:var(--secondary);">' + ganado + ' ganados</span>' +
+              '</div>'
+            : '';
+
+        const actionsHtml = isDraft
+            ? '<div class="video-actions">' +
+                '<button class="btn-action btn-action-primary" onclick="editarVideo(' + v.id + ')">&#9999;&#65039; Continuar Editando</button>' +
+                '<button class="btn-action btn-action-secondary" onclick="eliminarVideo(' + v.id + ')">&#128465;&#65039; Eliminar</button>' +
+              '</div>'
+            : '<div class="video-actions">' +
+                '<button class="btn-action btn-action-primary" onclick="verVideo(' + v.id + ')">&#128065;&#65039; Ver</button>' +
+                '<button class="btn-action btn-action-secondary" onclick="editarVideo(' + v.id + ')">&#9999;&#65039; Editar</button>' +
+                '<button class="btn-action btn-action-secondary" onclick="statsVideo(' + v.id + ')">&#128202; Stats</button>' +
+              '</div>';
+
+        return (
+            '<div class="video-card"' + (isDraft ? ' style="opacity:0.7"' : '') + '>' +
+                '<div class="video-thumbnail" style="background:' + gradient + '">' +
+                    this._statusBadge(v.estado) +
+                    '<span class="video-duration">' + (v.duracion || '--:--') + '</span>' +
+                    '&#127909;' +
+                '</div>' +
+                '<div class="video-info">' +
+                    '<div class="video-title">' + v.titulo + '</div>' +
+                    '<div class="video-stats">' +
+                        '<div class="video-stat">&#128065;&#65039; ' + vistas + ' vistas</div>' +
+                        (v.puntaje_promedio ? '<div class="video-stat">&#11088; ' + v.puntaje_promedio + '</div>' : '') +
+                    '</div>' +
+                    '<div class="video-price">' + precio + '</div>' +
+                    earningsHtml +
+                    actionsHtml +
+                '</div>' +
+            '</div>'
+        );
+    }
+};
+
+window.VideoCard = VideoCard;
+</script>

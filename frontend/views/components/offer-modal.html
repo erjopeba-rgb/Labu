@@ -1,0 +1,441 @@
+﻿<!--
+  Offer Modal Component — Labu
+  Modal para enviar una oferta económica en respuesta a un trabajo del feed.
+  Se muestra al hacer clic en "Ofertar" en cualquier post-card.
+
+  API: POST /api/offers
+    { trabajo_id, monto_propuesto, tiempo_estimado, unidad_tiempo, mensaje }
+
+  Control desde JS (feed.js):
+    Abrir  → document.getElementById('modalOfertar').style.display = 'flex'
+    Cerrar → Feed.closeOfferModal() | clic en overlay
+
+  Requiere en la página: /css/variables.css, /css/global.css,
+                         /js/auth.js, /js/main.js, /js/modules/feed.js
+-->
+
+<div class="modal" id="modalOfertar">
+    <div class="offer-modal">
+
+        <!-- Header con degradado -->
+        <div class="offer-modal-hero">
+            <button class="offer-close-btn" onclick="Feed.closeOfferModal()" title="Cerrar">&#10005;</button>
+            <div class="offer-hero-icon">&#128176;</div>
+            <h2 class="offer-hero-title">Hacer una Oferta</h2>
+            <p class="offer-hero-sub">Postulate al trabajo con tu propuesta</p>
+        </div>
+
+        <!-- Info trabajo (se rellena desde JS) -->
+        <div class="offer-job-preview" id="offerJobPreview" style="display:none;">
+            <div class="offer-job-label">Para el trabajo:</div>
+            <div class="offer-job-name" id="offerJobName"></div>
+        </div>
+
+        <div class="form-error offer-error" id="offerError"></div>
+
+        <!-- Campo oculto con el ID del trabajo -->
+        <input type="hidden" id="offer-job-id">
+
+        <div class="offer-body">
+
+            <!-- Monto -->
+            <div class="offer-field">
+                <label class="offer-label" for="offer-monto">
+                    <span class="offer-label-icon">&#128176;</span> Tu oferta
+                    <span class="offer-label-required">*</span>
+                </label>
+                <div class="offer-money-input">
+                    <span class="offer-currency">ARS $</span>
+                    <input type="number" id="offer-monto" placeholder="0" min="0" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Tiempo -->
+            <div class="offer-field">
+                <label class="offer-label">
+                    <span class="offer-label-icon">&#9201;</span> Tiempo estimado
+                </label>
+                <div class="offer-time-row">
+                    <input type="number" id="offer-tiempo" placeholder="Ej: 3" min="1">
+                    <select id="offer-unidad">
+                        <option value="minutos">Minutos</option>
+                        <option value="horas">Horas</option>
+                        <option value="dias" selected>Días</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Disponibilidad rápida -->
+            <div class="offer-field">
+                <label class="offer-label">
+                    <span class="offer-label-icon">&#128197;</span> Disponibilidad
+                </label>
+                <div class="offer-chips" id="offerDisponibilidadChips">
+                    <button type="button" class="offer-chip" onclick="selectDisponibilidad(this, 'Hoy mismo')">Hoy mismo</button>
+                    <button type="button" class="offer-chip" onclick="selectDisponibilidad(this, 'Esta semana')">Esta semana</button>
+                    <button type="button" class="offer-chip" onclick="selectDisponibilidad(this, 'A coordinar')">A coordinar</button>
+                </div>
+            </div>
+
+            <!-- Mensaje -->
+            <div class="offer-field">
+                <label class="offer-label" for="offer-mensaje">
+                    <span class="offer-label-icon">&#128172;</span> Mensaje
+                    <span class="offer-label-optional">(opcional)</span>
+                </label>
+                <textarea id="offer-mensaje" placeholder="Contá tu experiencia con este tipo de trabajo y por qué sos la mejor opción..."></textarea>
+                <div class="offer-char-count"><span id="offerCharCount">0</span> / 300</div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="offer-footer">
+            <button class="offer-btn-cancel" onclick="Feed.closeOfferModal()">Cancelar</button>
+            <button class="offer-btn-send" id="btnEnviarOferta">
+                <span class="offer-btn-icon">&#128640;</span> Enviar Oferta
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* ── OVERLAY ─────────────────────────────────────────────── */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    z-index: var(--z-modal);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.modal.active { display: flex; }
+
+/* ── MODAL CARD ──────────────────────────────────────────── */
+.offer-modal {
+    background: var(--white);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+    animation: offerIn 0.22s cubic-bezier(.34,1.3,.64,1);
+    position: relative;
+}
+
+@keyframes offerIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── HERO HEADER ─────────────────────────────────────────── */
+.offer-modal-hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    padding: 2rem 1.5rem 1.5rem;
+    text-align: center;
+    position: relative;
+    border-radius: 20px 20px 0 0;
+}
+
+.offer-close-btn {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.85rem;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: rgba(255,255,255,0.25);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+}
+.offer-close-btn:hover { background: rgba(255,255,255,0.4); }
+
+.offer-hero-icon {
+    font-size: 2.4rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.offer-hero-title {
+    color: var(--white);
+    font-size: 1.4rem;
+    margin-bottom: 0.25rem;
+}
+
+.offer-hero-sub {
+    color: rgba(255,255,255,0.82);
+    font-size: 0.9rem;
+}
+
+/* ── JOB PREVIEW ─────────────────────────────────────────── */
+.offer-job-preview {
+    padding: 0.9rem 1.5rem;
+    background: #f8faff;
+    border-bottom: 1px solid var(--border);
+}
+.offer-job-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.2rem;
+}
+.offer-job-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+/* ── ERROR ───────────────────────────────────────────────── */
+.offer-error {
+    margin: 0.75rem 1.5rem 0;
+    padding: 0.6rem 0.9rem;
+    background: #fff0f0;
+    color: var(--danger);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    border-left: 3px solid var(--danger);
+    display: none;
+}
+.offer-error.visible { display: block; }
+
+/* ── BODY ────────────────────────────────────────────────── */
+.offer-body { padding: 1.25rem 1.5rem 0.75rem; }
+
+.offer-field { margin-bottom: 1.25rem; }
+
+.offer-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.55rem;
+}
+
+.offer-label-icon { font-size: 0.9rem; }
+
+.offer-label-required {
+    color: var(--danger);
+    margin-left: auto;
+    font-weight: 700;
+}
+
+.offer-label-optional {
+    color: var(--gray);
+    font-weight: 400;
+    margin-left: 2px;
+    font-size: 0.78rem;
+}
+
+/* Monto */
+.offer-money-input {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color var(--transition);
+    background: var(--white);
+}
+.offer-money-input:focus-within { border-color: var(--primary); }
+
+.offer-currency {
+    padding: 0 0.85rem;
+    font-weight: 700;
+    color: var(--gray);
+    font-size: 0.9rem;
+    background: var(--light-gray);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    border-right: 2px solid var(--border);
+    white-space: nowrap;
+}
+
+.offer-money-input input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 0.75rem 0.9rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    font-family: var(--font-family);
+    color: var(--dark);
+    background: transparent;
+}
+
+/* Tiempo */
+.offer-time-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.offer-time-row input,
+.offer-time-row select {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-family: var(--font-family);
+    background: var(--white);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+.offer-time-row input:focus,
+.offer-time-row select:focus { outline: none; border-color: var(--primary); }
+
+/* Chips de disponibilidad */
+.offer-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.offer-chip {
+    padding: 0.45rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--white);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+    color: var(--dark);
+}
+.offer-chip:hover { border-color: var(--primary); color: var(--primary); }
+.offer-chip.active { background: var(--primary); border-color: var(--primary); color: var(--white); }
+
+/* Textarea */
+.offer-field textarea {
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    font-family: var(--font-family);
+    resize: none;
+    min-height: 100px;
+    max-height: 160px;
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+    line-height: 1.5;
+}
+.offer-field textarea:focus { outline: none; border-color: var(--primary); }
+
+.offer-char-count {
+    text-align: right;
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 0.3rem;
+}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+.offer-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.offer-btn-cancel {
+    flex: 1;
+    padding: 0.8rem;
+    border: 2px solid var(--border);
+    background: var(--white);
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    color: var(--dark);
+}
+.offer-btn-cancel:hover { border-color: var(--gray); background: var(--light-gray); }
+
+.offer-btn-send {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem;
+    border: none;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-family: var(--font-family);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    color: var(--white);
+    box-shadow: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+.offer-btn-send:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0, 102, 255, 0.4); }
+.offer-btn-send:active { transform: translateY(0); }
+.offer-btn-send:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.offer-btn-icon { font-size: 1rem; }
+
+@media (max-width: 480px) {
+    .offer-footer   { flex-direction: column; }
+    .offer-time-row { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+(function () {
+    var _disponibilidad = null;
+
+    /* Cerrar al clic en overlay */
+    var overlay = document.getElementById('modalOfertar');
+    if (overlay) {
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) {
+                if (typeof Feed !== 'undefined') Feed.closeOfferModal();
+                else overlay.style.display = 'none';
+            }
+        });
+    }
+
+    /* Contador de caracteres */
+    var textarea = document.getElementById('offer-mensaje');
+    var counter  = document.getElementById('offerCharCount');
+    if (textarea && counter) {
+        textarea.addEventListener('input', function () {
+            var n = this.value.length;
+            if (n > 300) this.value = this.value.slice(0, 300);
+            counter.textContent = Math.min(n, 300);
+        });
+    }
+
+    /* Botón enviar */
+    var btn = document.getElementById('btnEnviarOferta');
+    if (btn) {
+        btn.addEventListener('click', function () {
+            if (typeof Feed !== 'undefined') Feed.enviarOferta();
+        });
+    }
+
+    /* Exponer selección de chip */
+    window.selectDisponibilidad = function(el, valor) {
+        document.querySelectorAll('.offer-chip').forEach(function(c) { c.classList.remove('active'); });
+        el.classList.add('active');
+        _disponibilidad = valor;
+    };
+
+    window.getOfferDisponibilidad = function() { return _disponibilidad; };
+})();
+</script>

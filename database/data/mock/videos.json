@@ -1,0 +1,28 @@
+[
+  {
+    "id": "v1",
+    "titulo": "Cómo hacer reboque profesional sin desperdicio",
+    "autor": "Juan Martínez",
+    "autorId": "u1",
+    "duracion": "12:34",
+    "categoria": "construccion",
+    "precio": 0.75,
+    "vistas": 2400,
+    "calificacion": 4.8,
+    "totalCalificaciones": 156,
+    "descripcion": "Técnicas profesionales paso a paso"
+  },
+  {
+    "id": "v2",
+    "titulo": "Instalación segura de toma trifásica",
+    "autor": "Carlos Rodríguez",
+    "autorId": "u2",
+    "duracion": "8:45",
+    "categoria": "electricidad",
+    "precio": 0.75,
+    "vistas": 5800,
+    "calificacion": 4.9,
+    "totalCalificaciones": 324,
+    "descripcion": "Instalación paso a paso con medidas de seguridad"
+  }
+]

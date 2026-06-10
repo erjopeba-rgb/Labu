@@ -1,0 +1,14 @@
+{
+  "taladro": {
+    "nombre": "Taladro",
+    "categoria": "herramientas_electricas"
+  },
+  "nivel": {
+    "nombre": "Nivel",
+    "categoria": "herramientas_manuales"
+  },
+  "soldadora": {
+    "nombre": "Soldadora",
+    "categoria": "herramientas_especializadas"
+  }
+}

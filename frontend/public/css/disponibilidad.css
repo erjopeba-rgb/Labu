@@ -1,0 +1,1142 @@
+/* disponibilidad.css — Estilos para disponibilidad semanal y reservas tentativas */
+
+/* ─── DISPONIBILIDAD CONFIG (agenda.html) ─── */
+
+.disp-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.disp-day-row {
+    display: grid;
+    grid-template-columns: 28px 90px 1fr 1fr;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.disp-day-row:last-child { border-bottom: none; }
+
+.disp-day-row label.day-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--dark);
+    cursor: pointer;
+    user-select: none;
+}
+
+.disp-day-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.disp-time-input {
+    padding: 0.45rem 0.6rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    font-family: var(--font-family);
+    width: 100%;
+    transition: border-color var(--transition);
+}
+.disp-time-input:focus { outline: none; border-color: var(--primary); }
+.disp-time-input:disabled { background: var(--light-gray); opacity: 0.5; }
+
+.disp-save-btn {
+    margin-top: 1.25rem;
+    width: 100%;
+    padding: 0.85rem;
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.disp-save-btn:hover { background: var(--primary-dark); }
+.disp-save-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.disp-prep-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: var(--radius);
+}
+.disp-prep-label {
+    flex: 1;
+    font-size: 0.875rem;
+    color: var(--text, #333);
+}
+.disp-prep-input {
+    width: 70px;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--border, #ddd);
+    border-radius: var(--radius);
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* ─── CALENDAR SLOT PICKER (offer modal — step 2) ─── */
+
+/* Legacy chip styles kept for agenda.html */
+.agenda-cal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+.agenda-cal-day {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.agenda-cal-day-header {
+    padding: 0.45rem 0.85rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    background: var(--light-gray, #f3f4f6);
+    color: var(--dark);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+.agenda-cal-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+}
+.agenda-slot-chip {
+    padding: 0.4rem 0.85rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full, 999px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    user-select: none;
+    background: var(--white);
+    color: var(--dark);
+}
+.agenda-slot-chip:hover { border-color: var(--primary); color: var(--primary); }
+.agenda-slot-chip.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+/* ─── TIME SELECTORS (offer modal step 2) ─── */
+
+.offer-tiempo-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.offer-tiempo-field {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.offer-tiempo-field input[type="number"] {
+    width: 72px;
+    padding: 0.5rem 0.6rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.offer-tiempo-field input[type="number"]:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+.offer-tiempo-field select {
+    padding: 0.5rem 0.6rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    background: var(--bg);
+    cursor: pointer;
+}
+
+.offer-tiempo-unit {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.offer-hint-jornadas {
+    margin-top: 0.4rem;
+    font-size: 0.82rem;
+    color: var(--primary);
+    font-weight: 500;
+    min-height: 1.2em;
+}
+
+.offer-time-selectors {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    flex-wrap: wrap;
+}
+
+.offer-time-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.offer-time-group label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.offer-time-fields {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.offer-time-fields select {
+    padding: 0.5rem 0.6rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text, #111);
+    background: var(--bg, #fff);
+    cursor: pointer;
+    min-width: 60px;
+}
+
+.offer-time-fields select:focus {
+    outline: none;
+    border-color: var(--primary, #3b82f6);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
+}
+
+.offer-time-colon {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text, #111);
+    line-height: 1;
+}
+
+.offer-time-arrow {
+    font-size: 1.2rem;
+    color: var(--text-secondary, #9ca3af);
+    padding-bottom: 0.3rem;
+}
+
+.offer-end-time-info {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    color: var(--primary, #6366f1);
+    font-weight: 500;
+    min-height: 1.2em;
+}
+
+/* ─── DAY CALENDAR PICKER (offer modal step 2 — legacy) ─── */
+
+.offer-cal-wrapper {
+    margin-bottom: 1rem;
+}
+
+.offer-cal-month {
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-secondary, #6b7280);
+    text-transform: capitalize;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.03em;
+}
+
+.offer-cal-header,
+.offer-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.offer-cal-header { margin-bottom: 4px; }
+
+.offer-cal-hcell {
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--gray, #9ca3af);
+    text-transform: uppercase;
+    padding: 0.25rem 0;
+}
+
+.offer-cal-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius, 8px);
+    font-size: 0.82rem;
+    font-weight: 600;
+    position: relative;
+    transition: transform 0.12s, box-shadow 0.12s;
+    user-select: none;
+}
+
+.offer-cal-cell.past {
+    color: var(--gray, #9ca3af);
+    opacity: 0.35;
+    cursor: default;
+}
+
+.offer-cal-cell.available {
+    background: #dcfce7;
+    color: #166534;
+    border: 2px solid #86efac;
+    cursor: pointer;
+}
+.offer-cal-cell.available:hover {
+    background: #bbf7d0;
+    border-color: #4ade80;
+    transform: scale(1.06);
+}
+
+.offer-cal-cell.unavailable {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 2px solid #fca5a5;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.offer-cal-cell.selected {
+    background: var(--primary, #3b82f6) !important;
+    border-color: var(--primary, #3b82f6) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    transform: scale(1.08);
+}
+.offer-cal-cell.selected::after {
+    content: '\2713';
+    position: absolute;
+    top: 1px;
+    right: 3px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.offer-cal-legend {
+    display: flex;
+    gap: 0.9rem;
+    margin-top: 0.65rem;
+    font-size: 0.76rem;
+    color: var(--text-secondary, #6b7280);
+    flex-wrap: wrap;
+}
+.offer-cal-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.offer-cal-leg-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+.offer-cal-leg-dot.avail   { background: #dcfce7; border: 1.5px solid #86efac; }
+.offer-cal-leg-dot.unavail { background: #fee2e2; border: 1.5px solid #fca5a5; }
+.offer-cal-leg-dot.sel     { background: var(--primary, #3b82f6); }
+
+/* ─── SLOT CHIPS (offer modal — step 2, legacy) ─── */
+
+.offer-step { }
+.offer-step-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.offer-step-hint {
+    font-size: 0.85rem;
+    color: var(--gray);
+    margin-bottom: 1.25rem;
+}
+
+.slot-chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+    min-height: 60px;
+}
+
+.slot-chip {
+    padding: 0.55rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full, 999px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    user-select: none;
+    background: var(--white);
+    color: var(--dark);
+}
+.slot-chip:hover { border-color: var(--primary); color: var(--primary); }
+.slot-chip.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.no-disp-msg {
+    font-size: 0.9rem;
+    color: var(--gray);
+    text-align: center;
+    padding: 1rem 0;
+}
+.no-disp-msg a { color: var(--primary); }
+
+.offer-step-back {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: var(--font-family);
+    padding: 0;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.offer-step-back:hover { text-decoration: underline; }
+
+/* ─── TIME PICKER (step 2 — trabajador elige hora dentro del día) ─── */
+
+.offer-cal-cell.pending {
+    background: #fef9c3 !important;
+    border-color: #facc15 !important;
+    color: #713f12 !important;
+    box-shadow: 0 2px 8px rgba(250, 204, 21, 0.4);
+    transform: scale(1.08);
+}
+
+.offer-tp {
+    margin-top: 0.9rem;
+    padding: 1rem 1.1rem;
+    background: var(--bg-secondary, #f9fafb);
+    border: 2px solid var(--primary, #3b82f6);
+    border-radius: var(--radius, 8px);
+    animation: offer-tp-in 0.15s ease;
+}
+@keyframes offer-tp-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.offer-tp-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--primary, #3b82f6);
+    margin-bottom: 0.75rem;
+}
+
+.offer-tp-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.offer-tp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    min-width: 100px;
+}
+.offer-tp-field label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.offer-tp-field select {
+    padding: 0.45rem 0.65rem;
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text, #111);
+    background: var(--white, #fff);
+    cursor: pointer;
+}
+.offer-tp-field select:focus {
+    outline: none;
+    border-color: var(--primary, #3b82f6);
+}
+
+.offer-tp-sep {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--gray, #9ca3af);
+    padding-bottom: 0.45rem;
+    flex-shrink: 0;
+}
+
+.offer-tp-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+}
+
+.offer-tp-confirm {
+    padding: 0.5rem 1.2rem !important;
+    font-size: 0.88rem !important;
+}
+
+.offer-tp-cancel {
+    background: none;
+    border: none;
+    color: var(--gray, #9ca3af);
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: var(--font-family);
+    padding: 0;
+}
+.offer-tp-cancel:hover { color: var(--danger, #ef4444); text-decoration: underline; }
+
+/* ─── OFFER RESUMEN CARD (step 2 — pre-send summary) ─── */
+
+.offer-resumen-card {
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    overflow: hidden;
+    background: var(--white, #fff);
+    font-size: 0.88rem;
+}
+
+.offer-resumen-title {
+    padding: 0.55rem 1rem;
+    background: var(--bg-secondary, #f9fafb);
+    border-bottom: 1px solid var(--border, #e5e7eb);
+    font-weight: 700;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.offer-resumen-rows {
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.offer-resumen-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+}
+
+.offer-resumen-icon {
+    flex-shrink: 0;
+    width: 1.1rem;
+    text-align: center;
+    line-height: 1.5;
+    font-size: 0.85rem;
+}
+
+.offer-resumen-label {
+    flex-shrink: 0;
+    min-width: 76px;
+    color: var(--text-secondary, #6b7280);
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.offer-resumen-val {
+    flex: 1;
+    color: var(--text, #111);
+    font-weight: 600;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.offer-resumen-monto {
+    font-size: 1rem;
+    color: var(--secondary, #10b981);
+}
+
+.offer-resumen-msg {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--text-secondary, #6b7280);
+}
+
+.offer-resumen-horarios-section {
+    padding: 0.65rem 1rem 0.75rem;
+}
+
+.offer-resumen-horarios-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary, #6b7280);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.offer-resumen-days {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.offer-resumen-days li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.75rem;
+    background: #eff6ff;
+    border-left: 3px solid var(--primary, #3b82f6);
+    border-radius: 0 var(--radius, 8px) var(--radius, 8px) 0;
+}
+
+.offer-resumen-day-name {
+    font-size: 0.85rem;
+    color: #1e3a5f;
+    font-weight: 500;
+}
+
+.offer-resumen-day-time {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--primary, #3b82f6);
+    white-space: nowrap;
+    margin-left: 0.5rem;
+}
+
+.offer-resumen-nodate {
+    font-size: 0.84rem;
+    color: var(--gray, #9ca3af);
+    font-style: italic;
+}
+
+/* ─── MODAL HORARIOS (mis-ofertas-laborales.html — owner picks slot) ─── */
+
+.horario-opciones {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin: 1.25rem 0;
+}
+
+.horario-opcion {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    user-select: none;
+}
+.horario-opcion:hover { border-color: var(--primary); background: #f0f6ff; }
+.horario-opcion.selected {
+    border-color: var(--primary);
+    background: #e8f0fe;
+}
+.horario-opcion .horario-radio {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    transition: all var(--transition);
+    background: var(--white);
+}
+.horario-opcion.selected .horario-radio {
+    background: var(--primary);
+    border-color: var(--primary);
+    box-shadow: inset 0 0 0 3px var(--white);
+}
+.horario-opcion-info { flex: 1; }
+.horario-opcion-dia  { font-weight: 700; font-size: 0.95rem; }
+.horario-opcion-hora { font-size: 0.85rem; color: var(--gray); margin-top: 0.15rem; }
+
+.modal-horarios-empty {
+    text-align: center;
+    color: var(--gray);
+    padding: 1.5rem 0;
+    font-size: 0.9rem;
+}
+
+/* ─── OWNER MODAL: OFFER INFO HEADER ─── */
+
+.horarios-oferta-header {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary, #f9fafb);
+    border: 1.5px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    margin-bottom: 1rem;
+}
+
+.horarios-oferta-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.horarios-oferta-worker {
+    font-weight: 700;
+    font-size: 0.93rem;
+    color: var(--dark);
+}
+
+.horarios-oferta-rating {
+    font-size: 0.82rem;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+.horarios-oferta-monto {
+    font-weight: 800;
+    font-size: 1.05rem;
+    color: var(--secondary, #10b981);
+    white-space: nowrap;
+}
+
+.horarios-oferta-tiempo {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--gray, #6b7280);
+}
+
+.horarios-oferta-msg {
+    font-size: 0.84rem;
+    color: var(--gray, #6b7280);
+    font-style: italic;
+    margin-top: 0.35rem;
+    line-height: 1.4;
+    border-left: 2.5px solid var(--border, #e5e7eb);
+    padding-left: 0.6rem;
+}
+
+.horarios-slots-resumen {
+    margin-top: 0.65rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.horarios-slots-resumen-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--gray, #6b7280);
+    margin-bottom: 0.35rem;
+}
+
+.horarios-slots-resumen-item {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--dark, #111827);
+    padding: 0.18rem 0;
+    line-height: 1.4;
+}
+
+/* ─── OWNER MODAL: FASE 1 — DAY CARDS ─── */
+
+.horarios-fase-hint {
+    font-size: 0.85rem;
+    color: var(--gray, #6b7280);
+    margin: 0.5rem 0 0.75rem;
+    line-height: 1.4;
+}
+
+.horarios-fase-titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0.5rem 0 0.25rem;
+}
+
+.owner-day-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, transform 0.12s;
+    margin-bottom: 0.5rem;
+    background: var(--white, #fff);
+}
+.owner-day-card:hover {
+    border-color: var(--primary, #3b82f6);
+    background: #f0f6ff;
+    transform: translateX(3px);
+}
+.owner-day-card.proposed {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+.owner-day-card.proposed:hover {
+    border-color: #4ade80;
+    background: #dcfce7;
+    transform: translateX(3px);
+}
+.owner-day-card.active {
+    border-color: var(--primary, #3b82f6) !important;
+    background: #eff6ff !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+.owner-day-card.active .owner-day-arrow {
+    color: var(--primary, #3b82f6);
+    font-size: 1.1rem;
+}
+.owner-day-info  { flex: 1; min-width: 0; }
+.owner-day-name  {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--dark);
+}
+.owner-day-date  {
+    font-weight: 400;
+    font-size: 0.83rem;
+    color: var(--gray, #6b7280);
+    margin-left: 0.4rem;
+}
+.owner-day-window {
+    font-size: 0.81rem;
+    color: var(--gray, #6b7280);
+    margin-top: 0.15rem;
+}
+.owner-day-time-exact {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--primary, #3b82f6);
+    margin-top: 0.15rem;
+}
+.owner-day-badge {
+    font-size: 0.71rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    background: #dcfce7;
+    color: #166534;
+    border-radius: 999px;
+    border: 1.5px solid #86efac;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.owner-day-arrow {
+    font-size: 1rem;
+    color: var(--gray, #9ca3af);
+    flex-shrink: 0;
+}
+
+/* ─── OWNER MODAL: FASE 2 — TIME SLOT CHIPS ─── */
+
+.owner-slots-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+    min-height: 48px;
+}
+
+.owner-time-chip {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full, 999px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 2px solid transparent;
+    transition: all 0.14s;
+    user-select: none;
+}
+.owner-time-chip.available {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+    cursor: pointer;
+}
+.owner-time-chip.available:hover {
+    background: #bbf7d0;
+    border-color: #4ade80;
+    transform: scale(1.05);
+}
+.owner-time-chip.occupied {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.owner-time-chip.selected {
+    background: var(--primary, #3b82f6) !important;
+    border-color: var(--primary, #3b82f6) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+    transform: scale(1.06);
+}
+
+/* ─── MODAL HORARIOS — new sections ─── */
+
+.horarios-seccion-titulo {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0.75rem 0 0.5rem;
+}
+
+.horarios-otros-toggle {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: var(--light-gray, #f3f4f6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--font-family);
+    transition: background var(--transition);
+    margin-top: 0.75rem;
+}
+.horarios-otros-toggle:hover { background: #e8f0fe; }
+
+#horariosOtrosContent {
+    margin-top: 0.75rem;
+}
+
+.horarios-msg-section {
+    /* message section styles */
+}
+.horarios-msg-section textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ─── RESERVAS CONFIRMADAS en agenda ─── */
+
+.reserva-confirmada-item {
+    padding: 0.75rem 1rem;
+    background: #e8f5e9;
+    border-left: 4px solid var(--secondary, #10b981);
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+}
+.reserva-confirmada-item .rc-titulo { font-weight: 600; font-size: 0.9rem; }
+.reserva-confirmada-item .rc-horario { font-size: 0.82rem; color: #2e7d32; margin-top: 0.2rem; }
+
+/* ─── DISPONIBILIDAD DEL DUEÑO — modal publicar trabajo ─── */
+
+.dispo-section-wrap {
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius, 8px);
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.dispo-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--light-gray, #f9fafb);
+    border: none;
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--dark, #111);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.14s;
+}
+.dispo-toggle-btn:hover { background: #f0f6ff; }
+
+.dispo-toggle-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    background: var(--border, #e5e7eb);
+    color: var(--gray, #6b7280);
+    border-radius: 999px;
+    margin-left: auto;
+}
+
+.dispo-toggle-arrow {
+    font-size: 0.75rem;
+    color: var(--gray, #6b7280);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+#duenoDispoSection {
+    padding: 0.85rem 1rem 1rem;
+    border-top: 1px solid var(--border, #e5e7eb);
+}
+
+.dispo-hint {
+    font-size: 0.82rem;
+    color: var(--gray, #6b7280);
+    margin: 0 0 0.75rem;
+    line-height: 1.45;
+}
+
+.dispo-week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-bottom: 0.6rem;
+}
+
+.dispo-day-cell {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius, 8px);
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+    border: 2px solid transparent;
+    transition: background 0.13s, border-color 0.13s, transform 0.1s;
+}
+.dispo-day-cell:hover { transform: scale(1.08); }
+
+.dispo-day-cell.neutral {
+    background: var(--light-gray, #f3f4f6);
+    color: var(--gray, #9ca3af);
+    border-color: var(--border, #e5e7eb);
+}
+.dispo-day-cell.neutral:hover {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.dispo-day-cell.avail {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+.dispo-day-cell.avail:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+.dispo-day-cell.unavail {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+.dispo-day-cell.unavail:hover {
+    background: var(--light-gray, #f3f4f6);
+    border-color: var(--border, #e5e7eb);
+    color: var(--gray, #9ca3af);
+}
+
+.dispo-legend {
+    font-size: 0.73rem;
+    color: var(--gray, #9ca3af);
+    margin: 0;
+}
+
+/* ─── DISPONIBILIDAD DEL DUEÑO — badge en tarjeta del feed ─── */
+
+.post-dispo-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0.6rem 0 0;
+    font-size: 0.78rem;
+    color: var(--gray, #6b7280);
+}
+
+.dispo-badge-day {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 22px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: 1.5px solid transparent;
+}
+
+.dispo-badge-avail {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.dispo-badge-unavail {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #991b1b;
+}
+
+/* ─── COINCIDENCIA DE DISPONIBILIDAD — indicador para trabajador ─── */
+
+.post-dispo-coincidencia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.dispo-match {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #86efac;
+}
+
+.dispo-no-match {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}

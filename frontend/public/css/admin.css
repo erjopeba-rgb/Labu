@@ -1,0 +1,213 @@
+/* ============================================================
+   Panel de Administración
+   ============================================================ */
+
+.admin-layout {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+.admin-header {
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--texto-principal, #111);
+  margin: 0 0 0.25rem;
+}
+
+.admin-header p {
+  color: var(--texto-secundario, #666);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* ─── Tabs ──────────────────────────────────────────────── */
+.admin-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--borde, #e5e7eb);
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  padding: 0.6rem 1.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--texto-secundario, #666);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.admin-tab:hover {
+  color: var(--primario, #2563eb);
+}
+
+.admin-tab.activo {
+  color: var(--primario, #2563eb);
+  border-bottom-color: var(--primario, #2563eb);
+}
+
+/* ─── Secciones ─────────────────────────────────────────── */
+.admin-seccion {
+  display: none;
+}
+
+.admin-seccion.activa {
+  display: block;
+}
+
+/* ─── Tabla ─────────────────────────────────────────────── */
+.admin-tabla-wrap {
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid var(--borde, #e5e7eb);
+  background: #fff;
+}
+
+.admin-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-tabla th {
+  background: var(--fondo-suave, #f8f9fa);
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--texto-secundario, #555);
+  border-bottom: 1px solid var(--borde, #e5e7eb);
+}
+
+.admin-tabla td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--borde, #f0f0f0);
+  vertical-align: middle;
+}
+
+.admin-tabla tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-tabla tr:hover td {
+  background: var(--fondo-suave, #f8f9fa);
+}
+
+/* ─── Badges de estado ──────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-verde { background: #d1fae5; color: #065f46; }
+.badge-rojo  { background: #fee2e2; color: #991b1b; }
+.badge-gris  { background: #f3f4f6; color: #374151; }
+.badge-azul  { background: #dbeafe; color: #1e40af; }
+.badge-naranja { background: #ffedd5; color: #9a3412; }
+
+/* ─── Botones de acción en tabla ────────────────────────── */
+.btn-accion {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-accion:hover { opacity: 0.8; }
+.btn-accion:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-suspender  { background: #fee2e2; color: #991b1b; }
+.btn-activar    { background: #d1fae5; color: #065f46; }
+.btn-resolver   { background: #dbeafe; color: #1e40af; }
+.btn-desestimar { background: #f3f4f6; color: #374151; }
+
+/* ─── Configuración ─────────────────────────────────────── */
+.config-grid {
+  display: grid;
+  gap: 1rem;
+  max-width: 600px;
+}
+
+.config-item {
+  background: #fff;
+  border: 1px solid var(--borde, #e5e7eb);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.config-item label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--texto-secundario, #555);
+  margin-bottom: 0.35rem;
+}
+
+.config-item .config-desc {
+  font-size: 0.78rem;
+  color: var(--texto-terciario, #999);
+  margin-bottom: 0.6rem;
+}
+
+.config-item input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--borde, #d1d5db);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+
+.config-item input:focus {
+  outline: none;
+  border-color: var(--primario, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
+
+.config-footer {
+  margin-top: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.config-msg {
+  font-size: 0.85rem;
+  color: var(--exito, #16a34a);
+  display: none;
+}
+
+.config-msg.visible { display: inline; }
+
+/* ─── Mensaje vacío ─────────────────────────────────────── */
+.admin-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--texto-secundario, #888);
+  font-size: 0.95rem;
+}
+
+/* ─── Loading ────────────────────────────────────────────── */
+.admin-loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--texto-secundario, #888);
+  font-size: 0.9rem;
+}

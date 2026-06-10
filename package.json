@@ -1,0 +1,16 @@
+{
+  "name": "labu",
+  "private": true,
+  "description": "Scripts de conveniencia — todas las dependencias viven en backend/package.json (ver AUDIT.md C2)",
+  "scripts": {
+    "test": "npm --prefix backend test",
+    "migrate": "npm --prefix backend run migrate",
+    "migrate:status": "npm --prefix backend run migrate:status",
+    "setup": "npm --prefix backend run setup",
+    "start": "node backend/server.js",
+    "start:prod": "pm2 start ecosystem.config.js --env production",
+    "stop:prod": "pm2 stop labu",
+    "reload:prod": "pm2 reload labu",
+    "logs:prod": "pm2 logs labu"
+  }
+}

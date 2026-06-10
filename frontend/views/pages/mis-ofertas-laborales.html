@@ -1,0 +1,282 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mis Ofertas Laborales</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/mis-trabajos.css">
+    <link rel="stylesheet" href="/css/disponibilidad.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="jobs-layout">
+
+        <div class="page-header">
+            <h1>&#128188; Mis Ofertas Laborales</h1>
+            <p>Gestion&#225; todos los trabajos que publicaste y sus ofertas recibidas</p>
+        </div>
+
+        <div class="card">
+            <div class="filters-bar">
+                <div class="filter-tabs">
+                    <div class="filter-tab active" data-filter="todos" onclick="filtrar('todos', this)">Todos</div>
+                    <div class="filter-tab" data-filter="publicado" onclick="filtrar('publicado', this)">Publicados</div>
+                    <div class="filter-tab" data-filter="en_negociacion" onclick="filtrar('en_negociacion', this)">En Negociaci&#243;n</div>
+                    <div class="filter-tab" data-filter="en_curso" onclick="filtrar('en_curso', this)">En Curso</div>
+                    <div class="filter-tab" data-filter="finalizado" onclick="filtrar('finalizado', this)">Finalizados</div>
+                </div>
+            </div>
+            <div class="jobs-grid" id="jobsGrid">
+                <div class="empty-state">
+                    <div class="empty-icon">&#9203;</div>
+                    <p>Cargando trabajos...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal Confirmación de Pago (al aceptar oferta) -->
+    <div class="modal" id="modalConfirmPago" style="display:none;">
+        <div class="modal-content" style="max-width:440px;max-height:90vh;overflow-y:auto;">
+            <button class="close-btn" onclick="cerrarModalConfirmPago()">&#10005;</button>
+            <div style="font-size:2rem;margin-bottom:0.5rem;text-align:center;">&#128179;</div>
+            <h3 style="text-align:center;margin-bottom:0.5rem;">Pag&#225; con tarjeta</h3>
+            <p style="font-size:0.9rem;color:var(--gray);text-align:center;margin-bottom:1rem;" id="confirmPagoInfo"></p>
+            <div style="background:var(--bg,#f8fafc);border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;" id="confirmPagoDesglose"></div>
+
+            <!-- Indicador de carga del SDK -->
+            <div id="mpSdkLoading" style="text-align:center;padding:0.75rem 0;color:var(--gray);font-size:0.85rem;">
+                Cargando formulario de pago&#8230;
+            </div>
+
+            <!-- Formulario de tarjeta inline (visible cuando el SDK carga) -->
+            <div id="mpCardForm" style="display:none;">
+                <div style="margin-bottom:0.6rem;">
+                    <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">N&#218;MERO DE TARJETA</label>
+                    <div id="mp-card-number" style="height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);background:#fff;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">VENCIMIENTO</label>
+                        <div id="mp-expiration-date" style="height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);background:#fff;"></div>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">CVV</label>
+                        <div id="mp-security-code" style="height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);background:#fff;"></div>
+                    </div>
+                </div>
+                <div style="margin-bottom:0.6rem;">
+                    <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">TITULAR</label>
+                    <input type="text" id="mp-cardholder-name" placeholder="Nombre como figura en la tarjeta"
+                           style="width:100%;height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);padding:0 0.75rem;font-size:0.9rem;box-sizing:border-box;">
+                </div>
+                <div style="display:grid;grid-template-columns:auto 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">DOC</label>
+                        <select id="mp-id-type" style="height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);padding:0 0.5rem;font-size:0.9rem;background:#fff;">
+                            <option value="DNI">DNI</option>
+                            <option value="CUIL">CUIL</option>
+                            <option value="CUIT">CUIT</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">N&#218;MERO</label>
+                        <input type="text" id="mp-id-number" placeholder="12345678" inputmode="numeric"
+                               style="width:100%;height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);padding:0 0.75rem;font-size:0.9rem;box-sizing:border-box;">
+                    </div>
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <label style="font-size:0.75rem;font-weight:700;color:var(--gray);display:block;margin-bottom:0.3rem;">EMAIL</label>
+                    <input type="email" id="mp-payer-email" placeholder="tu@email.com"
+                           style="width:100%;height:42px;border:1px solid var(--border,#e2e8f0);border-radius:var(--radius);padding:0 0.75rem;font-size:0.9rem;box-sizing:border-box;">
+                </div>
+                <button class="btn-action btn-action-primary" style="width:100%;margin-bottom:0.5rem;" id="btnPagarDirecto" onclick="procesarPagoDirecto()">
+                    &#128179; Pagar $<span id="mpMontoPago">0</span>
+                </button>
+                <button class="btn-action" style="width:100%;background:none;border:1px solid var(--border,#e2e8f0);color:var(--gray);font-size:0.8rem;" id="btnFallbackPro" onclick="confirmarPagoYAceptar()">
+                    Pagar con MercadoPago Checkout Pro
+                </button>
+            </div>
+
+            <!-- Fallback cuando el SDK no pudo cargar -->
+            <div id="mpFallback" style="display:none;margin-top:0.5rem;">
+                <p style="font-size:0.85rem;color:var(--gray);text-align:center;margin-bottom:0.75rem;">
+                    &#9888; El formulario de tarjeta no pudo cargarse.
+                </p>
+            </div>
+
+            <!-- Resultado del pago (aprobado / rechazado / pendiente) -->
+            <div id="mpPagoResultado" style="display:none;text-align:center;padding:1rem 0;">
+                <div id="mpResultIcon" style="font-size:2.5rem;margin-bottom:0.5rem;"></div>
+                <div id="mpResultTitulo" style="font-size:1rem;font-weight:700;margin-bottom:0.25rem;"></div>
+                <div id="mpResultDetalle" style="font-size:0.85rem;color:var(--gray);margin-bottom:1rem;"></div>
+                <button id="mpResultBtn" class="btn-action btn-action-primary" style="display:none;" onclick="window.location.href='/pages/mis-trabajos.html'">
+                    Ver mis trabajos
+                </button>
+            </div>
+
+            <div class="form-error" id="confirmPagoError"></div>
+
+            <!-- Botones base: Cancelar + Checkout Pro (fallback cuando SDK falla) -->
+            <div style="display:flex;gap:0.75rem;margin-top:0.75rem;">
+                <button class="btn-action" style="flex:1;background:var(--gray-light,#f1f5f9);color:var(--text);" id="btnCancelarPago" onclick="cerrarModalConfirmPago()">
+                    Cancelar
+                </button>
+                <button class="btn-action btn-action-primary" style="flex:2;display:none;" id="btnConfirmPago" onclick="procesarPagoDirecto()">
+                    &#128179; Pagar ahora
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Contraoferta (paso 3c) -->
+    <div class="modal" id="modalContraoferta" style="display:none;">
+        <div class="modal-content">
+            <button class="close-btn" onclick="cerrarModalContraoferta()">&#10005;</button>
+            <h3>&#8617; Hacer Contraoferta</h3>
+            <input type="hidden" id="counter-oferta-id">
+            <input type="hidden" id="counter-job-id">
+            <div class="modal-info">
+                Oferta recibida: <strong id="counter-monto-actual"></strong>
+            </div>
+            <div class="form-group">
+                <label>Tu contraoferta (ARS)</label>
+                <input type="number" id="counter-monto" placeholder="Ingres&#225; tu monto">
+            </div>
+            <div class="form-group">
+                <label>Mensaje (opcional)</label>
+                <textarea id="counter-mensaje" placeholder="Explic&#225; tu contraoferta..."></textarea>
+            </div>
+            <div class="form-error" id="counterError"></div>
+            <button class="btn-action btn-action-primary" style="width:100%;" id="btnEnviarContra" onclick="enviarContraoferta()">
+                Enviar Contraoferta
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Ver Resultado y Confirmar (pasos 7→8) -->
+    <div class="modal" id="modalConfirmar" style="display:none;">
+        <div class="modal-content" style="max-width:560px;">
+            <button class="close-btn" onclick="cerrarModalConfirmar()">&#10005;</button>
+            <h3>&#128247; Resultado del trabajo</h3>
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.25rem;">
+                Revis&#225; las fotos y confirm&#225; si el trabajo qued&#243; correcto.
+                Al confirmar se publicar&#225; autom&#225;ticamente el antes/despu&#233;s en ambos perfiles.
+            </p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                <div>
+                    <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                        &#128248; Antes (tu foto original)
+                    </div>
+                    <img id="confirmarFotoAntes" src="" alt="Antes"
+                         style="width:100%;border-radius:var(--radius);object-fit:cover;max-height:180px;display:none;">
+                    <div id="confirmarFotoAntesVacio" style="color:var(--gray);font-size:0.85rem;">Sin foto original</div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                        &#9989; Despu&#233;s (foto del trabajador)
+                    </div>
+                    <img id="confirmarFotoResultado" src="" alt="Resultado"
+                         style="width:100%;border-radius:var(--radius);object-fit:cover;max-height:180px;display:none;">
+                    <div id="confirmarFotoResultadoVacio" style="color:var(--gray);font-size:0.85rem;">Sin foto de resultado</div>
+                </div>
+            </div>
+
+            <div id="confirmarTextoWrap" style="margin-bottom:1rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.25rem;">
+                    Comentario del trabajador
+                </div>
+                <p id="confirmarTexto" style="font-size:0.9rem;color:var(--text);font-style:italic;margin:0;"></p>
+            </div>
+
+            <div class="form-error" id="confirmarError"></div>
+
+            <div style="display:flex;gap:0.75rem;">
+                <button class="btn-action btn-action-danger" style="flex:1;" onclick="cerrarModalConfirmar()">
+                    &#10060; Pedir correcci&#243;n
+                </button>
+                <button class="btn-action btn-action-primary" style="flex:2;" id="btnConfirmarCorrecto" onclick="confirmarTrabajoCorrecto()">
+                    &#9989; Confirmar &#8212; trabajo correcto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Calificación (paso 9) -->
+    <div class="modal" id="modalCalificacion" style="display:none;">
+        <div class="modal-content" style="max-width:420px;text-align:center;">
+            <button class="close-btn" onclick="cerrarModalCalificacion()">&#10005;</button>
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#11088;</div>
+            <h3 style="margin-bottom:0.25rem;">Calific&#225; al trabajador</h3>
+            <p style="font-size:0.9rem;color:var(--gray);margin-bottom:1.5rem;">
+                &#191;C&#243;mo fue tu experiencia con este profesional?
+            </p>
+            <div id="calificacionEstrellas" style="display:flex;justify-content:center;gap:0.25rem;margin-bottom:1.25rem;"></div>
+            <div class="form-group" style="text-align:left;">
+                <label>Comentario (opcional)</label>
+                <textarea id="calificacionComentario" rows="3" placeholder="Cont&#225; tu experiencia..."></textarea>
+            </div>
+            <div class="form-error" id="calificacionError" style="text-align:left;"></div>
+            <button class="btn-action btn-action-primary" style="width:100%;" id="btnEnviarCalificacion" onclick="enviarCalificacion()">
+                Enviar calificaci&#243;n
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Abrir Disputa -->
+    <div class="modal" id="modalDisputa" style="display:none;">
+        <div class="modal-content" style="max-width:460px;">
+            <button class="close-btn" onclick="cerrarModalDisputa()">&#10005;</button>
+            <div style="font-size:2rem;margin-bottom:0.5rem;text-align:center;">&#9878;</div>
+            <h3 style="text-align:center;margin-bottom:0.25rem;">Abrir disputa</h3>
+            <p id="disputaTitulo" style="text-align:center;font-size:0.88rem;color:var(--gray);margin-bottom:1.25rem;font-weight:600;"></p>
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.25rem;text-align:center;">
+                Un moderador revisará la situación y tomará una decisión. Ambas partes serán notificadas.
+            </p>
+            <div class="form-group">
+                <label>Motivo <span style="color:var(--danger);">*</span></label>
+                <select id="disputaMotivo" style="width:100%;padding:0.6rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9rem;font-family:var(--font-family);">
+                    <option value="">Seleccioná el motivo</option>
+                    <option value="trabajo_mal_hecho">Trabajo mal realizado</option>
+                    <option value="no_pago">Pago no recibido</option>
+                    <option value="incumplimiento">Incumplimiento del acuerdo</option>
+                    <option value="acusacion_falsa">Acusación falsa</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descripción (opcional)</label>
+                <textarea id="disputaDescripcion" rows="3" placeholder="Describí la situación con detalle..."></textarea>
+            </div>
+            <div class="form-error" id="disputaError"></div>
+            <button class="btn-action btn-action-danger" style="width:100%;margin-top:0.5rem;" id="btnEnviarDisputa" onclick="enviarDisputa()">
+                Abrir disputa
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <script src="/js/modules/floating-chat.js"></script>
+    <script src="/js/modules/shared-jobs.js"></script>
+    <script src="/js/modules/mis-trabajos.js"></script>
+</body>
+</html>

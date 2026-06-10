@@ -1,0 +1,6 @@
+@media (max-width: 768px) {
+    .container { padding: 1rem; }
+    .sidebar { width: 100%; position: relative; height: auto; }
+    .grid { grid-template-columns: 1fr; }
+    .navbar { padding: 0.5rem 1rem; }
+}

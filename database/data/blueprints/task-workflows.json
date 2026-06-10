@@ -1,0 +1,13 @@
+{
+  "construccion_casa": {
+    "etapas": [
+      {"nombre": "Excavación", "orden": 1},
+      {"nombre": "Cimientos", "orden": 2},
+      {"nombre": "Estructura", "orden": 3},
+      {"nombre": "Mampostería", "orden": 4},
+      {"nombre": "Techos", "orden": 5},
+      {"nombre": "Instalaciones", "orden": 6},
+      {"nombre": "Terminaciones", "orden": 7}
+    ]
+  }
+}

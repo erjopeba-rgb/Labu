@@ -1,0 +1,145 @@
+﻿<!--
+  Post Card Component — Labu
+  Tarjeta de trabajo publicado en el feed. Muestra datos del dueño,
+  título, descripción, detalles (ciudad, presupuesto, rubro, ofertas)
+  y acciones (Ofertar, Preguntar).
+
+  Uso en JS (feed.js → renderPost):
+    data-job-id="${job.id}"
+    .urgency-badge.urgency-urgent | .urgency-normal
+    .post-action.primary → onclick="Feed.openOfferModal(jobId)"
+
+  Requiere en la página: /css/variables.css, /css/global.css, /css/cards.css
+-->
+
+<div class="card post-card" data-job-id="1">
+
+    <div class="post-header">
+        <div class="post-user">
+            <div class="avatar">JD</div>
+            <div class="post-meta">
+                <h4>Juan Duarte</h4>
+                <div class="meta-info">&#127968; Dueño &bull; Publicado hace 2 horas</div>
+            </div>
+        </div>
+        <span class="urgency-badge urgency-urgent">&#9889; Urgente</span>
+    </div>
+
+    <div class="post-content">
+        <div class="post-title">Instalación eléctrica en oficina</div>
+        <div class="post-description">Necesito un electricista matriculado para instalar tablero trifásico y puesta a tierra en local comercial de 80m². Trabajo urgente.</div>
+
+        <div class="post-details">
+            <div class="detail-item">
+                <span class="detail-icon">&#128205;</span>
+                <div class="detail-text">
+                    <div class="detail-label">Ubicación</div>
+                    <div class="detail-value">Córdoba, Córdoba</div>
+                </div>
+            </div>
+            <div class="detail-item">
+                <span class="detail-icon">&#128176;</span>
+                <div class="detail-text">
+                    <div class="detail-label">Presupuesto</div>
+                    <div class="detail-value">$80.000 - $120.000</div>
+                </div>
+            </div>
+            <div class="detail-item">
+                <span class="detail-icon">&#128295;</span>
+                <div class="detail-text">
+                    <div class="detail-label">Rubro</div>
+                    <div class="detail-value">Electricidad</div>
+                </div>
+            </div>
+            <div class="detail-item">
+                <span class="detail-icon">&#128172;</span>
+                <div class="detail-text">
+                    <div class="detail-label">Ofertas</div>
+                    <div class="detail-value">3</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-actions">
+        <button class="post-action primary">Ofertar</button>
+        <button class="post-action">Preguntar</button>
+    </div>
+
+</div>
+
+<style>
+/* ── POST CARD ────────────────────────────────────────────── */
+.post-card { margin-bottom: 1.5rem; }
+
+.post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.post-user { display: flex; gap: 1rem; }
+.post-user .avatar { width: 48px; height: 48px; font-size: 1.2rem; }
+.post-meta h4      { font-size: 1rem; margin-bottom: 0.2rem; }
+.post-meta .meta-info { font-size: 0.85rem; color: var(--gray); }
+
+/* ── URGENCY BADGE ───────────────────────────────────────── */
+.urgency-badge {
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.urgency-normal { background: var(--light-gray); color: var(--gray); }
+.urgency-urgent { background: var(--warning-light); color: #856404; }
+
+/* ── CONTENIDO ───────────────────────────────────────────── */
+.post-content   { margin-bottom: 1rem; }
+.post-title     { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+.post-description { color: var(--dark); line-height: 1.6; margin-bottom: 1rem; }
+
+/* ── DETALLES GRID ───────────────────────────────────────── */
+.post-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+.detail-item  { display: flex; align-items: center; gap: 0.5rem; }
+.detail-icon  { font-size: 1.2rem; }
+.detail-label { color: var(--gray); font-size: 0.75rem; }
+.detail-value { font-weight: bold; font-size: 0.9rem; }
+
+/* ── ACCIONES ────────────────────────────────────────────── */
+.post-actions {
+    display: flex;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.post-action {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: var(--light-gray);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-weight: 600;
+    font-family: var(--font-family);
+}
+.post-action:hover         { background: var(--primary); color: var(--white); }
+.post-action.primary       { background: var(--primary); color: var(--white); }
+.post-action.primary:hover { opacity: 0.85; }
+
+@media (max-width: 768px) {
+    .post-details { grid-template-columns: 1fr; }
+}
+</style>

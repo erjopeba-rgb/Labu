@@ -1,0 +1,22 @@
+[
+  {
+    "id": "o1",
+    "jobId": "j1",
+    "userId": "u1",
+    "monto": 42000,
+    "descripcion": "Puedo realizar el trabajo con materiales incluidos",
+    "fechaInicio": "2025-01-12",
+    "duracion": "3 días",
+    "estado": "pendiente"
+  },
+  {
+    "id": "o2",
+    "jobId": "j1",
+    "userId": "u2",
+    "monto": 38000,
+    "descripcion": "Trabajo rápido y profesional",
+    "fechaInicio": "2025-01-10",
+    "duracion": "2 días",
+    "estado": "pendiente"
+  }
+]

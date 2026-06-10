@@ -1,0 +1,168 @@
+﻿<!--
+  Urgency Badge Component — Labu
+  Selector y badge de urgencia: Normal / Urgente / Muy Urgente.
+  Extraído de: publicar-trabajo.html (urgency-selector), feed.html (checkbox urgente),
+               marketplace.html (product-badge).
+  Requiere en la página: /css/variables.css, /css/global.css
+-->
+
+<!-- Contenedor vacío; se inicializa con UrgencyBadge.initSelector() o se usa UrgencyBadge.render() -->
+<div class="urgency-selector" id="urgencySelector"></div>
+
+<style>
+/* ── URGENCY SELECTOR (formulario) ───────────────────────── */
+.urgency-selector {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+    .urgency-selector { grid-template-columns: 1fr; }
+}
+
+.urgency-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1rem 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-align: center;
+    background: var(--white);
+    user-select: none;
+}
+
+.urgency-option input[type="radio"] { display: none; }
+
+.urgency-option:hover { border-color: var(--primary); }
+
+.urgency-option.selected {
+    border-color: var(--primary);
+    background: rgba(102, 51, 153, 0.07);
+}
+
+.urgency-option[data-level="urgent"].selected {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.07);
+}
+
+.urgency-option[data-level="very-urgent"].selected {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.07);
+}
+
+.urgency-icon  { font-size: 1.6rem; line-height: 1; }
+.urgency-title { font-weight: 700; font-size: 0.88rem; color: var(--dark); }
+.urgency-desc  { font-size: 0.75rem; color: var(--gray); }
+
+/* ── URGENCY BADGE (display, en tarjetas de feed/trabajos) ── */
+.urgency-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.urgency-badge-normal     { background: #e8f5e9; color: #2e7d32; }
+.urgency-badge-urgent     { background: #fff8e1; color: #f57f17; }
+.urgency-badge-very-urgent {
+    background: #fce4ec;
+    color: #c62828;
+    animation: urgency-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes urgency-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.65; }
+}
+
+/* ── PRODUCT BADGE (marketplace) ────────────────────────── */
+.product-badge {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    z-index: 1;
+}
+
+.badge-sale { background: #ef4444; color: #fff; }
+.badge-new  { background: #22c55e; color: #fff; }
+</style>
+
+<script>
+(function () {
+    const UrgencyBadge = {
+        /**
+         * Renderiza un badge de urgencia inline (para tarjetas de trabajo).
+         * @param {'normal'|'urgent'|'very-urgent'} level
+         * @returns {string} HTML string
+         */
+        render(level) {
+            const map = {
+                'normal':      { cls: 'urgency-badge-normal',      icon: '📅', label: 'Normal' },
+                'urgent':      { cls: 'urgency-badge-urgent',      icon: '⚡', label: 'Urgente' },
+                'very-urgent': { cls: 'urgency-badge-very-urgent', icon: '🔥', label: 'Muy Urgente' },
+            };
+            const b = map[level] || map['normal'];
+            return `<span class="urgency-badge ${b.cls}">${b.icon} ${b.label}</span>`;
+        },
+
+        /**
+         * Inicializa un urgency-selector interactivo en un contenedor.
+         * @param {HTMLElement|string} container
+         * @param {function} onChange — callback(level)
+         * @param {string} [defaultLevel='normal']
+         */
+        initSelector(container, onChange, defaultLevel = 'normal') {
+            const el = typeof container === 'string'
+                ? document.getElementById(container)
+                : container;
+            if (!el) return;
+
+            const options = [
+                { value: 'normal',      icon: '📅', title: 'Normal',      desc: 'Flexible con fechas' },
+                { value: 'urgent',      icon: '⚡', title: 'Urgente',     desc: 'Esta semana' },
+                { value: 'very-urgent', icon: '🔥', title: 'Muy Urgente', desc: 'Lo antes posible' },
+            ];
+
+            const name = el.id || 'urgency';
+            el.innerHTML = options.map(opt => `
+                <label class="urgency-option${opt.value === defaultLevel ? ' selected' : ''}"
+                       data-level="${opt.value}">
+                    <input type="radio" name="${name}" value="${opt.value}"${opt.value === defaultLevel ? ' checked' : ''}>
+                    <div class="urgency-icon">${opt.icon}</div>
+                    <div class="urgency-title">${opt.title}</div>
+                    <div class="urgency-desc">${opt.desc}</div>
+                </label>
+            `).join('');
+
+            el.addEventListener('change', e => {
+                el.querySelectorAll('.urgency-option').forEach(o => o.classList.remove('selected'));
+                e.target.closest('.urgency-option')?.classList.add('selected');
+                if (onChange) onChange(e.target.value);
+            });
+        },
+
+        /** Devuelve el nivel seleccionado de un selector */
+        getValue(container) {
+            const el = typeof container === 'string'
+                ? document.getElementById(container)
+                : container;
+            return el?.querySelector('input[type="radio"]:checked')?.value || 'normal';
+        }
+    };
+
+    window.UrgencyBadge = UrgencyBadge;
+})();
+</script>

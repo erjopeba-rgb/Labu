@@ -1,0 +1,18 @@
+[
+  {
+    "id": "m1",
+    "fromId": "u1",
+    "toId": "u3",
+    "mensaje": "Hola, vi tu trabajo publicado",
+    "timestamp": "2025-01-06T10:30:00",
+    "leido": false
+  },
+  {
+    "id": "m2",
+    "fromId": "u3",
+    "toId": "u1",
+    "mensaje": "¡Hola! ¿Podrías darme más detalles?",
+    "timestamp": "2025-01-06T10:32:00",
+    "leido": true
+  }
+]

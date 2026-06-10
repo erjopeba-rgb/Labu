@@ -1,0 +1,141 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - B&#250;squeda Avanzada</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/busqueda-avanzada.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="search-layout">
+
+        <!-- Sidebar Filtros -->
+        <aside>
+            <div class="card">
+                <div class="filter-section">
+                    <h3>&#128269; Filtros Avanzados</h3>
+
+                    <div class="filter-group">
+                        <label>Rubro</label>
+                        <select id="selectRubro">
+                            <option value="">Todos los rubros</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Radio de b&#250;squeda</label>
+                        <select id="selectRadio">
+                            <option value="5">5 km</option>
+                            <option value="10">10 km</option>
+                            <option value="20" selected>20 km</option>
+                            <option value="50">50 km</option>
+                            <option value="100">100 km</option>
+                        </select>
+                        <div id="geoStatus" class="geo-status geo-sin-ubicacion">
+                            <span id="geoStatusTexto">&#128204; Sin ubicaci&#243;n</span>
+                            <button id="btnUsarUbicacion" onclick="solicitarUbicacion()">Activar</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Disponibilidad (d&#237;a)</label>
+                        <select id="selectDia">
+                            <option value="">Cualquier d&#237;a</option>
+                            <option value="0">Lunes</option>
+                            <option value="1">Martes</option>
+                            <option value="2">Mi&#233;rcoles</option>
+                            <option value="3">Jueves</option>
+                            <option value="4">Viernes</option>
+                            <option value="5">S&#225;bado</option>
+                            <option value="6">Domingo</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Calificaci&#243;n m&#237;nima</label>
+                        <select id="selectCalificacion">
+                            <option value="">Cualquiera</option>
+                            <option value="3">3+ estrellas</option>
+                            <option value="4">4+ estrellas</option>
+                            <option value="5">5 estrellas</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Precio m&#225;ximo (ARS/h)</label>
+                        <input type="number" id="inputPMax" placeholder="Ej: 5000" min="0">
+                    </div>
+
+                    <button class="btn-filter" onclick="buscar()">&#128269; Buscar</button>
+                    <button class="btn-clear"  onclick="limpiarFiltros()">Limpiar Todo</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Resultados -->
+        <main>
+            <div class="search-header">
+                <h1>B&#250;squeda Avanzada</h1>
+                <p>Encontr&#225; el profesional perfecto para tu proyecto</p>
+            </div>
+
+            <div class="main-search">
+                <input type="text" id="inputBusqueda" placeholder="Buscar por nombre, habilidad o servicio...">
+                <span class="search-icon">&#128269;</span>
+            </div>
+
+            <div class="active-filters" id="activeFilters"></div>
+
+            <div class="card">
+                <div class="results-header">
+                    <div class="results-count" id="resultsCount">Buscando...</div>
+                    <div style="display:flex;gap:0.75rem;align-items:center;">
+                        <select class="sort-select" id="selectOrden" onchange="buscar()">
+                            <option value="">M&#225;s relevantes</option>
+                            <option value="calificacion">Mejor calificados</option>
+                            <option value="distancia">M&#225;s cercanos</option>
+                            <option value="tarifa_asc">Precio: menor a mayor</option>
+                            <option value="tarifa_desc">Precio: mayor a menor</option>
+                        </select>
+                        <button class="btn-vista" id="btnToggleVista" onclick="toggleVista()">&#128205; Mapa</button>
+                    </div>
+                </div>
+
+                <!-- Mapa -->
+                <div id="mapaContainer" class="mapa-container" style="display:none;">
+                    <div id="mapa"></div>
+                </div>
+
+                <!-- Lista -->
+                <div class="results-grid" id="resultsGrid">
+                    <div class="no-results">
+                        <div class="no-results-icon">&#9203;</div>
+                        <p>Cargando...</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/components/user-card.js"></script>
+    <script src="/js/modules/busqueda-avanzada.js"></script>
+</body>
+</html>

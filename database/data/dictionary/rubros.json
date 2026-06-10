@@ -1,0 +1,42 @@
+{
+  "construccion": {
+    "nombre": "Construcción",
+    "icon": "🏗️",
+    "tareas": ["reboque", "albanileria", "hormigon", "demolicion"]
+  },
+  "electricidad": {
+    "nombre": "Electricidad",
+    "icon": "⚡",
+    "tareas": ["instalacion", "reparacion", "iluminacion", "tableros"]
+  },
+  "plomeria": {
+    "nombre": "Plomería",
+    "icon": "🔧",
+    "tareas": ["instalacion", "reparacion", "destapaciones", "calefaccion"]
+  },
+  "pintura": {
+    "nombre": "Pintura",
+    "icon": "🎨",
+    "tareas": ["interior", "exterior", "lacado", "empapelado"]
+  },
+  "carpinteria": {
+    "nombre": "Carpintería",
+    "icon": "🪚",
+    "tareas": ["muebles", "puertas", "ventanas", "deck"]
+  },
+  "jardineria": {
+    "nombre": "Jardinería",
+    "icon": "🌱",
+    "tareas": ["mantenimiento", "poda", "riego", "paisajismo"]
+  },
+  "limpieza": {
+    "nombre": "Limpieza",
+    "icon": "🧹",
+    "tareas": ["domestica", "obra", "vidrios", "tapizados"]
+  },
+  "artista": {
+    "nombre": "Artista",
+    "icon": "🎭",
+    "tareas": ["musica", "pintura", "fotografia", "diseno"]
+  }
+}

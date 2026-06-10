@@ -1,0 +1,357 @@
+﻿<!--
+  Navbar Component — Labu
+  Barra de navegación principal: logo, buscador, iconos de acción.
+  Requiere en la página: /css/variables.css, /css/global.css, /js/auth.js, /js/main.js
+-->
+
+<nav class="navbar">
+    <div class="navbar-content">
+
+        <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+
+        <div class="nav-search">
+            <span class="nav-search-icon">&#128269;</span>
+            <input type="text" id="navSearchInput" placeholder="Buscar trabajos, profesionales...">
+        </div>
+
+        <!-- Toggle de perfil activo -->
+        <div class="nav-perfil-toggle" id="navPerfilToggle" title="Cambiar modo de perfil" style="display:none;">
+            <span class="toggle-modo-icon" id="navModoIcon"></span>
+            <span class="toggle-modo-label" id="navModoLabel"></span>
+            <span class="toggle-switch-arrow">&#8646;</span>
+        </div>
+
+        <div class="nav-icons">
+
+            <!-- Notificaciones -->
+            <div class="nav-icon nav-icon-dropdown" title="Notificaciones" id="navNotifBtn">
+                &#128276;
+                <span class="badge" id="notification-badge"></span>
+                <div class="nav-dropdown" id="dropdownNotif">
+                    <div class="nav-dropdown-header">
+                        <span>Notificaciones</span>
+                        <a href="/pages/notificaciones.html" class="nav-dropdown-link">Ver todas</a>
+                    </div>
+                    <div class="nav-dropdown-list" id="dropdownNotifList">
+                        <div class="nav-dropdown-empty">No tenés notificaciones nuevas</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensajes -->
+            <div class="nav-icon nav-icon-dropdown" title="Mensajes" id="navMsgBtn">
+                &#128172;
+                <span class="badge" id="message-badge"></span>
+                <div class="nav-dropdown" id="dropdownMsg">
+                    <div class="nav-dropdown-header">
+                        <span>Mensajes</span>
+                        <a href="/pages/mensajes.html" class="nav-dropdown-link">Ver todos</a>
+                    </div>
+                    <div class="nav-dropdown-list" id="dropdownMsgList">
+                        <div class="nav-dropdown-empty">Sin mensajes nuevos</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-icon nav-avatar" title="Mi perfil" onclick="App.navigateTo('perfil-publico?id=me')" id="navAvatar">
+                &#128100;
+            </div>
+        </div>
+
+    </div>
+</nav>
+
+<style>
+/* ── NAVBAR ─────────────────────────────────────────────── */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    z-index: var(--z-fixed);
+    padding: 0 1rem;
+}
+
+.navbar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ── BUSCADOR ────────────────────────────────────────────── */
+.nav-search {
+    flex: 1;
+    max-width: 500px;
+    position: relative;
+}
+
+.nav-search-icon {
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.9rem;
+    pointer-events: none;
+    color: var(--gray);
+}
+
+.nav-search input {
+    width: 100%;
+    padding: 0.5rem 1rem 0.5rem 2.25rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-family: var(--font-family);
+    background: var(--light-gray);
+    transition: var(--transition);
+}
+
+.nav-search input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--white);
+}
+
+/* ── ICONOS ──────────────────────────────────────────────── */
+.nav-icons {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.nav-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background var(--transition);
+    user-select: none;
+}
+
+.nav-icon:hover { background: var(--light-gray); }
+
+.nav-avatar {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.nav-avatar:hover { opacity: 0.85; background: linear-gradient(135deg, var(--primary), var(--secondary)); }
+
+/* ── BADGE ───────────────────────────────────────────────── */
+.badge {
+    display: none;
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    background: var(--danger);
+    color: var(--white);
+    font-size: 0.65rem;
+    font-weight: 700;
+    border-radius: var(--radius-full);
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    border: 2px solid var(--white);
+}
+
+/* ── DROPDOWN ────────────────────────────────────────────── */
+.nav-icon-dropdown { position: relative; }
+
+.nav-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: -8px;
+    width: 340px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+    border: 1px solid var(--border);
+    z-index: calc(var(--z-fixed) + 10);
+    animation: dropdownIn 0.15s ease;
+}
+
+.nav-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--white);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    transform: rotate(45deg);
+}
+
+.nav-dropdown.open { display: block; }
+
+@keyframes dropdownIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.nav-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem 0.65rem;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.nav-dropdown-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+}
+.nav-dropdown-link:hover { text-decoration: underline; }
+
+.nav-dropdown-list { max-height: 360px; overflow-y: auto; }
+
+.nav-dropdown-empty {
+    padding: 1.5rem 1rem;
+    text-align: center;
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+
+.nav-dd-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background var(--transition);
+}
+.nav-dd-item:last-child { border-bottom: none; }
+.nav-dd-item:hover { background: var(--light-gray); }
+.nav-dd-item.unread { background: #f0f4ff; }
+.nav-dd-item.unread:hover { background: #e5eaff; }
+
+.nav-dd-avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-dd-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background: var(--light-gray);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-dd-body { flex: 1; min-width: 0; }
+
+.nav-dd-text {
+    font-size: 0.875rem;
+    color: var(--dark);
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.nav-dd-item.unread .nav-dd-text { font-weight: 600; }
+
+.nav-dd-time {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 0.2rem;
+}
+
+.nav-dd-dot {
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    margin-top: 0.35rem;
+    display: none;
+}
+.nav-dd-item.unread .nav-dd-dot { display: block; }
+
+/* ── TOGGLE DE PERFIL ────────────────────────────────────── */
+.nav-perfil-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--primary);
+    background: transparent;
+    transition: background var(--transition), color var(--transition);
+    white-space: nowrap;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.nav-perfil-toggle:hover {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.nav-perfil-toggle.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.toggle-switch-arrow {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .nav-search { display: none; }
+    .nav-dropdown { width: 300px; right: -50px; }
+    .toggle-modo-label { display: none; }
+}
+</style>

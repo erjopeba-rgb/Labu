@@ -1,0 +1,20 @@
+[
+  {
+    "id": "p1",
+    "nombre": "Cemento Portland x 50kg",
+    "precio": 8500,
+    "stock": 200,
+    "categoria": "materiales",
+    "vendedor": "Corralón Del Sol",
+    "imagen": "cement.jpg"
+  },
+  {
+    "id": "p2",
+    "nombre": "Pintura latex interior x 20L",
+    "precio": 15000,
+    "stock": 50,
+    "categoria": "pintura",
+    "vendedor": "PintureríaMax",
+    "imagen": "paint.jpg"
+  }
+]

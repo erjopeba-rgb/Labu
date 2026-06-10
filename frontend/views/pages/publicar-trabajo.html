@@ -1,0 +1,501 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Publicar Trabajo</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/publicar-trabajo.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="publish-layout">
+
+        <div class="page-header">
+            <h1>&#128188; Publicar Trabajo</h1>
+            <p>Describe tu proyecto y recibe ofertas de profesionales calificados</p>
+        </div>
+
+        <div class="form-error" id="formError"></div>
+
+        <div class="info-box">
+            <div class="info-title">&#128161; Consejo para recibir mejores ofertas</div>
+            <div class="info-text">
+                Cuanto m&#225;s detallada sea tu descripci&#243;n y m&#225;s informaci&#243;n proveas,
+                mejores y m&#225;s precisas ser&#225;n las ofertas que recibas.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#127919; Tipo de Proyecto</h2>
+            <div class="project-type-selector">
+                <div class="project-type selected" onclick="selectProjectType(this, 'single')">
+                    <div class="project-type-icon">&#128296;</div>
+                    <div class="project-type-title">Trabajo Individual</div>
+                    <div class="project-type-desc">Un solo profesional, una tarea espec&#237;fica</div>
+                </div>
+                <div class="project-type" onclick="selectProjectType(this, 'complete')">
+                    <div class="project-type-icon">&#127959;</div>
+                    <div class="project-type-title">Proyecto Completo</div>
+                    <div class="project-type-desc">M&#250;ltiples profesionales, proyecto integral</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128203; Informaci&#243;n del Trabajo</h2>
+
+            <div class="form-group">
+                <label>T&#237;tulo del Trabajo *</label>
+                <input type="text" id="input-titulo" placeholder="Ej: Instalaci&#243;n El&#233;ctrica Completa en Casa 3 Pisos">
+                <div class="helper-text">S&#233; espec&#237;fico y claro sobre lo que necesitas</div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Rubro</label>
+                    <select id="select-rubro">
+                        <option value="">Selecciona un rubro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Modalidad</label>
+                    <select id="select-modalidad">
+                        <option value="presencial">Presencial</option>
+                        <option value="remoto">Remoto</option>
+                        <option value="mixto">Mixto</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Descripci&#243;n Detallada *</label>
+                <textarea id="input-descripcion" placeholder="Describe el trabajo en detalle: qu&#233; necesitas, condiciones actuales, materiales requeridos, plazos, etc."></textarea>
+                <div class="helper-text">M&#237;nimo 20 caracteres. Incluye todos los detalles relevantes.</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128247; Fotos y Videos <span class="section-optional">(Opcional)</span></h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">&#128248;</div>
+                <div class="upload-title">Arrastr&#225; fotos o videos aqu&#237;</div>
+                <div class="upload-subtitle">o hac&#233; clic para seleccionar archivos</div>
+                <div class="upload-limits">Hasta 10 fotos (JPG, PNG, WEBP) &#183; Hasta 3 videos (MP4, MOV, WEBM) &#183; M&#225;x. 20MB c/u</div>
+                <input type="file" id="mediaInput" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm" style="display:none;">
+            </div>
+            <div class="media-preview-grid" id="mediaPreviewGrid"></div>
+            <div class="media-counter" id="mediaCounter"></div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128205; Ubicaci&#243;n</h2>
+            <div class="geo-status">
+                <button type="button" id="btnGeo" class="btn-geo" onclick="detectarUbicacion()">&#128205; Detectar mi ubicaci&#243;n autom&#225;ticamente</button>
+                <div id="geoMsg" class="geo-msg"></div>
+            </div>
+            <input type="hidden" id="input-lat">
+            <input type="hidden" id="input-lng">
+            <div class="form-row" id="locationFields">
+                <div class="form-group">
+                    <label>Ciudad</label>
+                    <input type="text" id="input-ciudad" placeholder="Ej: Buenos Aires">
+                </div>
+                <div class="form-group">
+                    <label>Provincia</label>
+                    <input type="text" id="input-provincia" placeholder="Ej: CABA">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128200; Medidas y Plano (Recomendado)</h2>
+            <div class="planner-preview" onclick="window.location.href='/pages/planner-3d.html'">
+                <div class="planner-icon">&#128208;</div>
+                <div class="planner-title">Crear Plano 3D con Medidas Exactas</div>
+                <div class="planner-desc">Agrega un plano con medidas exactas para recibir cotizaciones precisas sin visitas previas</div>
+            </div>
+            <div class="warning-box" style="margin-top:1rem;">
+                <div class="warning-title">&#9888; Importante sobre Medidas</div>
+                <div class="warning-text">
+                    Si agregas medidas, aseg&#250;rate de usar herramientas de medici&#243;n reales.
+                    Medidas incorrectas pueden resultar en cotizaciones inexactas.
+                </div>
+            </div>
+            <div class="form-row" style="margin-top:1rem;">
+                <div class="form-group">
+                    <label>&#193;rea Total (opcional)</label>
+                    <div class="medidas-row">
+                        <input type="number" step="0.01" placeholder="0.00">
+                        <div class="currency-symbol">m&#178;</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Altura de Techos (opcional)</label>
+                    <div class="medidas-row">
+                        <input type="number" step="0.01" placeholder="2.50">
+                        <div class="currency-symbol">m</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128176; Presupuesto</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Presupuesto M&#237;nimo (ARS)</label>
+                    <div class="budget-input">
+                        <div class="currency-symbol">$</div>
+                        <input type="number" id="input-presupuesto-min" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Presupuesto M&#225;ximo (ARS)</label>
+                    <div class="budget-input">
+                        <div class="currency-symbol">$</div>
+                        <input type="number" id="input-presupuesto-max" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <div class="budget-hint">
+                &#128161; <strong>Sugerencia:</strong> Si no est&#225;s seguro del presupuesto, deja en blanco y los profesionales te cotizar&#225;n.
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#9200; Urgencia</h2>
+            <div class="urgency-selector">
+                <label class="urgency-option selected">
+                    <input type="radio" name="urgency" value="normal" checked>
+                    <div class="urgency-icon">&#128197;</div>
+                    <div class="urgency-title">Normal</div>
+                    <div class="urgency-desc">Flexible con fechas</div>
+                </label>
+                <label class="urgency-option">
+                    <input type="radio" name="urgency" value="urgent">
+                    <div class="urgency-icon">&#9889;</div>
+                    <div class="urgency-title">Urgente</div>
+                    <div class="urgency-desc">Esta semana</div>
+                </label>
+                <label class="urgency-option">
+                    <input type="radio" name="urgency" value="very-urgent">
+                    <div class="urgency-icon">&#128293;</div>
+                    <div class="urgency-title">Muy Urgente</div>
+                    <div class="urgency-desc">Lo antes posible</div>
+                </label>
+            </div>
+            <div class="warning-box" style="margin-top:1.5rem;">
+                <div class="warning-title">&#9888; Sobre Publicaciones Urgentes</div>
+                <div class="warning-text">
+                    Si marcas como "Muy Urgente" y luego cancelas, tu reputaci&#243;n como contratante puede verse afectada.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="section-title">&#128260; &#191;Es un Trabajo Recurrente?</h2>
+            <div class="form-group">
+                <label style="display:flex; align-items:center; gap:0.5rem;">
+                    <input type="checkbox" id="recurrent" style="width:20px; height:20px;">
+                    Este trabajo se repite peri&#243;dicamente
+                </label>
+            </div>
+            <div id="recurrentOptions" style="display:none;">
+                <div class="form-group">
+                    <label>Frecuencia</label>
+                    <div class="recurrent-options">
+                        <div class="recurrent-btn" onclick="selectFrequency(this)">Semanal</div>
+                        <div class="recurrent-btn" onclick="selectFrequency(this)">Quincenal</div>
+                        <div class="recurrent-btn" onclick="selectFrequency(this)">Mensual</div>
+                        <div class="recurrent-btn" onclick="selectFrequency(this)">Otro</div>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">&#8505; Trabajos Recurrentes</div>
+                    <div class="info-text">
+                        Los trabajos recurrentes aparecer&#225;n en tu agenda y en la del trabajador contratado.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button class="btn-secondary" onclick="saveDraft()">&#128190; Guardar Borrador</button>
+            <button class="btn-primary" id="btnPublicar" onclick="publishJob()">&#128640; Publicar Trabajo</button>
+        </div>
+
+    </div>
+
+    <!-- Modal Proyecto Completo -->
+    <div class="modal" id="modalProyectoCompleto">
+        <div class="modal-content pcomp-modal">
+            <button class="close-btn" onclick="cerrarModalProyecto()">&#10005;</button>
+            <div class="pcomp-header">
+                <div class="pcomp-header-icon">&#127959;</div>
+                <h3>Proyecto Completo</h3>
+                <p>M&#250;ltiples profesionales coordinados para un proyecto integral</p>
+            </div>
+
+            <div class="pcomp-body">
+                <div class="form-group">
+                    <label>Nombre del Proyecto *</label>
+                    <input type="text" id="pcomp-nombre" placeholder="Ej: Remodelaci&#243;n Completa Oficina">
+                </div>
+
+                <div class="form-group">
+                    <label>Descripci&#243;n General *</label>
+                    <textarea id="pcomp-descripcion" placeholder="Describe el proyecto completo: alcance, objetivos, condiciones actuales..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Ciudad</label>
+                        <input type="text" id="pcomp-ciudad" placeholder="Ej: Buenos Aires">
+                    </div>
+                    <div class="form-group">
+                        <label>Presupuesto Total (ARS)</label>
+                        <div class="budget-input">
+                            <div class="currency-symbol">$</div>
+                            <input type="number" id="pcomp-presupuesto" placeholder="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pcomp-rubros-label">Rubros necesarios</div>
+                <div class="pcomp-rubros-grid" id="pcompRubrosGrid"></div>
+
+                <div class="form-group">
+                    <label>Fecha de Inicio Estimada</label>
+                    <input type="date" id="pcomp-fecha">
+                </div>
+
+                <div class="form-group">
+                    <label>Duraci&#243;n Estimada</label>
+                    <div class="offer-time-row">
+                        <input type="number" id="pcomp-duracion" placeholder="Ej: 30" min="1">
+                        <select id="pcomp-duracion-unidad">
+                            <option value="dias">D&#237;as</option>
+                            <option value="semanas">Semanas</option>
+                            <option value="meses">Meses</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notas Adicionales</label>
+                    <textarea id="pcomp-notas" placeholder="Cualquier informaci&#243;n extra relevante..."></textarea>
+                </div>
+            </div>
+
+            <div class="pcomp-footer">
+                <button class="btn-secondary" onclick="cerrarModalProyecto()">Cancelar</button>
+                <button class="btn-primary" onclick="publicarProyectoCompleto()">&#128640; Publicar Proyecto</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+    }
+    .modal.active { display: flex; }
+
+    .pcomp-modal {
+        max-width: 560px;
+        padding: 0;
+        overflow: hidden;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .pcomp-header {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        padding: 1.75rem 1.5rem 1.5rem;
+        text-align: center;
+        color: var(--white);
+    }
+    .pcomp-header-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .pcomp-header h3   { font-size: 1.35rem; margin-bottom: 0.3rem; color: var(--white); }
+    .pcomp-header p    { color: rgba(255,255,255,0.8); font-size: 0.9rem; }
+
+    .pcomp-body  { padding: 1.5rem; }
+    .pcomp-footer {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid var(--border);
+    }
+    .pcomp-footer button { flex: 1; }
+
+    .pcomp-rubros-label {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 0.6rem;
+    }
+
+    .pcomp-rubros-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .pcomp-rubro-chip {
+        padding: 0.4rem 0.8rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-full);
+        font-size: 0.82rem;
+        font-weight: 600;
+        font-family: var(--font-family);
+        cursor: pointer;
+        background: var(--white);
+        transition: all var(--transition);
+        color: var(--dark);
+    }
+    .pcomp-rubro-chip:hover { border-color: var(--primary); color: var(--primary); }
+    .pcomp-rubro-chip.selected { background: var(--primary); border-color: var(--primary); color: var(--white); }
+
+    .offer-time-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.65rem;
+    }
+    .offer-time-row input,
+    .offer-time-row select {
+        width: 100%;
+        padding: 0.7rem 0.9rem;
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 0.95rem;
+        font-family: var(--font-family);
+        background: var(--white);
+        transition: border-color var(--transition);
+        box-sizing: border-box;
+    }
+    .offer-time-row input:focus,
+    .offer-time-row select:focus { outline: none; border-color: var(--primary); }
+
+    .geo-status { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
+    .btn-geo {
+        display: inline-flex; align-items: center; gap: 0.5rem;
+        padding: 0.65rem 1.2rem;
+        background: var(--primary, #3b82f6); color: #fff;
+        border: none; border-radius: var(--radius, 8px);
+        font-size: 0.9rem; font-family: var(--font-family); font-weight: 600;
+        cursor: pointer; transition: background 0.2s, opacity 0.2s;
+        width: fit-content;
+    }
+    .btn-geo:hover:not(:disabled) { opacity: 0.88; }
+    .btn-geo:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-geo.success { background: var(--success, #22c55e); }
+    .geo-msg { font-size: 0.82rem; color: var(--gray, #6b7280); min-height: 1.1rem; }
+    .geo-msg.error { color: var(--danger, #ef4444); }
+    .geo-msg.success { color: var(--success, #22c55e); font-weight: 600; }
+    </style>
+
+    <script>
+    (function() {
+        var rubrosComunes = [
+            '&#9889; Electricidad','&#128694; Plomer&#237;a','&#127912; Pintura','&#127959; Construcci&#243;n',
+            '&#127970; Carpinter&#237;a','&#10052; Aire Acondicionado','&#127981; Herrería','&#128247; CCTV / Seguridad',
+            '&#128241; Tecnolog&#237;a','&#128241; Gas','&#127745; Jardiner&#237;a','&#9977; Limpieza'
+        ];
+        var rubrosSeleccionados = [];
+
+        function renderRubrosGrid() {
+            var grid = document.getElementById('pcompRubrosGrid');
+            if (!grid) return;
+            grid.innerHTML = rubrosComunes.map(function(r, i) {
+                return '<button type="button" class="pcomp-rubro-chip" onclick="toggleRubroChip(this, ' + i + ')">' + r + '</button>';
+            }).join('');
+        }
+
+        window.toggleRubroChip = function(el, idx) {
+            el.classList.toggle('selected');
+            var rubro = rubrosComunes[idx];
+            var pos = rubrosSeleccionados.indexOf(idx);
+            if (pos === -1) rubrosSeleccionados.push(idx);
+            else rubrosSeleccionados.splice(pos, 1);
+        };
+
+        window.cerrarModalProyecto = function() {
+            document.getElementById('modalProyectoCompleto').classList.remove('active');
+        };
+
+        window.publicarProyectoCompleto = function() {
+            var nombre = (document.getElementById('pcomp-nombre').value || '').trim();
+            var desc   = (document.getElementById('pcomp-descripcion').value || '').trim();
+            if (!nombre) { App.showNotification('El nombre del proyecto es obligatorio', 'error'); return; }
+            if (!desc)   { App.showNotification('La descripci&#243;n es obligatoria', 'error'); return; }
+
+            var btn = document.querySelector('#modalProyectoCompleto .btn-primary');
+            btn.disabled = true;
+            btn.textContent = 'Publicando...';
+
+            var data = {
+                titulo: nombre,
+                descripcion: desc,
+                ciudad: (document.getElementById('pcomp-ciudad').value || '').trim() || null,
+                presupuesto_total: document.getElementById('pcomp-presupuesto').value || null,
+                fecha_inicio: document.getElementById('pcomp-fecha').value || null,
+                duracion: document.getElementById('pcomp-duracion').value || null,
+                duracion_unidad: document.getElementById('pcomp-duracion-unidad').value,
+                notas: (document.getElementById('pcomp-notas').value || '').trim() || null,
+                tipo: 'proyecto_completo',
+                rubros: rubrosSeleccionados.map(function(i) { return rubrosComunes[i]; })
+            };
+
+            App.apiRequest('/jobs', { method: 'POST', body: JSON.stringify(data) })
+                .then(function(res) {
+                    if (res.success || res.id) {
+                        App.showNotification('&#161;Proyecto publicado!', 'success');
+                        cerrarModalProyecto();
+                        setTimeout(function() { window.location.href = '/pages/feed.html'; }, 1500);
+                    } else {
+                        App.showNotification(res.error || 'Error al publicar', 'error');
+                    }
+                })
+                .catch(function() { App.showNotification('Error de conexi&#243;n', 'error'); })
+                .finally(function() { btn.disabled = false; btn.textContent = '&#128640; Publicar Proyecto'; });
+        };
+
+        // Cerrar al clic fuera
+        document.getElementById('modalProyectoCompleto').addEventListener('click', function(e) {
+            if (e.target === this) cerrarModalProyecto();
+        });
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', renderRubrosGrid);
+        } else {
+            renderRubrosGrid();
+        }
+    })();
+    </script>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/utils/text-classifier.js"></script>
+    <script src="/js/modules/publicar-trabajo.js"></script>
+</body>
+</html>

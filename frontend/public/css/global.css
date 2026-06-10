@@ -1,0 +1,181 @@
+﻿/* ============================================================
+   Labu — global.css
+   Estilos base compartidos por todas las páginas
+   ============================================================ */
+
+@import url('/css/responsive.css');
+
+/* ── RESET ───────────────────────────────────────────────── */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    line-height: 1.6;
+    color: var(--dark);
+    background: var(--light-gray);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+ul {
+    list-style: none;
+}
+
+button {
+    font-family: inherit;
+}
+
+/* ── LOADER GLOBAL ───────────────────────────────────────── */
+#global-loader {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ── NOTIFICACIONES UI ───────────────────────────────────── */
+#notification-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.notification {
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    color: var(--white);
+    font-weight: 500;
+    box-shadow: var(--shadow-md);
+    animation: slideInRight 0.3s ease-out;
+    pointer-events: all;
+}
+
+.notification-info    { background: var(--primary); }
+.notification-success { background: var(--secondary); }
+.notification-warning { background: var(--warning); color: var(--dark); }
+.notification-error   { background: var(--danger); }
+
+.notification.fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(110%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* ── BOTONES ──────────────────────────────────────────────── */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 1rem;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+.btn-primary         { background: var(--primary); color: var(--white); }
+.btn-primary:hover   { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-secondary       { background: var(--light-gray); color: var(--dark); }
+.btn-secondary:hover { background: var(--border); }
+.btn-outline         { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+.btn-outline:hover   { background: var(--primary); color: var(--white); }
+.btn-danger          { background: var(--danger-light); color: var(--danger); }
+.btn-danger:hover    { background: var(--danger); color: var(--white); }
+
+/* ── CARD ─────────────────────────────────────────────────── */
+.card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+}
+
+/* ── FORM GROUP ───────────────────────────────────────────── */
+.form-group { margin-bottom: 1.5rem; }
+.form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.95rem; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    font-family: var(--font-family);
+    transition: border-color var(--transition);
+    box-sizing: border-box;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,132,255,0.1); }
+.form-group textarea { resize: vertical; min-height: 100px; }
+
+/* ── ESTADO VACÍO ─────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 4rem 2rem; color: var(--gray); }
+.empty-icon  { font-size: 4rem; margin-bottom: 1rem; }
+
+/* ── STAT CARD ────────────────────────────────────────────── */
+.stat-card   { padding: 1.5rem; background: var(--light-gray); border-radius: var(--radius); text-align: center; }
+.stat-number { font-size: 2rem; font-weight: bold; color: var(--primary); margin-bottom: 0.25rem; }
+.stat-label  { font-size: 0.85rem; color: var(--gray); }
+
+/* ── NIVEL DE CONFIANZA ───────────────────────────────────── */
+.nivel-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--radius-full, 9999px);
+    vertical-align: middle;
+    line-height: 1.5;
+}
+.nivel-nuevo   { background: #f0f0f0;  color: #6b7280; border: 1px solid #d1d5db; }
+.nivel-bronce  { background: #fdf0e0;  color: #92400e; border: 1px solid #cd7f32; }
+.nivel-plata   { background: #f3f4f6;  color: #4b5563; border: 1px solid #9ca3af; }
+.nivel-oro     { background: #fffbeb;  color: #92400e; border: 1px solid #f59e0b; }
+.nivel-platino { background: #ecfeff;  color: #0e7490; border: 1px solid #22d3ee; }

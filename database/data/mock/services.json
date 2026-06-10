@@ -1,0 +1,24 @@
+[
+  {
+    "id": "s1",
+    "titulo": "Reboque profesional por m²",
+    "descripcion": "Servicio de reboque fino y grueso con acabado perfecto",
+    "rubro": "construccion",
+    "precio": 3500,
+    "unidad": "m2",
+    "userId": "u1",
+    "calificacion": 4.8,
+    "trabajosRealizados": 156
+  },
+  {
+    "id": "s2",
+    "titulo": "Instalaciones eléctricas residenciales",
+    "descripcion": "Todo tipo de instalaciones eléctricas con garantía",
+    "rubro": "electricidad",
+    "precio": 5000,
+    "unidad": "hora",
+    "userId": "u2",
+    "calificacion": 4.9,
+    "trabajosRealizados": 324
+  }
+]

@@ -1,0 +1,255 @@
+<!-- 
+  Calendar Widget Component
+  Widget de calendario interactivo para agendar eventos y trabajos
+-->
+
+<div class="calendar-widget">
+  <!-- Header del Calendario -->
+  <div class="calendar-header">
+    <button class="calendar-nav-btn" id="prevMonth">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"/>
+      </svg>
+    </button>
+    
+    <div class="calendar-title">
+      <h3 id="currentMonth">Enero 2025</h3>
+      <button class="btn-today" id="todayBtn">Hoy</button>
+    </div>
+    
+    <button class="calendar-nav-btn" id="nextMonth">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Días de la semana -->
+  <div class="calendar-weekdays">
+    <div class="weekday">Dom</div>
+    <div class="weekday">Lun</div>
+    <div class="weekday">Mar</div>
+    <div class="weekday">Mié</div>
+    <div class="weekday">Jue</div>
+    <div class="weekday">Vie</div>
+    <div class="weekday">Sáb</div>
+  </div>
+
+  <!-- Grid de días -->
+  <div class="calendar-days" id="calendarDays">
+    <!-- Los días se generan dinámicamente con JavaScript -->
+  </div>
+
+  <!-- Lista de eventos del día seleccionado -->
+  <div class="calendar-events" id="calendarEvents" style="display: none;">
+    <div class="events-header">
+      <h4 id="selectedDateTitle">Eventos</h4>
+      <button class="btn-add-event" id="addEventBtn">
+        + Agregar
+      </button>
+    </div>
+    <div class="events-list" id="eventsList"></div>
+  </div>
+</div>
+
+<style>
+.calendar-widget {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 400px;
+  width: 100%;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.calendar-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.calendar-title h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.btn-today {
+  padding: 0.25rem 0.75rem;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.calendar-nav-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: #f0f0f0;
+}
+
+.calendar-day.today {
+  background: #e3f2fd;
+  color: #0084ff;
+  font-weight: 700;
+}
+
+.calendar-day.selected {
+  background: #0084ff;
+  color: white;
+}
+
+.calendar-day.has-events::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  width: 4px;
+  height: 4px;
+  background: #0084ff;
+  border-radius: 50%;
+}
+
+.calendar-events {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+.events-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.btn-add-event {
+  padding: 0.5rem 0.75rem;
+  background: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.events-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.event-item {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 3px solid #0084ff;
+  cursor: pointer;
+}
+</style>
+
+<script>
+(function() {
+  let currentDate = new Date();
+  let selectedDate = null;
+  
+  function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    document.getElementById('currentMonth').textContent = 
+      new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(currentDate);
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const prevMonthLastDay = new Date(year, month, 0);
+    
+    const calendarDays = document.getElementById('calendarDays');
+    calendarDays.innerHTML = '';
+    
+    // Días del mes anterior
+    for (let i = firstDay.getDay() - 1; i >= 0; i--) {
+      createDay(prevMonthLastDay.getDate() - i, true);
+    }
+    
+    // Días del mes actual
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      createDay(day, false);
+    }
+  }
+  
+  function createDay(day, otherMonth) {
+    const div = document.createElement('div');
+    div.className = 'calendar-day' + (otherMonth ? ' other-month' : '');
+    div.textContent = day;
+    div.onclick = () => selectDay(day);
+    document.getElementById('calendarDays').appendChild(div);
+  }
+  
+  function selectDay(day) {
+    document.getElementById('calendarEvents').style.display = 'block';
+  }
+  
+  document.getElementById('prevMonth').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  };
+  
+  document.getElementById('nextMonth').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  };
+  
+  document.getElementById('todayBtn').onclick = () => {
+    currentDate = new Date();
+    renderCalendar();
+  };
+  
+  renderCalendar();
+})();
+</script>

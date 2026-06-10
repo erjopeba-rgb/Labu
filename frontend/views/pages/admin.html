@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+      // Verificar token antes de cargar la página
+      if (!localStorage.getItem('auth_token') && !sessionStorage.getItem('auth_token')) {
+        window.location.replace('/index.html');
+      }
+    </script>
+    <title>Labu - Panel de Administración</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo">Labu</div>
+            </div>
+            <div class="nav-title">&#9881; Panel de Administración</div>
+            <div style="width:100px;"></div>
+        </div>
+    </nav>
+
+    <div class="admin-layout">
+
+        <div class="admin-header">
+            <h1>Panel de Administración</h1>
+            <p>Gestión de usuarios, reportes y configuración de la plataforma</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab activo" data-tab="usuarios" onclick="cambiarTab('usuarios')">
+                Usuarios
+            </button>
+            <button class="admin-tab" data-tab="reportes" onclick="cambiarTab('reportes')">
+                Reportes
+            </button>
+            <button class="admin-tab" data-tab="verificaciones" onclick="cambiarTab('verificaciones')">
+                Verificaciones
+            </button>
+            <button class="admin-tab" data-tab="disputas" onclick="cambiarTab('disputas')">
+                Disputas
+            </button>
+            <button class="admin-tab" data-tab="config" onclick="cambiarTab('config')">
+                Configuración
+            </button>
+            <button class="admin-tab" data-tab="errores" onclick="cambiarTab('errores')">
+                Errores
+            </button>
+            <button class="admin-tab" data-tab="backups" onclick="cambiarTab('backups')">
+                Backups
+            </button>
+        </div>
+
+        <!-- Sección: Usuarios -->
+        <div id="sec-usuarios" class="admin-seccion activa">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Nombre</th>
+                            <th>Perfil</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyUsuarios">
+                        <tr><td colspan="6" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección: Reportes -->
+        <div id="sec-reportes" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Tipo</th>
+                            <th>Ref. ID</th>
+                            <th>Motivo</th>
+                            <th>Reportado por</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyReportes">
+                        <tr><td colspan="7" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección: Verificaciones -->
+        <div id="sec-verificaciones" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Email</th>
+                            <th>Fotos</th>
+                            <th>Estado</th>
+                            <th>Fecha solicitud</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyVerificaciones">
+                        <tr><td colspan="7" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal rechazar verificación -->
+        <div id="modalRechazar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:2rem;width:min(420px,90vw);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 1rem;">Rechazar verificación</h3>
+                <label style="font-size:0.9rem;font-weight:600;">Motivo del rechazo *</label>
+                <textarea id="motivoRechazo" rows="4" placeholder="Explicá por qué se rechaza la solicitud..."
+                    style="width:100%;margin-top:0.5rem;padding:0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModalRechazar()">Cancelar</button>
+                    <button class="btn btn-primary" style="background:#dc2626;" onclick="confirmarRechazo()">Rechazar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Disputas -->
+        <div id="sec-disputas" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Trabajo</th>
+                            <th>Iniciador</th>
+                            <th>Acusado</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDisputas">
+                        <tr><td colspan="8" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal resolver disputa -->
+        <div id="modalResolverDisputa" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:2rem;width:min(480px,90vw);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 0.5rem;">Resolver disputa</h3>
+                <p id="resolverDisputaInfo" style="font-size:0.88rem;color:#64748b;margin:0 0 1rem;"></p>
+                <label style="font-size:0.9rem;font-weight:600;">Resolución *</label>
+                <textarea id="resolverDisputaTexto" rows="4"
+                    placeholder="Describí la decisión tomada y los motivos..."
+                    style="width:100%;margin-top:0.5rem;padding:0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModalResolverDisputa()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="confirmarResolucionDisputa()">Confirmar resolución</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Configuración -->
+        <div id="sec-config" class="admin-seccion">
+            <div id="configGrid" class="config-grid">
+                <div class="admin-loading">Cargando...</div>
+            </div>
+            <div class="config-footer">
+                <button id="btnGuardarConfig" class="btn btn-primary" onclick="guardarConfig()">
+                    Guardar cambios
+                </button>
+                <span id="configMsg" class="config-msg"></span>
+            </div>
+        </div>
+
+        <!-- Sección: Errores -->
+        <div id="sec-errores" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Mensaje</th>
+                            <th>URL</th>
+                            <th>Método</th>
+                            <th>Usuario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyErrores">
+                        <tr><td colspan="6" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Sección: Backups -->
+        <div id="sec-backups" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <div style="padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--borde,#e5e7eb);">
+                    <h3 style="margin:0;font-size:1rem;font-weight:600;">Backups de base de datos</h3>
+                    <button class="btn btn-primary" id="btnEjecutarBackup" onclick="ejecutarBackup()">
+                        Ejecutar backup ahora
+                    </button>
+                </div>
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Fecha</th>
+                            <th>Tamaño</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyBackups">
+                        <tr><td colspan="4" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p id="backupMsg" style="margin-top:0.75rem;font-size:0.9rem;color:var(--texto-secundario,#64748b);display:none;"></p>
+        </div>
+
+    </div>
+
+    <script src="/js/modules/admin.js"></script>
+</body>
+</html>

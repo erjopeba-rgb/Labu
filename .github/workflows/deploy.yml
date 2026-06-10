@@ -1,0 +1,85 @@
+﻿name: Deploy
+
+# TODO: Configurar el trigger según la estrategia de deploy elegida.
+# Opción A — deploy automático al hacer push a main (solo si el CI pasó):
+#   on:
+#     workflow_run:
+#       workflows: [CI]
+#       types: [completed]
+#       branches: [main]
+#
+# Opción B — deploy manual desde GitHub Actions:
+#   on:
+#     workflow_dispatch:
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy a producción
+    runs-on: ubuntu-latest
+    # TODO: Si usás Opción A, agregar esta condición para no deployar si el CI falló:
+    # if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # TODO: Configurar acceso SSH al servidor de producción.
+      # Agregar en GitHub → Settings → Secrets:
+      #   SSH_HOST       → IP o dominio del servidor
+      #   SSH_USER       → usuario SSH (ej: ubuntu, deploy)
+      #   SSH_PRIVATE_KEY → clave privada SSH (sin passphrase)
+      #   SSH_PORT       → puerto SSH (por defecto 22)
+
+      - name: Conectar al servidor y hacer deploy
+        # TODO: Reemplazar con la acción SSH de tu preferencia.
+        # Opción recomendada: appleboy/ssh-action
+        # Instalar con: uses: appleboy/ssh-action@v1
+        run: echo "TODO — configurar acción SSH"
+
+      # TODO: Pasos dentro del servidor (ejecutar vía SSH):
+      #
+      # 1. Ir al directorio del proyecto:
+      #    cd /var/www/rtype1
+      #
+      # 2. Bajar últimos cambios:
+      #    git pull origin main
+      #
+      # 3. Instalar/actualizar dependencias:
+      #    cd backend && npm ci --omit=dev
+      #
+      # 4. Cargar variables de entorno de producción.
+      #    El archivo .env NO debe estar en el repo. Opciones:
+      #    a) Tenerlo en el servidor y no tocarlo en el deploy.
+      #    b) Escribirlo desde GitHub Secrets en cada deploy:
+      #       echo "${{ secrets.ENV_PRODUCCION }}" > backend/.env
+      #
+      # 5. Ejecutar migraciones pendientes:
+      #    PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME \
+      #      -f database/migrations/<nueva_migracion>.sql
+      #
+      # 6. Recargar el proceso con PM2 (sin downtime):
+      #    pm2 reload rtype1 --update-env
+      #    # Si es el primer deploy: pm2 start backend/server.js --name rtype1
+      #
+      # 7. Verificar que el proceso quedó corriendo:
+      #    pm2 status rtype1
+      #
+      # 8. Verificar health check del servidor:
+      #    curl -f https://labu.com/api/health || exit 1
+
+      # TODO: Variables de entorno de producción necesarias en el servidor (.env):
+      #   DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+      #   JWT_SECRET                  (clave larga y aleatoria, distinta a la de dev)
+      #   JWT_EXPIRES_IN=7d
+      #   PORT=3000
+      #   CORS_ORIGIN=https://labu.com
+      #   APP_URL=https://labu.com
+      #   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+      #   MP_ACCESS_TOKEN             (token de producción de MercadoPago)
+      #   MP_WEBHOOK_SECRET
+      #   NODE_ENV=production
+      #   # Opcional (cuando se agregue Redis):
+      #   # REDIS_URL=redis://localhost:6379

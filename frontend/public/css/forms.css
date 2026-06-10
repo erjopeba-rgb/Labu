@@ -1,0 +1,2 @@
+input, textarea, select { width: 100%; padding: 0.75rem; border: 2px solid var(--border); border-radius: var(--radius); font-size: 1rem; }
+input:focus { outline: none; border-color: var(--primary); }

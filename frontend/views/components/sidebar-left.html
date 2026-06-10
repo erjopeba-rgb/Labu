@@ -1,0 +1,176 @@
+﻿<!--
+  Sidebar Izquierdo Component — Labu
+  Panel de navegación principal: perfil del usuario y menú de secciones.
+  Requiere en la página: /css/variables.css, /css/global.css, /css/cards.css,
+                         /js/auth.js, /js/main.js
+-->
+
+<aside class="sidebar-left">
+
+    <!-- Mini perfil -->
+    <div class="card sidebar-profile">
+        <div class="avatar" id="sidebarAvatar">?</div>
+        <div class="sidebar-user-info">
+            <h4 id="sidebarNombre">Cargando...</h4>
+            <div class="sidebar-user-role" id="sidebarRol">--</div>
+        </div>
+    </div>
+
+    <!-- Menú de navegación -->
+    <nav class="card sidebar-nav">
+        <div class="menu-item" data-page="feed">&#128240; Feed</div>
+        <div class="menu-item" data-page="publicar-trabajo" data-role="dueno">&#128736; Publicar Trabajo</div>
+        <div class="menu-item" data-page="mis-ofertas-laborales" data-role="dueno">&#128188; Mis Ofertas Laborales</div>
+        <div class="menu-item" data-page="mis-ofertas" data-role="trabajador">&#128203; Mis Ofertas</div>
+        <div class="menu-item" data-page="ayudantes" data-role="trabajador">&#129309; Mis Ayudantes</div>
+        <div class="menu-item" data-page="mensajes">&#128172; Mensajes</div>
+        <div class="menu-item" data-page="agenda">&#128197; Agenda</div>
+        <div class="menu-item" data-page="busqueda">&#128269; Búsqueda</div>
+        <div class="menu-item" data-page="configuracion">&#9881;&#65039; Configuración</div>
+        <div class="menu-item sidebar-logout" data-action="logout">&#128682; Cerrar Sesión</div>
+    </nav>
+
+</aside>
+
+<style>
+/* ── SIDEBAR IZQUIERDO ───────────────────────────────────── */
+.sidebar-left {
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── MINI PERFIL ─────────────────────────────────────────── */
+.sidebar-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.sidebar-user-info h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.sidebar-user-role {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-transform: capitalize;
+}
+
+/* ── MENÚ ────────────────────────────────────────────────── */
+.sidebar-nav { padding: 0.75rem; }
+
+.menu-item {
+    padding: 0.7rem 0.75rem;
+    margin: 0.15rem 0;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--dark);
+    user-select: none;
+}
+
+.menu-item:hover { background: var(--light-gray); }
+
+.menu-item.active {
+    background: var(--primary);
+    color: var(--white);
+    font-weight: 600;
+}
+
+.sidebar-logout {
+    color: var(--danger);
+    margin-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.85rem;
+}
+
+.sidebar-logout:hover { background: var(--danger-light); }
+</style>
+
+<script>
+(function () {
+    var PAGE_NAMES = {
+        'feed': 'feed',
+        'publicar-trabajo': 'publicar-trabajo',
+        'mis-trabajos':          'mis-trabajos',
+        'mis-ofertas-laborales': 'mis-ofertas-laborales',
+        'mis-ofertas': 'mis-ofertas',
+        'mensajes': 'mensajes',
+        'agenda': 'agenda',
+        'busqueda-avanzada': 'busqueda',
+        'configuracion': 'configuracion',
+        'ayudantes': 'ayudantes'
+    };
+
+    function populateProfile() {
+        if (typeof Auth === 'undefined' || !Auth.isAuthenticated()) return;
+        var user = Auth.getUser();
+        if (!user) return;
+
+        var nombreEl = document.getElementById('sidebarNombre');
+        var rolEl    = document.getElementById('sidebarRol');
+        var avatarEl = document.getElementById('sidebarAvatar');
+
+        if (nombreEl) nombreEl.textContent = user.nombre || user.email || 'Usuario';
+        if (avatarEl) {
+            var inicial = (user.nombre || user.email || '?')[0].toUpperCase();
+            avatarEl.textContent = inicial;
+        }
+
+        var rolActivo  = user.perfil_activo || user.tipo_perfil || '';
+        var rolLabels  = { dueno: 'Dueño', trabajador: 'Trabajador', ambos: 'Dueño / Trabajador' };
+        if (rolEl) rolEl.textContent = rolLabels[rolActivo] || rolActivo || '--';
+
+        document.querySelectorAll('.sidebar-left .menu-item[data-role]').forEach(function (item) {
+            item.style.display = item.dataset.role === rolActivo ? '' : 'none';
+        });
+    }
+
+    function markActiveItem() {
+        var filename = window.location.pathname.split('/').pop().replace('.html', '');
+        var activePage = PAGE_NAMES[filename] || filename;
+        document.querySelectorAll('.sidebar-left .menu-item[data-page]').forEach(function (item) {
+            item.classList.toggle('active', item.dataset.page === activePage);
+        });
+    }
+
+    function init() {
+        populateProfile();
+        markActiveItem();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>

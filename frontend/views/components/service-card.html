@@ -1,0 +1,161 @@
+﻿<!--
+  Service Card Component — Labu
+  Tarjeta de profesional/trabajador que ofrece servicios.
+  Muestra avatar, nombre, rubro, calificación, habilidades,
+  detalles (tarifa, distancia, experiencia) y acciones.
+
+  Extraído de: busqueda-avanzada.js → renderCard()
+               busqueda-avanzada.css → .result-card
+
+  Uso en JS (busqueda-avanzada.js → renderCard):
+    .result-avatar       → iniciales del nombre (2 chars)
+    .result-name         → t.nombre
+    .result-role         → t.rubro_nombre || t.profesion
+    .result-rating       → t.calificacion_promedio / t.total_calificaciones
+    .result-skills       → t.habilidades[] → .skill-tag
+    .result-details      → tarifa / distancia / experiencia
+    .btn-action.btn-primary   → onclick="verPerfil(t.id)"
+    .btn-action.btn-secondary → onclick="contactar(t.id)"
+
+  Estados de habilidades: .skill-tag (pill genérico)
+  Requiere en la página: /css/variables.css, /css/global.css
+-->
+
+<div class="result-card">
+
+    <div class="result-header">
+        <div class="result-avatar">CA</div>
+        <div class="result-info">
+            <div class="result-name">Carlos Argüello</div>
+            <div class="result-role">Electricista</div>
+            <div class="result-rating">
+                <span class="stars">&#11088;</span>
+                <span>4.8 (32 reseñas)</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="result-skills">
+        <span class="skill-tag">Tableros</span>
+        <span class="skill-tag">Instalaciones</span>
+        <span class="skill-tag">Urgencias</span>
+        <span class="skill-tag">LED</span>
+    </div>
+
+    <div class="result-details">
+        <div>
+            <div class="detail-icon">&#128176;</div>
+            <div class="detail-label">Tarifa</div>
+            <div class="detail-value">$3.500/h</div>
+        </div>
+        <div>
+            <div class="detail-icon">&#128205;</div>
+            <div class="detail-label">Distancia</div>
+            <div class="detail-value">2.4 km</div>
+        </div>
+        <div>
+            <div class="detail-icon">&#128197;</div>
+            <div class="detail-label">Experiencia</div>
+            <div class="detail-value">8 años</div>
+        </div>
+    </div>
+
+    <div class="result-actions">
+        <button class="btn-action btn-primary" onclick="verPerfil(1)">Ver Perfil</button>
+        <button class="btn-action btn-secondary" onclick="contactar(1)">&#128172; Mensaje</button>
+    </div>
+
+</div>
+
+<style>
+/* ── SERVICE / RESULT CARD ────────────────────────────────── */
+.result-card {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    transition: all var(--transition);
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+.result-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.result-header { display: flex; gap: 1rem; margin-bottom: 1rem; }
+
+.result-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 1.5rem;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.result-info     { flex: 1; }
+.result-name     { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.25rem; }
+.result-role     { color: var(--gray); font-size: 0.9rem; margin-bottom: 0.5rem; }
+
+.result-rating   { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.stars           { color: #ffc107; }
+
+/* ── HABILIDADES ──────────────────────────────────────────── */
+.result-skills { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+
+.skill-tag {
+    padding: 0.4rem 0.8rem;
+    background: var(--light-gray);
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* ── DETALLES ─────────────────────────────────────────────── */
+.result-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--light-gray);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.detail-icon  { font-size: 1.2rem; margin-bottom: 0.25rem; }
+.detail-label { font-size: 0.75rem; color: var(--gray); }
+.detail-value { font-weight: bold; font-size: 0.9rem; }
+
+/* ── BOTONES ──────────────────────────────────────────────── */
+.result-actions { display: flex; gap: 0.75rem; }
+
+.btn-action {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.btn-action.btn-primary          { background: var(--primary); color: var(--white); }
+.btn-action.btn-primary:hover    { background: var(--primary-dark); }
+.btn-action.btn-secondary        { background: var(--light-gray); color: var(--dark); }
+.btn-action.btn-secondary:hover  { background: var(--border); }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .result-actions { flex-direction: column; }
+    .result-details { grid-template-columns: 1fr; }
+}
+</style>

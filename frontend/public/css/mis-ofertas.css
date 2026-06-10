@@ -1,0 +1,207 @@
+﻿/* mis-ofertas.css */
+
+body {
+    background: var(--light-gray);
+    padding-top: 60px;
+}
+
+/* ─── NAVBAR ─── */
+.navbar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    z-index: var(--z-fixed);
+    padding: 0.75rem 1rem;
+}
+
+.navbar-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.btn-back {
+    padding: 0.5rem 1rem;
+    background: var(--light-gray);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+}
+.btn-back:hover { background: var(--border); }
+
+/* ─── LAYOUT ─── */
+.offers-layout {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.page-header       { margin-bottom: 2rem; }
+.page-header h1    { font-size: 2rem; margin-bottom: 0.5rem; }
+.page-header p     { color: var(--gray); }
+
+
+/* ─── STATS ─── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.stat-card:hover  { border-color: var(--primary); }
+.stat-card.active { border-color: var(--primary); background: #e3f2fd; }
+
+/* ─── FILTROS ─── */
+.filters-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; flex: 1; }
+
+.filter-tab {
+    padding: 0.6rem 1.25rem;
+    background: var(--light-gray);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    font-family: var(--font-family);
+    transition: all var(--transition);
+    font-size: 0.9rem;
+}
+.filter-tab:hover  { border-color: var(--primary); }
+.filter-tab.active { background: var(--primary); color: var(--white); border-color: var(--primary); }
+
+/* ─── OFFERS LIST ─── */
+.offers-list { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.offer-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--white);
+    transition: all var(--transition);
+}
+.offer-card:hover     { border-color: var(--primary); box-shadow: var(--shadow); }
+.offer-card.rechazada { opacity: 0.7; }
+
+.offer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--light-gray);
+    gap: 1rem;
+}
+
+.offer-job-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 0.35rem; }
+.offer-meta      { font-size: 0.85rem; color: var(--gray); margin-bottom: 0.2rem; }
+
+.offer-status {
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: bold;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.status-pendiente    { background: var(--warning-light); color: #856404; }
+.status-aceptada     { background: var(--success-light); color: #155724; }
+.status-rechazada    { background: var(--danger-light);  color: #721c24; }
+.status-contraoferta { background: #e3f2fd; color: #1565c0; }
+
+/* ─── OFFER BODY ─── */
+.offer-body { padding: 1.25rem; }
+
+.offer-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.detail-item  { display: flex; align-items: center; gap: 0.75rem; }
+.detail-icon  { font-size: 1.3rem; }
+.detail-label { font-size: 0.75rem; color: var(--gray); margin-bottom: 0.15rem; }
+.detail-value { font-weight: bold; font-size: 0.95rem; }
+.detail-value.amount { font-size: 1.4rem; color: var(--primary); }
+
+.offer-message {
+    padding: 0.875rem 1rem;
+    background: var(--light-gray);
+    border-radius: var(--radius);
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+    color: var(--dark);
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* ─── ALERT BOXES ─── */
+.alert-box {
+    padding: 0.875rem 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.alert-success { background: var(--success-light); color: #155724; }
+.alert-warning { background: var(--warning-light); color: #856404; }
+.alert-danger  { background: var(--danger-light);  color: #721c24; }
+
+.contraoferta-box {
+    padding: 0.875rem 1rem;
+    background: #e3f2fd;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.contraoferta-msg { margin-top: 0.5rem; color: var(--gray); font-style: italic; }
+
+/* ─── ACCIONES ─── */
+.offer-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+/* override: botones más compactos en mis-ofertas */
+.btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+}
+
+/* ─── EMPTY STATE ─── */
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+    .stats-grid      { grid-template-columns: repeat(2, 1fr); }
+    .offer-header    { flex-direction: column; }
+    .offer-actions   { justify-content: stretch; }
+    .btn             { flex: 1; }
+}

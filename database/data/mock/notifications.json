@@ -1,0 +1,22 @@
+[
+  {
+    "id": "n1",
+    "userId": "u3",
+    "tipo": "nueva_oferta",
+    "titulo": "Nueva oferta en tu trabajo",
+    "mensaje": "Juan Martínez hizo una oferta de $42.000",
+    "timestamp": "2025-01-06T09:15:00",
+    "leida": false,
+    "link": "/mis-trabajos"
+  },
+  {
+    "id": "n2",
+    "userId": "u1",
+    "tipo": "trabajo_aceptado",
+    "titulo": "¡Felicitaciones!",
+    "mensaje": "Tu oferta fue aceptada",
+    "timestamp": "2025-01-05T14:20:00",
+    "leida": true,
+    "link": "/mis-ofertas"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "reboque": {
+    "nombre": "Reboque",
+    "unidad": "m2",
+    "precioPromedio": 3500
+  },
+  "pintura_interior": {
+    "nombre": "Pintura Interior",
+    "unidad": "m2",
+    "precioPromedio": 2500
+  },
+  "instalacion_electrica": {
+    "nombre": "Instalación Eléctrica",
+    "unidad": "hora",
+    "precioPromedio": 5000
+  }
+}

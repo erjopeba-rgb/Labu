@@ -1,0 +1,3 @@
+/* .card está definida en global.css — ver /css/global.css */
+/* Hover adicional para páginas que cargan cards.css (ej: feed.html) */
+.card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }

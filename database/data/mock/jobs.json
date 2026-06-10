@@ -1,0 +1,28 @@
+[
+  {
+    "id": "j1",
+    "titulo": "Reboque de habitación completa",
+    "descripcion": "Necesito reboque profesional para habitación de 4x3 metros",
+    "rubro": "construccion",
+    "urgencia": "normal",
+    "ubicacion": {"lat": -34.6037, "lng": -58.3816, "direccion": "Palermo"},
+    "presupuesto": 45000,
+    "fechaLimite": "2025-01-20",
+    "userId": "u3",
+    "ofertas": 8,
+    "estado": "activo"
+  },
+  {
+    "id": "j2",
+    "titulo": "Instalación de toma trifásica",
+    "descripcion": "Requiero instalación de toma trifásica para taller",
+    "rubro": "electricidad",
+    "urgencia": "urgente",
+    "ubicacion": {"lat": -34.6158, "lng": -58.4333, "direccion": "Villa Crespo"},
+    "presupuesto": 25000,
+    "fechaLimite": "2025-01-15",
+    "userId": "u3",
+    "ofertas": 12,
+    "estado": "activo"
+  }
+]

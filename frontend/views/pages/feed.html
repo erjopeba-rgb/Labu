@@ -1,0 +1,548 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Feed</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="stylesheet" href="/css/cards.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <link rel="stylesheet" href="/css/modals.css">
+    <link rel="stylesheet" href="/css/feed.css">
+    <link rel="stylesheet" href="/css/disponibilidad.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body>
+
+    <!-- Banner verificación de email -->
+    <div id="bannerVerifEmail" style="display:none; background:#fff3cd; color:#664d03; border-bottom:1px solid #ffc107; padding:0.6rem 1.25rem; font-size:0.9rem; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <span>📧 <strong>Verificá tu email</strong> para acceder a todas las funciones.</span>
+        <button id="btnReenviarVerif" style="background:#ffc107; color:#664d03; border:none; border-radius:6px; padding:0.3rem 0.85rem; font-size:0.85rem; font-weight:600; cursor:pointer;">Reenviar verificación</button>
+        <span id="bannerVerifMsg" style="font-size:0.85rem; display:none;"></span>
+        <button onclick="document.getElementById('bannerVerifEmail').style.display='none'" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:1.1rem; color:#664d03; line-height:1;">✕</button>
+    </div>
+
+    <!-- Navbar — componente: /components/navbar.html -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            <div class="nav-search">
+                <span class="nav-search-icon">&#128269;</span>
+                <input type="text" id="navSearchInput" placeholder="Buscar trabajos, profesionales...">
+            </div>
+            <!-- Toggle de perfil activo -->
+            <div class="nav-perfil-toggle" id="navPerfilToggle" title="Cambiar modo de perfil" style="display:none;">
+                <span class="toggle-modo-icon" id="navModoIcon"></span>
+                <span class="toggle-modo-label" id="navModoLabel"></span>
+                <span class="toggle-switch-arrow">&#8646;</span>
+            </div>
+            <div class="nav-icons">
+                <div class="nav-icon nav-icon-dropdown" title="Notificaciones" id="navNotifBtn">
+                    &#128276;
+                    <span class="badge" id="notification-badge"></span>
+                    <div class="nav-dropdown" id="dropdownNotif">
+                        <div class="nav-dropdown-header">
+                            <span>Notificaciones</span>
+                            <a href="/pages/notificaciones.html" class="nav-dropdown-link">Ver todas</a>
+                        </div>
+                        <div class="nav-dropdown-list" id="dropdownNotifList">
+                            <div class="nav-dropdown-empty">No tenés notificaciones nuevas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-icon nav-icon-dropdown" title="Mensajes" id="navMsgBtn">
+                    &#128172;
+                    <span class="badge" id="message-badge"></span>
+                    <div class="nav-dropdown" id="dropdownMsg">
+                        <div class="nav-dropdown-header">
+                            <span>Mensajes</span>
+                            <a href="/pages/mensajes.html" class="nav-dropdown-link">Ver todos</a>
+                        </div>
+                        <div class="nav-dropdown-list" id="dropdownMsgList">
+                            <div class="nav-dropdown-empty">Sin mensajes nuevos</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="nav-icon nav-avatar" title="Mi perfil" onclick="App.navigateTo('mi-perfil')" id="navAvatar">&#128100;</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="feed-layout">
+
+        <!-- Sidebar Izquierdo — componente: /components/sidebar-left.html -->
+        <aside class="sidebar-left">
+            <div class="card sidebar-profile">
+                <div class="avatar" id="sidebarAvatar">?</div>
+                <div class="sidebar-user-info">
+                    <h4 id="sidebarNombre">Cargando...</h4>
+                    <div class="sidebar-user-role" id="sidebarRol">--</div>
+                </div>
+            </div>
+            <nav class="card sidebar-nav" id="feedSidebarNav">
+                <div class="menu-item active" data-page="feed">&#128240; Feed</div>
+                <div class="menu-item" data-page="publicar-trabajo" data-role="dueno">&#128736; Publicar Trabajo</div>
+                <div class="menu-item" data-page="mis-ofertas-laborales" data-role="dueno">&#128188; Mis Ofertas Laborales</div>
+                <div class="menu-item" data-page="mis-trabajos" data-role="trabajador">&#128736; Mis Trabajos</div>
+                <div class="menu-item" data-page="mis-ofertas" data-role="trabajador">&#128203; Mis Ofertas</div>
+                <div class="menu-item" data-page="mensajes">&#128172; Mensajes</div>
+                <div class="menu-item" data-page="agenda">&#128197; Agenda</div>
+                <div class="menu-item" data-page="catalogo">&#128218; Cat&#225;logo</div>
+                <div class="menu-item" data-page="busqueda">&#128269; Búsqueda</div>
+                <div class="menu-item" data-page="configuracion">&#9881;&#65039; Configuración</div>
+                <div class="menu-item sidebar-logout" data-action="logout">&#128682; Cerrar Sesión</div>
+            </nav>
+        </aside>
+
+        <!-- Feed Principal -->
+        <main class="feed-main">
+
+            <!-- Barra publicar -->
+            <div class="card publish-bar" id="publishBarTrigger">
+                <div class="publish-bar-avatar" id="publishBarAvatar">?</div>
+                <div class="publish-bar-placeholder" id="publishBarText">Cargando...</div>
+            </div>
+
+            <!-- Posts -->
+            <div id="postsContainer">
+                <div style="text-align:center;padding:2rem;color:var(--gray);">Cargando trabajos...</div>
+            </div>
+
+        </main>
+
+        <!-- Sidebar Derecho -->
+        <aside class="sidebar-right">
+            <div class="card">
+                <h4 class="sidebar-section-title">&#128205; Mapa de Cercanía</h4>
+                <div id="leafletMap" style="width:100%;height:180px;border-radius:var(--radius);z-index:0;"></div>
+                <p id="mapStatus" style="font-size:0.75rem;color:var(--gray);margin-top:0.5rem;text-align:center;display:none;">Activá la ubicación para ver el mapa</p>
+            </div>
+            <div class="card">
+                <h4 class="sidebar-section-title">&#128100; Cerca de Vos</h4>
+                <div class="nearby-list" id="nearbyList">
+                    <div class="nearby-empty">Activá la ubicación para ver profesionales cercanos</div>
+                </div>
+            </div>
+            <!-- Widget Trabajo en Proceso (solo perfil trabajador) -->
+            <div class="card" id="widgetTrabajo" style="display:none;">
+                <h4 class="sidebar-section-title">&#128295; Trabajo en Proceso</h4>
+                <div id="widgetTrabajoContenido">
+                    <div class="nearby-empty">No ten\u00e9s trabajos en proceso</div>
+                </div>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Modal Completar Trabajo (trabajador, desde widget feed) -->
+    <div class="modal" id="modalCompletar" style="display:none;">
+        <div class="modal-content" style="max-width:520px;">
+            <button class="close-btn" onclick="cerrarModalCompletar()">&#10005;</button>
+            <h3 style="margin-bottom:0.25rem;">&#9989; Termin\u00e9 el trabajo</h3>
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.25rem;">
+                Sub\u00ed una foto del resultado. El due\u00f1o la ver\u00e1 antes de confirmar.
+                Al confirmar se publicar\u00e1 autom\u00e1ticamente el antes/despu\u00e9s en ambos perfiles.
+            </p>
+            <input type="hidden" id="completar-job-id">
+            <input type="text" id="completar-titulo" readonly style="width:100%;font-weight:600;font-size:1rem;border:none;background:transparent;padding:0;margin-bottom:0.75rem;color:var(--text);font-family:var(--font-family);">
+            <div class="form-error" id="completarError"></div>
+            <!-- Fotos del dueño (antes) -->
+            <div id="completarAntesWrap" style="display:none;margin-bottom:1rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                    &#128248; Estado inicial &#8212; fotos del cliente
+                </div>
+                <div id="completarAntesGrid" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+            </div>
+            <!-- Upload foto resultado (después) -->
+            <div style="margin-bottom:1rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                    &#10003; Foto o video del resultado <span style="color:var(--danger);">*</span>
+                </div>
+                <button type="button"
+                    style="padding:0.5rem 1rem;background:var(--light-gray);border:2px dashed var(--border);border-radius:var(--radius);cursor:pointer;font-size:0.85rem;font-family:var(--font-family);"
+                    onclick="document.getElementById('completarDespuesInput').click()">
+                    + Agregar foto o video del resultado
+                </button>
+                <span id="completarDespuesCount" style="font-size:0.85rem;color:var(--gray);margin-left:0.75rem;"></span>
+                <input type="file" id="completarDespuesInput" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" style="display:none;">
+                <div id="completarDespuesGrid" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;"></div>
+            </div>
+            <!-- Descripción opcional -->
+            <div class="form-group">
+                <label>Comentario sobre el trabajo (opcional)</label>
+                <textarea id="completar-descripcion" placeholder="Cont\u00e1 c\u00f3mo lo hiciste, materiales, tiempo..."></textarea>
+            </div>
+            <button class="btn-action btn-action-primary" style="width:100%;" id="btnConfirmarCompletar" onclick="confirmarCompletar()">
+                Enviar y esperar confirmaci\u00f3n del due\u00f1o
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Publicar Portfolio (trabajador) -->
+    <div class="modal" id="modalPortfolio" style="display:none;">
+        <div class="modal-content modal-wide">
+            <div class="modal-publish-header">
+                <h3 id="portfolioModalTitle">&#128247; Compartir Trabajo Realizado</h3>
+                <button class="close-btn" onclick="Feed.closePortfolioModal()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <input type="hidden" id="portfolio-job-id">
+                <div class="form-error" id="portfolioError"></div>
+                <div class="form-group">
+                    <label>T&#237;tulo del trabajo *</label>
+                    <input type="text" id="portfolio-titulo" placeholder="Ej: Pintura de habitaci&#243;n, Plomer&#237;a ba&#241;o...">
+                </div>
+                <div class="form-group">
+                    <label>Descripci&#243;n</label>
+                    <textarea id="portfolio-descripcion" placeholder="Cont&#225; c&#243;mo lo hiciste, materiales usados, tiempo..." rows="3"></textarea>
+                </div>
+
+                <!-- Fotos Antes del dueño (referencia, solo cuando viene de un job) -->
+                <div id="portfolioOwnerFotos" style="display:none;">
+                    <div class="ba-upload-label antes" style="margin-bottom:0.5rem;">&#128248; Estado inicial <span>&#8212; fotos del cliente</span></div>
+                    <div class="media-preview-grid feed-media-grid" id="portfolioOwnerGrid"></div>
+                </div>
+
+                <!-- Fotos Antes (upload, solo modo libre) -->
+                <div class="ba-upload-section" id="portfolioAntesSection">
+                    <div class="ba-upload-label antes">&#128248; Fotos <strong>Antes</strong> <span>&#8212; estado inicial del trabajo</span></div>
+                    <div class="publish-media-bar">
+                        <button type="button" class="publish-media-btn" onclick="document.getElementById('portfolioAntesInput').click()">
+                            + Agregar fotos
+                        </button>
+                        <span class="publish-media-count" id="portfolioAntesCount"></span>
+                        <input type="file" id="portfolioAntesInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    </div>
+                    <div class="media-preview-grid feed-media-grid" id="portfolioAntesGrid"></div>
+                </div>
+
+                <!-- Fotos Después -->
+                <div class="ba-upload-section">
+                    <div class="ba-upload-label despues">&#10003; Fotos <strong>Despu&#233;s</strong> <span>&#8212; trabajo finalizado (tus fotos)</span></div>
+                    <div class="publish-media-bar">
+                        <button type="button" class="publish-media-btn" onclick="document.getElementById('portfolioDespuesInput').click()">
+                            + Agregar fotos
+                        </button>
+                        <span class="publish-media-count" id="portfolioDespuesCount"></span>
+                        <input type="file" id="portfolioDespuesInput" multiple accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    </div>
+                    <div class="media-preview-grid feed-media-grid" id="portfolioDespuesGrid"></div>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%;margin-top:0.5rem;" id="btnPublicarPortfolio">
+                    Publicar en mi Portfolio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Publicar Trabajo -->
+    <div class="modal" id="modalPublicar" style="display:none;">
+        <div class="modal-content modal-wide">
+            <div class="modal-publish-header">
+                <h3>&#128736; Publicar Nuevo Trabajo</h3>
+                <button class="close-btn" onclick="Feed.closePublishModal()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <!-- Título corto -->
+                <div class="form-group">
+                    <label>&#128295; &#191;Qu&#233; necesit&#225;s? *</label>
+                    <input type="text" id="job-titulo" placeholder="Ej: podar una planta, poner un ca&#241;o..." maxlength="100">
+                    <div class="job-rubro-chip" id="jobRubroChip" style="display:none;"></div>
+                </div>
+
+                <!-- Descripción detallada -->
+                <div class="form-group">
+                    <label>&#128221; Descripci&#243;n detallada *</label>
+                    <textarea id="job-descripcion" placeholder="Explic&#225; con m&#225;s detalle: &#191;cu&#225;nto tiempo tiene el problema? &#191;qu&#233; intent&#225;s? &#191;hay materiales disponibles?..." rows="4"></textarea>
+                </div>
+
+                <!-- Fotos del "antes" -->
+                <div class="ba-upload-section">
+                    <div class="ba-upload-label antes">&#128247; Fotos del estado actual <span>&#8212; opcional</span></div>
+                    <div class="publish-media-bar">
+                        <button type="button" class="publish-media-btn" id="btnAdjuntar" onclick="document.getElementById('feedMediaInput').click()">
+                            + Agregar fotos / videos
+                        </button>
+                        <span class="publish-media-count" id="feedMediaCount"></span>
+                        <input type="file" id="feedMediaInput" multiple accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/quicktime,video/webm" style="display:none;">
+                    </div>
+                    <div class="media-preview-grid feed-media-grid" id="feedMediaGrid"></div>
+                </div>
+
+                <!-- Disponibilidad del dueño (opcional) -->
+                <div class="dispo-section-wrap">
+                    <button type="button" class="dispo-toggle-btn" id="btnToggleDuenoDispo"
+                            onclick="Feed.toggleDisponibilidadSection()">
+                        &#128197; &#191;Cu&#225;ndo pod&#233;s recibir al trabajador?
+                        <span class="dispo-toggle-label">Opcional</span>
+                        <span class="dispo-toggle-arrow">&#9660;</span>
+                    </button>
+                    <div id="duenoDispoSection" style="display:none;">
+                        <p class="dispo-hint">
+                            Marc&#225; los d&#237;as que te vienen bien. Los trabajadores lo ver&#225;n al ofertar y propondr&#225;n horarios acordes.
+                            <br>&#128994; = disponible &nbsp; &#128308; = no disponible &nbsp; (gris = sin marcar)
+                        </p>
+                        <div class="dispo-week-grid" id="duenoDispoGrid">
+                            <!-- filled by Feed._renderDuenoDispoGrid() -->
+                        </div>
+                        <p class="dispo-legend">
+                            Clic una vez = disponible &nbsp;&middot;&nbsp;
+                            Clic dos veces = no disponible &nbsp;&middot;&nbsp;
+                            Clic tres veces = quitar marca
+                        </p>
+                    </div>
+                </div>
+
+                <div class="form-error" id="jobError"></div>
+                <button class="btn btn-primary" style="width:100%;" id="btnPublicarTrabajo">
+                    Publicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ofertar -->
+    <div class="modal" id="modalOfertar" style="display:none;">
+        <div class="modal-content">
+            <input type="hidden" id="offer-job-id">
+
+            <div class="modal-publish-header">
+                <h3>&#128184; Hacer una Oferta</h3>
+                <button class="close-btn" onclick="Feed.closeOfferModal()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <!-- Aviso: sin coincidencia de disponibilidad -->
+                <div id="offerNoDispo" style="display:none;">
+                    <div class="offer-no-dispo-aviso">
+                        <p>Tus horarios disponibles no coinciden con los d&#237;as del due&#241;o de esta publicaci&#243;n.</p>
+                        <a href="/pages/agenda.html" class="btn btn-secondary" style="display:inline-block;text-align:center;text-decoration:none;">Ajustar mi disponibilidad</a>
+                    </div>
+                </div>
+                <!-- Formulario de oferta -->
+                <div id="offerFormContent">
+                    <div class="form-error" id="offerError"></div>
+                    <div class="form-group">
+                        <label>Tu oferta (ARS) *</label>
+                        <input type="number" id="offer-monto" placeholder="Ingres&#225; tu precio">
+                    </div>
+                    <div class="form-group">
+                        <label>Tiempo estimado</label>
+                        <div class="offer-tiempo-row">
+                            <div class="offer-tiempo-field">
+                                <input type="number" id="offer-horas" min="0" max="999" placeholder="0"
+                                       oninput="Feed._actualizarHintJornadas()">
+                                <span class="offer-tiempo-unit">hs</span>
+                            </div>
+                            <div class="offer-tiempo-field">
+                                <select id="offer-minutos" onchange="Feed._actualizarHintJornadas()">
+                                </select>
+                            </div>
+                        </div>
+                        <div id="offerHintJornadas" class="offer-hint-jornadas"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>Mensaje (opcional)</label>
+                        <textarea id="offer-mensaje" placeholder="Explic&#225; por qu&#233; sos la mejor opci&#243;n..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%;" id="btnEnviarOferta">
+                        Enviar Oferta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Compartir Publicación -->
+    <div class="modal" id="modalCompartir" style="display:none;">
+        <div class="modal-content" style="max-width:460px;">
+            <div class="modal-publish-header">
+                <h3>&#128279; Compartir publicación</h3>
+                <button class="close-btn" onclick="Feed.cerrarModalCompartir()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <!-- Copiar link -->
+                <div style="display:flex;gap:0.5rem;align-items:center;margin-bottom:1.25rem;">
+                    <input type="text" id="compartirLinkInput" readonly
+                        style="flex:1;padding:0.55rem 0.75rem;border:1px solid var(--border,#e5e7eb);border-radius:var(--radius,8px);font-size:0.85rem;color:var(--text,#111);background:var(--bg-secondary,#f9fafb);">
+                    <button class="btn btn-secondary" onclick="Feed.copiarLinkCompartir()" style="white-space:nowrap;">
+                        &#128203; Copiar
+                    </button>
+                </div>
+
+                <!-- Enviar a contacto -->
+                <div style="font-size:0.85rem;font-weight:600;color:var(--text-secondary,#6b7280);margin-bottom:0.75rem;">
+                    &#128101; Enviar a un contacto:
+                </div>
+                <input type="text" id="compartirBuscarContacto" placeholder="Buscar contacto..."
+                    oninput="Feed.filtrarContactosCompartir(this.value)"
+                    style="width:100%;padding:0.55rem 0.75rem;border:1px solid var(--border,#e5e7eb);border-radius:var(--radius,8px);font-size:0.9rem;margin-bottom:0.75rem;box-sizing:border-box;">
+                <div id="compartirContactosList" style="max-height:240px;overflow-y:auto;">
+                    <div style="text-align:center;padding:1.5rem;color:var(--gray);">Cargando contactos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Eliminar Publicación -->
+    <div class="modal" id="modalConfirmarEliminar" style="display:none;">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-publish-header">
+                <h3>&#128465; Eliminar publicación</h3>
+                <button class="close-btn" onclick="Feed.cerrarModalEliminar()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <p style="color:var(--text-secondary,#6b7280);margin-bottom:1.5rem;">
+                    &#9888;&#65039; ¿Estás seguro que querés eliminar esta publicación? Esta acción no se puede deshacer.
+                </p>
+                <div style="display:flex;gap:0.75rem;">
+                    <button class="btn" style="flex:1;" onclick="Feed.cerrarModalEliminar()">Cancelar</button>
+                    <button class="btn btn-danger" style="flex:1;background:var(--danger,#ef4444);color:#fff;border:none;" id="btnConfirmarEliminar">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reportar Contenido -->
+    <div class="modal" id="modalReportar" style="display:none;">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-publish-header">
+                <h3>&#9888;&#65039; Reportar contenido</h3>
+                <button class="close-btn" onclick="Feed.cerrarModalReportar()">&#10005;</button>
+            </div>
+            <div class="modal-publish-body">
+                <p style="font-size:0.9rem;color:var(--text-secondary,#6b7280);margin-bottom:1.25rem;">
+                    Seleccioná el motivo del reporte. Lo revisaremos a la brevedad.
+                </p>
+                <div id="reportarOpciones" style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <button class="report-motivo-btn" data-motivo="spam" onclick="Feed._seleccionarMotivoReporte(this)">
+                        &#128233; Spam
+                    </button>
+                    <button class="report-motivo-btn" data-motivo="contenido_inapropiado" onclick="Feed._seleccionarMotivoReporte(this)">
+                        &#128683; Contenido inapropiado
+                    </button>
+                    <button class="report-motivo-btn" data-motivo="informacion_falsa" onclick="Feed._seleccionarMotivoReporte(this)">
+                        &#10071; Información falsa
+                    </button>
+                    <button class="report-motivo-btn" data-motivo="otro" onclick="Feed._seleccionarMotivoReporte(this)">
+                        &#8226;&#8226;&#8226; Otro motivo
+                    </button>
+                </div>
+                <div class="form-error" id="reportarError"></div>
+                <button class="btn btn-primary" style="width:100%;margin-top:1rem;" id="btnEnviarReporte" disabled
+                    onclick="Feed.enviarReporte()">
+                    Enviar reporte
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/navbar.js"></script>
+    <script src="/js/modules/notif-modal.js"></script>
+    <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+    <script src="/js/modules/floating-chat.js"></script>
+    <script src="/js/modules/feed.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+    (function initLeafletMap() {
+        const BA = [-34.6037, -58.3816];
+
+        function buildUserIcon() {
+            return L.divIcon({
+                className: '',
+                html: '<div style="width:14px;height:14px;background:#3b82f6;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.35);"></div>',
+                iconSize: [14, 14], iconAnchor: [7, 7]
+            });
+        }
+
+        function buildWorkerIcon() {
+            return L.divIcon({
+                className: '',
+                html: '<div style="width:11px;height:11px;background:#f59e0b;border:2px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>',
+                iconSize: [11, 11], iconAnchor: [5, 5]
+            });
+        }
+
+        function updateNearbyList(workers) {
+            const list = document.getElementById('nearbyList');
+            if (!list) return;
+            if (!workers || workers.length === 0) return;
+            list.innerHTML = workers.slice(0, 5).map(function (w) {
+                const nombre   = w.nombre || 'Trabajador';
+                const iniciales = nombre.substring(0, 2).toUpperCase();
+                const dist     = w.distancia_km ? (w.distancia_km < 1 ? Math.round(w.distancia_km * 1000) + ' m' : w.distancia_km.toFixed(1) + ' km') : '';
+                return '<div class="nearby-item" onclick="window.location.href=\'/pages/perfil-publico.html?id=' + (w.id || '') + '\'">' +
+                    '<div class="nearby-avatar">' + iniciales + '</div>' +
+                    '<div class="nearby-info">' +
+                        '<div class="nearby-name">' + nombre + '</div>' +
+                        '<div class="nearby-rubro">' + (w.rubro || '') + '</div>' +
+                    '</div>' +
+                    (dist ? '<div class="nearby-dist">' + dist + '</div>' : '') +
+                '</div>';
+            }).join('');
+        }
+
+        function initMap(lat, lng) {
+            const map = L.map('leafletMap', { zoomControl: false, attributionControl: false })
+                         .setView([lat, lng], 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 18
+            }).addTo(map);
+
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+            L.control.attribution({ position: 'bottomleft', prefix: '© OSM' }).addTo(map);
+
+            L.marker([lat, lng], { icon: buildUserIcon() })
+             .addTo(map)
+             .bindPopup('Tu ubicación');
+
+            const token = (typeof Auth !== 'undefined') ? Auth.getToken() : (localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token'));
+
+            fetch('/api/geo/nearby?lat=' + lat + '&lng=' + lng, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            }).then(function (r) { return r.json(); }).then(function (data) {
+                const workers = data.workers || data.nearby || data.items || [];
+                workers.forEach(function (w) {
+                    if (w.lat && w.lng) {
+                        L.marker([w.lat, w.lng], { icon: buildWorkerIcon() })
+                         .addTo(map)
+                         .bindPopup('<b>' + (w.nombre || 'Trabajador') + '</b>' + (w.rubro ? '<br>' + w.rubro : ''));
+                    }
+                });
+                updateNearbyList(workers);
+            }).catch(function () {});
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const mapEl = document.getElementById('leafletMap');
+            if (!mapEl || typeof L === 'undefined') return;
+
+            if (!navigator.geolocation) {
+                document.getElementById('mapStatus').style.display = 'block';
+                initMap(BA[0], BA[1]);
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) { initMap(pos.coords.latitude, pos.coords.longitude); },
+                function ()    {
+                    document.getElementById('mapStatus').style.display = 'block';
+                    initMap(BA[0], BA[1]);
+                },
+                { timeout: 6000 }
+            );
+        });
+    })();
+    </script>
+</body>
+</html>

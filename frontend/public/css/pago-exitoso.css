@@ -1,0 +1,69 @@
+body {
+    background: var(--color-bg, #f5f5f5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1rem;
+}
+
+.pago-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.pago-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, .08);
+}
+
+.pago-icono {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.pago-titulo {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: .75rem;
+    color: var(--color-text, #1a1a1a);
+}
+
+.pago-badge {
+    display: inline-block;
+    font-size: .75rem;
+    padding: .25rem .75rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.pago-badge.success { background: #d1fae5; color: #065f46; }
+.pago-badge.failure { background: #fee2e2; color: #991b1b; }
+.pago-badge.pending { background: #fef3c7; color: #92400e; }
+
+.pago-mensaje {
+    font-size: .95rem;
+    color: #555;
+    line-height: 1.55;
+    margin-bottom: 1.75rem;
+}
+
+.pago-acciones {
+    display: flex;
+    gap: .75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.pago-id {
+    font-size: .75rem;
+    color: #aaa;
+    margin-top: 1.5rem;
+}

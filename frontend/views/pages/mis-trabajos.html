@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mis Trabajos</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/mis-trabajos.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display:flex; align-items:center; gap:1rem;">
+                <button class="btn-back" onclick="window.location.href='/pages/feed.html'">&#8592; Volver</button>
+                <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="jobs-layout">
+
+        <div class="page-header">
+            <h1>&#128736; Mis Trabajos</h1>
+            <p>Trabajos en los que est&#225;s participando o ya completaste</p>
+        </div>
+
+        <div class="card">
+            <div class="filters-bar">
+                <div class="filter-tabs">
+                    <div class="filter-tab active" data-filter="todos" onclick="filtrar('todos', this)">Todos</div>
+                    <div class="filter-tab" data-filter="en_negociacion" onclick="filtrar('en_negociacion', this)">En Negociaci&#243;n</div>
+                    <div class="filter-tab" data-filter="en_curso" onclick="filtrar('en_curso', this)">En Curso</div>
+                    <div class="filter-tab" data-filter="finalizado" onclick="filtrar('finalizado', this)">Finalizados</div>
+                </div>
+            </div>
+            <div class="jobs-grid" id="jobsGrid">
+                <div class="empty-state">
+                    <div class="empty-icon">&#9203;</div>
+                    <p>Cargando trabajos...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal: Advertencia de geolocalización (lejos del trabajo) -->
+    <div class="modal" id="modalGeoWarning" style="display:none;">
+        <div class="modal-content" style="max-width:400px;text-align:center;">
+            <button class="close-btn" onclick="cerrarModalGeoWarning()">&#10005;</button>
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#128205;</div>
+            <h3 style="margin-bottom:0.5rem;">&#191;Estás en el lugar?</h3>
+            <p style="font-size:0.93rem;color:var(--gray);margin-bottom:1.75rem;">
+                Parece que no estás en la ubicación del trabajo todavía. &#191;Confirm&#225;s igual?
+            </p>
+            <input type="hidden" id="geoWarning-job-id">
+            <div style="display:flex;gap:0.75rem;">
+                <button class="btn-action btn-action-secondary" style="flex:1;" onclick="cerrarModalGeoWarning()">
+                    Cancelar
+                </button>
+                <button class="btn-action btn-action-primary" style="flex:1;" onclick="confirmarIgualGeoWarning()">
+                    S&#237;, confirm&#225;r igual
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirmar Asistencia (paso 4→5) -->
+    <div class="modal" id="modalConfirmarAsistencia" style="display:none;">
+        <div class="modal-content" style="max-width:420px;text-align:center;">
+            <button class="close-btn" onclick="cerrarModalAsistencia()">&#10005;</button>
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#128205;</div>
+            <h3 style="margin-bottom:0.5rem;">Confirm&#225; tu llegada</h3>
+            <p style="font-size:0.93rem;color:var(--gray);margin-bottom:1.75rem;">
+                &#191;Confirm&#225;s que llegaste al lugar del trabajo?
+            </p>
+            <input type="hidden" id="asistencia-job-id">
+            <div class="form-error" id="asistenciaError"></div>
+            <div style="display:flex;gap:0.75rem;">
+                <button class="btn-action btn-action-secondary" style="flex:1;" onclick="cerrarModalAsistencia()">
+                    Cancelar
+                </button>
+                <button class="btn-action btn-action-primary" style="flex:1;" id="btnConfirmarAsistencia" onclick="confirmarAsistenciaModal()">
+                    S&#237;, llegu&#233;
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Completar Trabajo + subir foto resultado (paso 6) -->
+    <div class="modal" id="modalCompletar" style="display:none;">
+        <div class="modal-content" style="max-width:520px;">
+            <button class="close-btn" onclick="cerrarModalCompletar()">&#10005;</button>
+            <h3 style="margin-bottom:0.25rem;">&#9989; Terminé el trabajo</h3>
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.25rem;">
+                Sub&#237; una foto (JPEG, PNG o WebP, m&#225;x. 5 MB). El due&#241;o la ver&#225; antes de confirmar.
+                Al confirmar se publicar&#225; autom&#225;ticamente el antes/despu&#233;s en ambos perfiles.
+            </p>
+
+            <input type="hidden" id="completar-job-id">
+            <input type="text" id="completar-titulo" readonly style="width:100%;font-weight:600;font-size:1rem;border:none;background:transparent;padding:0;margin-bottom:0.75rem;color:var(--text);font-family:var(--font-family);">
+            <div class="form-error" id="completarError"></div>
+
+            <!-- Fotos del dueño (antes) -->
+            <div id="completarAntesWrap" style="display:none;margin-bottom:1rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                    &#128248; Estado inicial &#8212; fotos del cliente
+                </div>
+                <div id="completarAntesGrid" style="display:flex;gap:0.5rem;flex-wrap:wrap;"></div>
+            </div>
+
+            <!-- Upload foto resultado (después) - solo 1 foto obligatoria -->
+            <div style="margin-bottom:1rem;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:0.5rem;">
+                    &#10003; Foto del resultado <span style="color:var(--danger);">*</span>
+                </div>
+                <button type="button"
+                    style="padding:0.5rem 1rem;background:var(--light-gray);border:2px dashed var(--border);border-radius:var(--radius);cursor:pointer;font-size:0.85rem;font-family:var(--font-family);"
+                    onclick="document.getElementById('completarDespuesInput').click()">
+                    + Agregar foto del resultado
+                </button>
+                <span id="completarDespuesCount" style="font-size:0.85rem;color:var(--gray);margin-left:0.75rem;"></span>
+                <input type="file" id="completarDespuesInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                <div id="completarDespuesGrid" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.75rem;"></div>
+            </div>
+
+            <!-- Descripción opcional -->
+            <div class="form-group">
+                <label>Comentario sobre el trabajo (opcional)</label>
+                <textarea id="completar-descripcion" placeholder="Cont&#225; c&#243;mo lo hiciste, materiales, tiempo..."></textarea>
+            </div>
+
+            <button class="btn-action btn-action-primary" style="width:100%;" id="btnConfirmarCompletar" onclick="confirmarCompletar()">
+                Enviar y esperar confirmaci&#243;n del due&#241;o
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Calificación (paso 9) -->
+    <div class="modal" id="modalCalificacion" style="display:none;">
+        <div class="modal-content" style="max-width:420px;text-align:center;">
+            <button class="close-btn" onclick="cerrarModalCalificacion()">&#10005;</button>
+            <div style="font-size:2.5rem;margin-bottom:0.5rem;">&#11088;</div>
+            <h3 style="margin-bottom:0.25rem;">Calific&#225; al due&#241;o</h3>
+            <p style="font-size:0.9rem;color:var(--gray);margin-bottom:1.5rem;">
+                &#191;C&#243;mo fue tu experiencia con este cliente?
+            </p>
+            <div id="calificacionEstrellas" style="display:flex;justify-content:center;gap:0.25rem;margin-bottom:1.25rem;"></div>
+            <div class="form-group" style="text-align:left;">
+                <label>Comentario (opcional)</label>
+                <textarea id="calificacionComentario" rows="3" placeholder="Cont&#225; tu experiencia..."></textarea>
+            </div>
+            <div class="form-error" id="calificacionError" style="text-align:left;"></div>
+            <button class="btn-action btn-action-primary" style="width:100%;" id="btnEnviarCalificacion" onclick="enviarCalificacion()">
+                Enviar calificaci&#243;n
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Abrir Disputa -->
+    <div class="modal" id="modalDisputa" style="display:none;">
+        <div class="modal-content" style="max-width:460px;">
+            <button class="close-btn" onclick="cerrarModalDisputa()">&#10005;</button>
+            <div style="font-size:2rem;margin-bottom:0.5rem;text-align:center;">&#9878;</div>
+            <h3 style="text-align:center;margin-bottom:0.25rem;">Abrir disputa</h3>
+            <p id="disputaTitulo" style="text-align:center;font-size:0.88rem;color:var(--gray);margin-bottom:1.25rem;font-weight:600;"></p>
+            <p style="font-size:0.85rem;color:var(--gray);margin-bottom:1.25rem;text-align:center;">
+                Un moderador revisará la situación y tomará una decisión. Ambas partes serán notificadas.
+            </p>
+            <div class="form-group">
+                <label>Motivo <span style="color:var(--danger);">*</span></label>
+                <select id="disputaMotivo" style="width:100%;padding:0.6rem 0.75rem;border:1px solid var(--border);border-radius:var(--radius);font-size:0.9rem;font-family:var(--font-family);">
+                    <option value="">Seleccioná el motivo</option>
+                    <option value="trabajo_mal_hecho">Trabajo mal realizado</option>
+                    <option value="no_pago">Pago no recibido</option>
+                    <option value="incumplimiento">Incumplimiento del acuerdo</option>
+                    <option value="acusacion_falsa">Acusación falsa</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Descripción (opcional)</label>
+                <textarea id="disputaDescripcion" rows="3" placeholder="Describí la situación con detalle..."></textarea>
+            </div>
+            <div class="form-error" id="disputaError"></div>
+            <button class="btn-action btn-action-danger" style="width:100%;margin-top:0.5rem;" id="btnEnviarDisputa" onclick="enviarDisputa()">
+                Abrir disputa
+            </button>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/shared-jobs.js"></script>
+    <script src="/js/modules/mis-trabajos-worker.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Planner 3D</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <button class="btn-back" onclick="window.history.back()">← Volver</button>
+                <div class="logo" onclick="window.location.href='feed.html'">Labu</div>
+            </div>
+            <div style="width: 100px;"></div>
+        </div>
+    </nav>
+
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:2rem;">
+        <div style="font-size:4rem;margin-bottom:1.5rem;">📐</div>
+        <h1 style="font-size:1.8rem;font-weight:700;margin-bottom:0.75rem;color:var(--text-primary,#111);">Planner 3D</h1>
+        <p style="font-size:1.1rem;color:var(--gray,#6b7280);max-width:420px;margin-bottom:2rem;">
+            Esta funcionalidad está en desarrollo. Próximamente podrás crear planos con medidas exactas para tus proyectos.
+        </p>
+        <span style="display:inline-block;padding:0.4rem 1.1rem;background:var(--primary-light,#eff6ff);color:var(--primary,#3b82f6);border-radius:999px;font-size:0.9rem;font-weight:600;">Próximamente</span>
+    </div>
+
+</body>
+</html>
