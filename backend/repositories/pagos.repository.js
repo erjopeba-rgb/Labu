@@ -33,25 +33,41 @@ const findTrabajoPagoData = async (trabajoId, db) => {
     return trabajo || null;
 };
 
-const insertPago = async ({ usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata }, db) => {
+const insertPago = async ({ usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata, estado = 'pendiente' }, db) => {
     const { rows: [pago] } = await db.query(
-        `INSERT INTO pagos (usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-        [usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata]
+        `INSERT INTO pagos (usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata, estado)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, monto_seguro, metadata, estado]
     );
     return pago;
 };
 
-const updatePagoPreferenceId = async (pagoId, prefId, db) => {
+// ─── Outbox (I17): transiciones cortas alrededor de la llamada a MP ──────────
+
+// Activa un pago 'iniciando' una vez que MP devolvió la preferencia creada.
+const activarPagoConPreferencia = async (pagoId, prefId, db = pool) => {
     await db.query(
-        "UPDATE pagos SET mp_preference_id = $1 WHERE id = $2",
-        [prefId, pagoId]
+        `UPDATE pagos SET mp_preference_id = $2, estado = 'pendiente', actualizado_en = NOW()
+         WHERE id = $1 AND estado = 'iniciando'`,
+        [pagoId, prefId]
     );
 };
 
-const findPagoById = async (pagoId, db) => {
-    const { rows: [pago] } = await db.query(
-        "SELECT * FROM pagos WHERE id = $1",
+// Marca 'fallido' un pago cuyo intento contra MP agotó los reintentos.
+// Solo pisa 'iniciando': si otro flujo ya fijó un estado, se respeta.
+const marcarPagoFallido = async (pagoId, detalle, db = pool) => {
+    await db.query(
+        `UPDATE pagos SET estado = 'fallido', mp_detail = $2, actualizado_en = NOW()
+         WHERE id = $1 AND estado = 'iniciando'`,
+        [pagoId, String(detalle || 'error desconocido')]
+    );
+};
+
+// Bloquea la fila del pago dentro de la transacción del llamador: serializa
+// webhook y pago directo aplicando el resultado de MP sobre el mismo pago.
+const findPagoByIdForUpdate = async (pagoId, client) => {
+    const { rows: [pago] } = await client.query(
+        "SELECT * FROM pagos WHERE id = $1 FOR UPDATE",
         [pagoId]
     );
     return pago || null;
@@ -323,8 +339,9 @@ module.exports = {
     findPagoByTrabajo,
     findTrabajoPagoData,
     insertPago,
-    updatePagoPreferenceId,
-    findPagoById,
+    activarPagoConPreferencia,
+    marcarPagoFallido,
+    findPagoByIdForUpdate,
     updatePagoEstado,
     insertDistribucion,
     findAyudantesPendientes,

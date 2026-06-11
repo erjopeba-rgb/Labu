@@ -16,7 +16,7 @@ const limpiarTablas = async () => {
     'verificaciones_identidad', 'trabajadores_confianza',
     'mantenimientos_recurrentes', 'aceptaciones_tyc',
     'reportes', 'calificaciones', 'portfolio_items',
-    'distribuciones_pago', 'seguros_trabajo', 'pagos_ayudante', 'pagos',
+    'distribuciones_pago', 'seguros_trabajo', 'pagos_ayudante', 'webhook_events', 'pagos',
     'mensajes', 'participantes_conversacion', 'conversaciones',
     'notificaciones', 'reservas_tentativas', 'disponibilidad_trabajador',
     'ofertas', 'trabajos', 'email_verifications', 'password_resets',

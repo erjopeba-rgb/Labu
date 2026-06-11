@@ -58,89 +58,89 @@ const calcularComision = async (montoTotal) => {
 
 // DEPRECADO - Se mantiene como fallback cuando el SDK de MercadoPago.js no carga.
 // El flujo principal usa pagarDirectoTrabajo con Checkout API.
+// I17 — patrón outbox: el pago nace 'iniciando' y queda commiteado ANTES de llamar a MP,
+// así ninguna conexión del pool queda retenida durante la llamada de red (que con los
+// reintentos puede demorar varios segundos y agotar el pool bajo carga).
 const crearPreferenciaTrabajo = async ({ trabajoId, pagadorId, montoTotal, conSeguro }) => {
-  const client = await pool.connect();
+  const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, pool);
+  if (!trabajo) throw new Error("Trabajo no encontrado");
+  if (trabajo.dueno_id !== pagadorId) throw new Error("Solo el dueño puede iniciar el pago");
+
+  const monto = montoTotal || trabajo.monto_propuesto;
+  if (!monto) throw new Error("No se pudo determinar el monto del trabajo");
+
+  // Validar credenciales antes de insertar: si MP no está configurado no queda
+  // un registro 'iniciando' huérfano.
+  const token = await getConfig('mp_access_token');
+  if (!token) throw new Error("MercadoPago no configurado");
+
+  const precioSeguro = conSeguro ? parseFloat(await getConfig('seguro_precio') || '2000') : 0;
+  const montoFinal = monto + precioSeguro;
+  const comision = await calcularComision(monto);
+
+  const pago = await pagosRepo.insertPago({
+    usuario_id: pagadorId,
+    tipo: 'trabajo',
+    referencia_id: trabajoId,
+    monto_total: montoFinal,
+    monto_plataforma: comision.comision,
+    monto_trabajador: comision.neto,
+    monto_seguro: precioSeguro > 0 ? precioSeguro : null,
+    metadata: JSON.stringify({ trabajo_id: trabajoId, trabajador_id: trabajo.trabajador_id, con_seguro: conSeguro, monto }),
+    estado: 'iniciando'
+  }, pool);
+
+  const mpClient = new MercadoPagoConfig({ accessToken: token });
+  const tokenMasked = `${token.slice(0, 8)}...${token.slice(-4)}`;
+  const preference = new Preference(mpClient);
+  const esProduccion = !APP_URL.includes('localhost') && !APP_URL.includes('127.0.0.1');
+  const mpBody = {
+    items: [{
+      title: `Pago trabajo: ${trabajo.titulo}`,
+      quantity: 1,
+      unit_price: montoFinal,
+      currency_id: 'ARS'
+    }],
+    external_reference: String(pago.id),
+    back_urls: {
+      success: `${APP_URL}/api/pagos/mp/callback?status=success`,
+      failure: `${APP_URL}/api/pagos/mp/callback?status=failure`,
+      pending: `${APP_URL}/api/pagos/mp/callback?status=pending`
+    },
+    ...(esProduccion && { auto_return: 'approved' }),
+    notification_url: `${APP_URL}/api/pagos/mp/webhook`
+  };
+  logger.info({ trabajoId, montoFinal, pagoId: pago.id, tokenMasked, mpBody }, '[pagos] llamando preference.create');
+
+  // Llamada de red fuera de toda transacción
+  let prefData;
   try {
-    await client.query("BEGIN");
-
-    const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, client);
-    if (!trabajo) throw new Error("Trabajo no encontrado");
-    if (trabajo.dueno_id !== pagadorId) throw new Error("Solo el dueño puede iniciar el pago");
-
-    const monto = montoTotal || trabajo.monto_propuesto;
-    if (!monto) throw new Error("No se pudo determinar el monto del trabajo");
-
-    const precioSeguro = conSeguro ? parseFloat(await getConfig('seguro_precio') || '2000') : 0;
-    const montoFinal = monto + precioSeguro;
-    const comision = await calcularComision(monto);
-
-    const pago = await pagosRepo.insertPago({
-      usuario_id: pagadorId,
-      tipo: 'trabajo',
-      referencia_id: trabajoId,
-      monto_total: montoFinal,
-      monto_plataforma: comision.comision,
-      monto_trabajador: comision.neto,
-      monto_seguro: precioSeguro > 0 ? precioSeguro : null,
-      metadata: JSON.stringify({ trabajo_id: trabajoId, trabajador_id: trabajo.trabajador_id, con_seguro: conSeguro, monto })
-    }, client);
-
-    const token = await getConfig('mp_access_token');
-    if (!token) throw new Error("MercadoPago no configurado");
-    const mpClient = new MercadoPagoConfig({ accessToken: token });
-    const tokenMasked = `${token.slice(0, 8)}...${token.slice(-4)}`;
-    const preference = new Preference(mpClient);
-    const esProduccion = !APP_URL.includes('localhost') && !APP_URL.includes('127.0.0.1');
-    const mpBody = {
-      items: [{
-        title: `Pago trabajo: ${trabajo.titulo}`,
-        quantity: 1,
-        unit_price: montoFinal,
-        currency_id: 'ARS'
-      }],
-      external_reference: String(pago.id),
-      back_urls: {
-        success: `${APP_URL}/api/pagos/mp/callback?status=success`,
-        failure: `${APP_URL}/api/pagos/mp/callback?status=failure`,
-        pending: `${APP_URL}/api/pagos/mp/callback?status=pending`
-      },
-      ...(esProduccion && { auto_return: 'approved' }),
-      notification_url: `${APP_URL}/api/pagos/mp/webhook`
-    };
-    logger.info({ trabajoId, montoFinal, pagoId: pago.id, tokenMasked, mpBody }, '[pagos] llamando preference.create');
-    let prefData;
-    try {
-      prefData = await conRetry(() => preference.create({ body: mpBody }));
-    } catch (mpErr) {
-      const causa = mpErr?.cause?.[0]?.description || mpErr?.message || String(mpErr);
-      logger.error({
-        err: mpErr,
-        trabajoId,
-        montoFinal,
-        tokenMasked,
-        mpErrStatus: mpErr?.status,
-        mpErrCause: mpErr?.cause,
-        mpErrMessage: mpErr?.message,
-        mpErrFull: JSON.stringify(mpErr)
-      }, `[pagos] MercadoPago preference.create falló después de reintentos: ${causa}`);
-      throw new Error(`MercadoPago error: ${causa}`);
-    }
-
-    await pagosRepo.updatePagoPreferenceId(pago.id, prefData.id, client);
-
-    await client.query("COMMIT");
-    return {
-      pago_id: pago.id,
-      preference_id: prefData.id,
-      init_point: prefData.init_point,
-      desglose: { monto_trabajo: montoTotal, comision: comision.comision, seguro: precioSeguro, total: montoFinal }
-    };
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
+    prefData = await conRetry(() => preference.create({ body: mpBody }));
+  } catch (mpErr) {
+    const causa = mpErr?.cause?.[0]?.description || mpErr?.message || String(mpErr);
+    logger.error({
+      err: mpErr,
+      trabajoId,
+      montoFinal,
+      tokenMasked,
+      mpErrStatus: mpErr?.status,
+      mpErrCause: mpErr?.cause,
+      mpErrMessage: mpErr?.message,
+      mpErrFull: JSON.stringify(mpErr)
+    }, `[pagos] MercadoPago preference.create falló después de reintentos: ${causa}`);
+    await pagosRepo.marcarPagoFallido(pago.id, causa);
+    throw new Error(`MercadoPago error: ${causa}`);
   }
+
+  // Transacción corta de cierre: activar el pago con la preferencia ya creada en MP
+  await pagosRepo.activarPagoConPreferencia(pago.id, prefData.id);
+
+  return {
+    pago_id: pago.id,
+    preference_id: prefData.id,
+    init_point: prefData.init_point,
+    desglose: { monto_trabajo: montoTotal, comision: comision.comision, seguro: precioSeguro, total: montoFinal }
+  };
 };
 
 // ─── CREAR PREFERENCIA MP PARA VIDEO ─────────────────────────────────────────
@@ -183,14 +183,26 @@ const crearPreferenciaVideo = async ({ videoId, usuarioId }) => {
 
 // ─── WEBHOOK MP ───────────────────────────────────────────────────────────────
 
+// I17 — patrón outbox: la consulta a MP ocurre FUERA de toda transacción. Si falla,
+// todavía no se escribió nada y el retry del webhook de MP reintenta desde cero.
+// El pago no puede marcarse 'procesando' antes de la llamada porque recién se
+// identifica con el external_reference que devuelve Payment.get; el marcador
+// idempotente pre-red es la tabla webhook_events.
 const procesarWebhook = async (paymentId) => {
-  // Pre-check rápido sin abrir transacción: evita adquirir un client del pool para duplicados.
-  // La verificación definitiva ocurre dentro de la transacción (ON CONFLICT DO NOTHING).
+  // Pre-check rápido sin abrir transacción: descarta duplicados sin tocar MP ni el pool.
   if (await pagosRepo.findWebhookEvent(paymentId, 'payment')) {
     logger.info({ paymentId }, '[pagos] Webhook duplicado ignorado (pre-check)');
     return;
   }
 
+  // Llamada de red fuera de toda transacción
+  const mpClient = await getMPClient();
+  const paymentClient = new Payment(mpClient);
+  const mpPago = await paymentClient.get({ id: paymentId });
+  const pagoId = parseInt(mpPago.external_reference);
+
+  // Transacción corta: dedupe definitivo (ON CONFLICT) + estado final + efectos, atómico.
+  // Si esta transacción falla, el evento se revierte junto con todo y el retry reprocesa.
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -202,29 +214,12 @@ const procesarWebhook = async (paymentId) => {
       return;
     }
 
-    const mpClient = await getMPClient();
-    const paymentClient = new Payment(mpClient);
-    const mpPago = await paymentClient.get({ id: paymentId });
-
-    const pagoId = parseInt(mpPago.external_reference);
-    const pago = await pagosRepo.findPagoById(pagoId, client);
-    if (!pago) throw new Error("Pago no encontrado");
-
-    const nuevoEstado = mpPago.status === 'approved' ? 'aprobado'
-      : mpPago.status === 'rejected' ? 'rechazado'
-      : mpPago.status === 'pending' ? 'pendiente' : 'en_proceso';
-
-    await pagosRepo.updatePagoEstado({
+    await aplicarResultadoMP({
       pagoId,
-      estado: nuevoEstado,
       paymentId,
       mpStatus: mpPago.status,
       mpDetail: mpPago.status_detail
     }, client);
-
-    if (nuevoEstado === 'aprobado') {
-      await procesarPagoAprobado(client, pago);
-    }
 
     await client.query("COMMIT");
   } catch (err) {
@@ -233,6 +228,40 @@ const procesarWebhook = async (paymentId) => {
   } finally {
     client.release();
   }
+};
+
+// Transición final compartida por webhook y pago directo: fija el estado del pago
+// según el resultado de MP y dispara los efectos (distribuciones, seguro) si quedó
+// aprobado. Corre dentro de la transacción del llamador, con la fila bloqueada.
+// Idempotente: si el pago ya está 'aprobado' (o fue 'reembolsado') no vuelve a
+// procesar — cubre el webhook que llega después de que pagarDirectoTrabajo ya
+// aplicó el resultado del mismo payment.
+const aplicarResultadoMP = async ({ pagoId, paymentId, mpStatus, mpDetail }, client) => {
+  const pago = await pagosRepo.findPagoByIdForUpdate(pagoId, client);
+  if (!pago) throw new Error("Pago no encontrado");
+
+  if (pago.estado === 'aprobado' || pago.estado === 'reembolsado') {
+    logger.info({ pagoId, estado: pago.estado, mpStatus }, '[pagos] Resultado MP ignorado: el pago ya tiene estado final');
+    return { estado: pago.estado, yaProcesado: true };
+  }
+
+  const nuevoEstado = mpStatus === 'approved' ? 'aprobado'
+    : mpStatus === 'rejected' ? 'rechazado'
+    : mpStatus === 'pending' ? 'pendiente' : 'en_proceso';
+
+  await pagosRepo.updatePagoEstado({
+    pagoId,
+    estado: nuevoEstado,
+    paymentId,
+    mpStatus,
+    mpDetail
+  }, client);
+
+  if (nuevoEstado === 'aprobado') {
+    await procesarPagoAprobado(client, pago);
+  }
+
+  return { estado: nuevoEstado, yaProcesado: false };
 };
 
 const procesarPagoAprobado = async (client, pago) => {
@@ -336,85 +365,81 @@ const simularPagoAprobadoDev = async (trabajoId, pagadorId) => {
 
 // ─── PAGO DIRECTO CON TARJETA (card token) ───────────────────────────────────
 
+// I17 — patrón outbox, igual que crearPreferenciaTrabajo: el pago nace 'iniciando' y
+// queda commiteado antes de la llamada a MP. Si la transacción final fallara después
+// de un cobro real, el webhook de MP aplica el resultado más tarde (aplicarResultadoMP).
 const pagarDirectoTrabajo = async ({ trabajoId, pagadorId, cardToken, paymentMethodId, payerEmail, installments = 1 }) => {
+  const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, pool);
+  if (!trabajo) throw new Error('Trabajo no encontrado');
+  if (trabajo.dueno_id !== pagadorId) throw new Error('Solo el dueño puede pagar');
+
+  const monto = parseFloat(trabajo.monto_propuesto);
+  if (!monto) throw new Error('No se pudo determinar el monto del trabajo');
+
+  // Validar credenciales antes de insertar: sin MP configurado no queda registro huérfano
+  const mpClient = await getMPClient();
+  const comision = await calcularComision(monto);
+
+  const pago = await pagosRepo.insertPago({
+    usuario_id: pagadorId,
+    tipo: 'trabajo',
+    referencia_id: trabajoId,
+    monto_total: monto,
+    monto_plataforma: comision.comision,
+    monto_trabajador: comision.neto,
+    monto_seguro: null,
+    metadata: JSON.stringify({ trabajo_id: trabajoId, trabajador_id: trabajo.trabajador_id, con_seguro: false, monto }),
+    estado: 'iniciando'
+  }, pool);
+
+  // Llamada de red fuera de toda transacción
+  const paymentClient = new Payment(mpClient);
+  let mpPago;
+  try {
+    mpPago = await conRetry(() => paymentClient.create({
+      body: {
+        transaction_amount: monto,
+        token: cardToken,
+        description: `Pago trabajo: ${trabajo.titulo}`,
+        installments: parseInt(installments) || 1,
+        payment_method_id: paymentMethodId,
+        payer: { email: payerEmail },
+        external_reference: String(pago.id),
+        notification_url: `${APP_URL}/api/pagos/mp/webhook`
+      }
+    }));
+  } catch (mpErr) {
+    const causa = mpErr?.cause?.[0]?.description || mpErr?.message || String(mpErr);
+    logger.error({ err: mpErr, trabajoId, causa }, '[pagos] Payment.create (directo) falló');
+    await pagosRepo.marcarPagoFallido(pago.id, causa);
+    throw new Error(`MercadoPago error: ${causa}`);
+  }
+
+  // Transacción corta: estado final + efectos (distribuciones, seguro) atómicos
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, client);
-    if (!trabajo) throw new Error('Trabajo no encontrado');
-    if (trabajo.dueno_id !== pagadorId) throw new Error('Solo el dueño puede pagar');
-
-    const monto = parseFloat(trabajo.monto_propuesto);
-    if (!monto) throw new Error('No se pudo determinar el monto del trabajo');
-
-    const comision = await calcularComision(monto);
-
-    const pago = await pagosRepo.insertPago({
-      usuario_id: pagadorId,
-      tipo: 'trabajo',
-      referencia_id: trabajoId,
-      monto_total: monto,
-      monto_plataforma: comision.comision,
-      monto_trabajador: comision.neto,
-      monto_seguro: null,
-      metadata: JSON.stringify({ trabajo_id: trabajoId, trabajador_id: trabajo.trabajador_id, con_seguro: false, monto })
-    }, client);
-
-    const mpClient = await getMPClient();
-    const paymentClient = new Payment(mpClient);
-
-    let mpPago;
-    try {
-      mpPago = await conRetry(() => paymentClient.create({
-        body: {
-          transaction_amount: monto,
-          token: cardToken,
-          description: `Pago trabajo: ${trabajo.titulo}`,
-          installments: parseInt(installments) || 1,
-          payment_method_id: paymentMethodId,
-          payer: { email: payerEmail },
-          external_reference: String(pago.id),
-          notification_url: `${APP_URL}/api/pagos/mp/webhook`
-        }
-      }));
-    } catch (mpErr) {
-      const causa = mpErr?.cause?.[0]?.description || mpErr?.message || String(mpErr);
-      logger.error({ err: mpErr, trabajoId, causa }, '[pagos] Payment.create (directo) falló');
-      throw new Error(`MercadoPago error: ${causa}`);
-    }
-
-    const mpStatus = mpPago.status;
-    const nuevoEstado = mpStatus === 'approved' ? 'aprobado'
-      : mpStatus === 'rejected' ? 'rechazado'
-      : 'pendiente';
-
-    await pagosRepo.updatePagoEstado({
+    await aplicarResultadoMP({
       pagoId: pago.id,
-      estado: nuevoEstado,
       paymentId: String(mpPago.id),
-      mpStatus,
+      mpStatus: mpPago.status,
       mpDetail: mpPago.status_detail
     }, client);
-
-    if (nuevoEstado === 'aprobado') {
-      await procesarPagoAprobado(client, pago);
-    }
-
     await client.query('COMMIT');
-    logger.info({ trabajoId, pagoId: pago.id, mpStatus }, '[pagos] Pago directo procesado');
-    return {
-      status: mpStatus,
-      pago_id: pago.id,
-      mp_payment_id: mpPago.id,
-      status_detail: mpPago.status_detail
-    };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;
   } finally {
     client.release();
   }
+
+  logger.info({ trabajoId, pagoId: pago.id, mpStatus: mpPago.status }, '[pagos] Pago directo procesado');
+  return {
+    status: mpPago.status,
+    pago_id: pago.id,
+    mp_payment_id: mpPago.id,
+    status_detail: mpPago.status_detail
+  };
 };
 
 // ─── SALDO Y RETIROS (payout manual) ──────────────────────────────────────────
