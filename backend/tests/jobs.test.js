@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('./app');
-const { limpiarTablas, registrarYLogin } = require('./helpers');
+const { limpiarTablas, registrar, registrarYLogin, aprobarPagoTrabajo } = require('./helpers');
 
 let pool;
 let tokenDueno;
@@ -192,5 +192,205 @@ describe('PATCH /api/jobs/:id/cancel', () => {
       .set('Authorization', `Bearer ${tokenOtro}`);
 
     expect(res.status).toBe(404);
+  });
+});
+
+// ─── C3: cancelación con salvaguardas (reembolso / bloqueos por estado) ────────
+
+describe('C3 — PATCH /api/jobs/:id/cancel con pago y estados avanzados', () => {
+  let tokenDuenoC3, tokenTrabajadorC3, idDuenoC3, idTrabajadorC3;
+
+  // Crea un trabajo del dueño C3 con oferta aceptada del trabajador C3 → en_negociacion
+  const crearTrabajoConOfertaAceptada = async (titulo) => {
+    const resJob = await request(app)
+      .post('/api/jobs')
+      .set('Authorization', `Bearer ${tokenDuenoC3}`)
+      .field('titulo', titulo)
+      .field('descripcion', 'Trabajo para tests de cancelación con salvaguardas');
+    const trabajoId = resJob.body.job.id;
+
+    const resOferta = await request(app)
+      .post('/api/offers')
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`)
+      .send({ trabajo_id: trabajoId, monto_propuesto: 6000, mensaje: 'Puedo hacerlo', tiempo_estimado: 1, unidad_tiempo: 'dias' });
+
+    await request(app)
+      .patch(`/api/offers/${resOferta.body.oferta.id}/accept`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+
+    return trabajoId;
+  };
+
+  // Lleva un trabajo en_negociacion con pago aprobado hasta trabajador_llego
+  const iniciarTrabajoC3 = async (trabajoId) => {
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/iniciar`)
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`)
+      .send({ latitud: -34.6037, longitud: -58.3816 });
+    expect(res.status).toBe(200);
+  };
+
+  const getEstadoTrabajo = async (trabajoId) => {
+    const { rows } = await pool.query('SELECT estado FROM trabajos WHERE id = $1', [trabajoId]);
+    return rows[0].estado;
+  };
+
+  beforeAll(async () => {
+    const regDueno = await registrar({ email: 'dueno.c3@test.com', tipo_perfil: 'dueno' });
+    idDuenoC3 = regDueno.body.usuario.id;
+    tokenDuenoC3 = regDueno.body.token;
+
+    const regTrabajador = await registrar({ email: 'worker.c3@test.com', tipo_perfil: 'trabajador' });
+    idTrabajadorC3 = regTrabajador.body.usuario.id;
+    tokenTrabajadorC3 = regTrabajador.body.token;
+
+    // medio_transporte es requerido para ofertar
+    await request(app)
+      .post('/api/profile/complete')
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`)
+      .send({ nombre: 'Worker C3', medio_transporte: 'auto' });
+  });
+
+  test('cancelación libre: en_negociacion SIN pago aprobado → 200 y notifica al trabajador', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('C3 cancelación libre');
+
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+
+    expect(res.status).toBe(200);
+    expect(await getEstadoTrabajo(trabajoId)).toBe('cancelado');
+
+    const { rows: notifs } = await pool.query(
+      `SELECT mensaje FROM notificaciones WHERE usuario_id = $1 AND tipo = 'trabajo_cancelado' AND referencia_id = $2`,
+      [idTrabajadorC3, trabajoId]
+    );
+    expect(notifs).toHaveLength(1);
+    expect(notifs[0].mensaje).not.toContain('reembolsado');
+  });
+
+  test('cancelación con reembolso: pago aprobado, no iniciado → 200, pago reembolsado y distribución anulada', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('C3 cancelación con reembolso');
+    await aprobarPagoTrabajo({ jobId: trabajoId, duenoId: idDuenoC3, trabajadorId: idTrabajadorC3, monto: 6000 });
+
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+
+    expect(res.status).toBe(200);
+    expect(await getEstadoTrabajo(trabajoId)).toBe('cancelado');
+
+    // El pago quedó registrado como reembolsado
+    const { rows: pagos } = await pool.query(
+      `SELECT estado FROM pagos WHERE referencia_id = $1 AND tipo = 'trabajo'`,
+      [trabajoId]
+    );
+    expect(pagos).toHaveLength(1);
+    expect(pagos[0].estado).toBe('reembolsado');
+
+    // La distribución retenida volvió a null (ya no cuenta como retenido ni liberado)
+    const { rows: dists } = await pool.query(
+      `SELECT d.estado FROM distribuciones_pago d
+       JOIN pagos p ON p.id = d.pago_id
+       WHERE p.referencia_id = $1 AND p.tipo = 'trabajo'`,
+      [trabajoId]
+    );
+    expect(dists).toHaveLength(1);
+    expect(dists[0].estado).toBeNull();
+
+    // El saldo del trabajador no retiene nada de este trabajo
+    const saldo = await request(app)
+      .get('/api/pagos/saldo')
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`);
+    expect(saldo.body.retenido).toBe(0);
+
+    // El trabajador fue notificado con mención del reembolso
+    const { rows: notifs } = await pool.query(
+      `SELECT mensaje FROM notificaciones WHERE usuario_id = $1 AND tipo = 'trabajo_cancelado' AND referencia_id = $2`,
+      [idTrabajadorC3, trabajoId]
+    );
+    expect(notifs).toHaveLength(1);
+    expect(notifs[0].mensaje).toContain('reembolsado');
+  });
+
+  test('bloqueo en progreso: dueño NO puede cancelar un trabajo iniciado → 403 y el pago sigue retenido', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('C3 bloqueado en progreso');
+    await aprobarPagoTrabajo({ jobId: trabajoId, duenoId: idDuenoC3, trabajadorId: idTrabajadorC3, monto: 6000 });
+    await iniciarTrabajoC3(trabajoId);
+
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+
+    expect(res.status).toBe(403);
+    expect(await getEstadoTrabajo(trabajoId)).toBe('trabajador_llego');
+
+    const { rows: pagos } = await pool.query(
+      `SELECT estado FROM pagos WHERE referencia_id = $1 AND tipo = 'trabajo'`,
+      [trabajoId]
+    );
+    expect(pagos[0].estado).toBe('aprobado');
+  });
+
+  test('en progreso el trabajador SÍ puede cancelar → 200 sin reembolso automático (queda para disputa)', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('C3 trabajador cancela en progreso');
+    await aprobarPagoTrabajo({ jobId: trabajoId, duenoId: idDuenoC3, trabajadorId: idTrabajadorC3, monto: 6000 });
+    await iniciarTrabajoC3(trabajoId);
+
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`);
+
+    expect(res.status).toBe(200);
+    expect(await getEstadoTrabajo(trabajoId)).toBe('cancelado');
+
+    // Sin reembolso automático: el pago sigue aprobado y la distribución retenida
+    const { rows } = await pool.query(
+      `SELECT p.estado AS pago_estado, d.estado AS dist_estado
+       FROM pagos p JOIN distribuciones_pago d ON d.pago_id = p.id
+       WHERE p.referencia_id = $1 AND p.tipo = 'trabajo'`,
+      [trabajoId]
+    );
+    expect(rows[0].pago_estado).toBe('aprobado');
+    expect(rows[0].dist_estado).toBe('pendiente');
+
+    // El dueño fue notificado de la cancelación
+    const { rows: notifs } = await pool.query(
+      `SELECT id FROM notificaciones WHERE usuario_id = $1 AND tipo = 'trabajo_cancelado' AND referencia_id = $2`,
+      [idDuenoC3, trabajoId]
+    );
+    expect(notifs).toHaveLength(1);
+  });
+
+  test('bloqueo completado: ni dueño ni trabajador pueden cancelar → 403', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('C3 bloqueado completado');
+    await aprobarPagoTrabajo({ jobId: trabajoId, duenoId: idDuenoC3, trabajadorId: idTrabajadorC3, monto: 6000 });
+    await iniciarTrabajoC3(trabajoId);
+
+    // trabajador sube resultado → pendiente_confirmacion → dueño confirma → completado
+    const resCompletar = await request(app)
+      .patch(`/api/jobs/${trabajoId}/completar`)
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`)
+      .field('texto_resultado', 'Trabajo terminado correctamente')
+      .attach('foto_resultado', Buffer.from('fake-result'), { filename: 'resultado.jpg', contentType: 'image/jpeg' });
+    expect(resCompletar.status).toBe(200);
+
+    const resConfirmar = await request(app)
+      .patch(`/api/jobs/${trabajoId}/confirmar-completado`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+    expect(resConfirmar.status).toBe(200);
+    expect(await getEstadoTrabajo(trabajoId)).toBe('completado');
+
+    const resDueno = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenDuenoC3}`);
+    expect(resDueno.status).toBe(403);
+
+    const resTrabajador = await request(app)
+      .patch(`/api/jobs/${trabajoId}/cancel`)
+      .set('Authorization', `Bearer ${tokenTrabajadorC3}`);
+    expect(resTrabajador.status).toBe(403);
+
+    expect(await getEstadoTrabajo(trabajoId)).toBe('completado');
   });
 });

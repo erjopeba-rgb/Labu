@@ -265,4 +265,27 @@ El flujo retención→liberación→payout ahora existe de verdad. Decisión de 
    - UI: página nueva `mis-pagos.html` (+ `mis-pagos.css`, `mis-pagos.js`) con tarjetas de saldo, form de retiro y historial — link "Mis Pagos" en sidebar (rol trabajador) y en `main.js` pageMap; tab "Retiros" en `admin.html`/`admin.js`.
 5. **Fix lateral en `backend/scripts/migrate.js`**: strip de BOM UTF-8 al leer los `.sql` (`indices_escalabilidad.sql` tenía BOM y rompía el runner, bloqueando todas las migraciones alfabéticamente posteriores). Tras el fix, las 32 migraciones quedaron registradas en `migration_history` de ambas DBs (resuelve la nota de C2 sobre la tabla vacía).
 - **Tests** (`npm test` → **135/135**, 6 nuevos): helper `aprobarPagoTrabajo` en `tests/helpers.js` (simula lo que hace el webhook: pago aprobado + distribución pendiente); `flujo-completo.test.js` ahora cubre gate 402 sin pago, retención pendiente al pagar, liberación a `procesado` al confirmar, saldo disponible correcto (8500 − 10% = 7650), retiro mayor al disponible → 400, retiro válido → 201 con saldo actualizado; `geolocalizacion.test.js` siembra pagos aprobados antes de confirmar llegada.
-- **Pendiente relacionado:** C3 (cancelación sin refund), I7 e I17 siguen abiertos — el dinero retenido de un trabajo cancelado todavía no tiene camino de vuelta al dueño.
+- **Pendiente relacionado:** ~~C3 (cancelación sin refund)~~ resuelto el 2026-06-10 (ver abajo); I7 e I17 siguen abiertos.
+
+---
+
+## C3 — RESUELTO (2026-06-10)
+
+Cancelación con salvaguardas por estado y rol. Con la retención real de C4 activa, cancelar un trabajo pagado dejaba distribuciones `'pendiente'` sin camino de vuelta al dueño (plata atrapada). Reglas implementadas en `cancelarTrabajo` (`jobs.service.js`):
+
+| Estado del trabajo | Dueño | Trabajador asignado | Admin | Efecto económico |
+|---|---|---|---|---|
+| `publicado` / `en_negociacion` sin pago | ✅ libre | ✅ | ✅ | ninguno |
+| `en_negociacion` con pago aprobado (no iniciado) | ✅ | ✅ | ✅ | **reembolso automático** |
+| `trabajador_llego` / `en_curso` (iniciado) | ❌ 403 | ✅ | ✅ | sin reembolso automático — el dinero queda retenido y el reembolso parcial lo decide el admin vía disputa |
+| `pendiente_confirmacion` / `completado` | ❌ 403 | ❌ 403 | ✅ (vía disputa) | sin movimiento automático |
+| `cancelado` | 404 (idempotencia: ya cancelado) | 404 | 404 | — |
+
+Detalle de implementación:
+
+1. **Todo en una transacción** (`BEGIN` … `COMMIT` con `SELECT … FOR UPDATE` sobre el trabajo, mismo patrón que `iniciarTrabajo`/`confirmarCompletado`): validación de estado y rol → `setCancelado` → reembolso (si corresponde) → liberación de reservas. Usuarios sin relación con el trabajo (ni dueño, ni trabajador asignado, ni admin) reciben 404 — no se filtra la existencia del trabajo.
+2. **Reembolso automático** (`reembolsarPagoPorTrabajo` en `jobs.repository.js`): las distribuciones `'pendiente'` del pago aprobado vuelven a `NULL` (dejan de contar como retenido en `findSaldoUsuario`, que filtra por `'pendiente'`/`'procesado'`) y el pago `'aprobado'` pasa a `'reembolsado'` — queda como evento de reembolso registrado en `pagos`. Migración `database/migrations/pagos_reembolsado.sql` agrega `'reembolsado'` al CHECK de `pagos.estado` (idempotente, aplicada en `rtype1` y `rtype1_test`).
+3. **Liberación de reservas** (`liberarReservasPorTrabajo`): los slots `'tentativa'` **y `'confirmada'`** de todas las ofertas del trabajo pasan a `'liberada'` en la misma transacción (antes el slot del trabajador quedaba bloqueado para siempre — era parte del hallazgo original).
+4. **Notificación** (`notificarTrabajoCancelado`, tipo `trabajo_cancelado`): si el trabajo tenía trabajador asignado se notifica a la contraparte del que canceló (al trabajador si canceló el dueño/admin, al dueño si canceló el trabajador), con mención explícita del reembolso cuando lo hubo.
+5. **Nota sobre MercadoPago:** el reembolso es contable (el dinero nunca salió de la cuenta de la plataforma — modelo payout por saldo de C4). La devolución real vía API de refunds de MP queda como mejora cuando haya credenciales de producción.
+- **Tests** (`backend/tests/jobs.test.js`, describe `C3`): cancelación libre sin pago + notificación, cancelación con reembolso (pago `'reembolsado'`, distribución `NULL`, saldo retenido en 0, notificación con mención de reembolso), dueño bloqueado en `trabajador_llego` (403, pago sigue `'aprobado'`), trabajador cancela en progreso (200 sin reembolso automático, distribución sigue `'pendiente'`), bloqueo total en `completado` (403 para ambos). Los 3 tests preexistentes de cancelación siguen pasando sin cambios.

@@ -56,11 +56,77 @@ const obtenerTrabajosAsignados = async (trabajador_id) => {
     return jobsRepo.findTrabajosAsignados(trabajador_id);
 };
 
-const cancelarTrabajo = async (id, dueno_id) => {
-    const trabajo = await jobsRepo.cancelJob(id, dueno_id);
-    if (!trabajo) throw new AppError("Trabajo no encontrado", 404);
+// C3: cancelación con salvaguardas según estado del trabajo y rol del que cancela.
+// - publicado / en_negociacion sin pago aprobado → cancelación libre
+// - en_negociacion con pago aprobado (no iniciado) → cancelación con reembolso
+//   automático: distribuciones retenidas anuladas + pago 'reembolsado' al dueño
+// - trabajador_llego / en_curso (ya iniciado) → bloqueada para el dueño; solo el
+//   trabajador o un admin pueden cancelar, y el dinero queda retenido (el reembolso
+//   parcial lo decide el admin vía disputa)
+// - pendiente_confirmacion / completado → bloqueada para todos salvo admin vía disputa
+const ESTADOS_INICIADOS = ['trabajador_llego', 'en_curso'];
+const ESTADOS_FINALIZADOS = ['pendiente_confirmacion', 'completado'];
+
+const cancelarTrabajo = async (id, usuarioId) => {
+    const client = await pool.connect();
+    let job, oferta, esDueno, esTrabajador, huboReembolso = false;
+    try {
+        await client.query('BEGIN');
+
+        // FOR UPDATE: bloquea la fila para que el estado no cambie durante la cancelación
+        const actual = await jobsRepo.findJobParaCancelar(id, client);
+        if (!actual || actual.estado === 'cancelado') throw new AppError('Trabajo no encontrado', 404);
+
+        oferta = await jobsRepo.findOfertaAceptadaTrabajadorId(id, client);
+        esDueno = actual.dueno_id === usuarioId;
+        esTrabajador = oferta != null && oferta.trabajador_id === usuarioId;
+        const esAdmin = await jobsRepo.findEsAdmin(usuarioId, client);
+
+        if (!esDueno && !esTrabajador && !esAdmin) throw new AppError('Trabajo no encontrado', 404);
+
+        if (ESTADOS_INICIADOS.includes(actual.estado) && !esTrabajador && !esAdmin) {
+            throw new AppError('No podés cancelar un trabajo ya iniciado. Si hay un problema, abrí una disputa.', 403);
+        }
+        if (ESTADOS_FINALIZADOS.includes(actual.estado) && !esAdmin) {
+            throw new AppError('Este trabajo ya no puede cancelarse. Solo un administrador puede hacerlo mediante una disputa.', 403);
+        }
+
+        job = await jobsRepo.setCancelado(id, client);
+
+        // Reembolso automático solo si el trabajo nunca se inició: el dinero retenido
+        // vuelve al dueño. En trabajos iniciados o finalizados el pago queda retenido
+        // y la decisión económica (reembolso parcial) pasa por la disputa del admin.
+        const pago = await jobsRepo.findPagoAprobadoPorTrabajo(id, client);
+        if (pago && !ESTADOS_INICIADOS.includes(actual.estado) && !ESTADOS_FINALIZADOS.includes(actual.estado)) {
+            const reembolsados = await jobsRepo.reembolsarPagoPorTrabajo(id, client);
+            huboReembolso = reembolsados.length > 0;
+        }
+
+        // El slot agendado del trabajador queda libre en la misma transacción
+        await jobsRepo.liberarReservasPorTrabajo(id, client);
+
+        await client.query('COMMIT');
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+
     await cache.delPattern(FEED_CACHE_PATTERN);
-    return trabajo;
+
+    // Notificar a la contraparte del que canceló (solo si había trabajador asignado)
+    if (oferta) {
+        try {
+            if (!esTrabajador) await notif.notificarTrabajoCancelado(oferta.trabajador_id, job.titulo, job.id, huboReembolso);
+            if (!esDueno) await notif.notificarTrabajoCancelado(job.dueno_id, job.titulo, job.id, huboReembolso);
+        } catch (e) {
+            logger.error({ trabajoId: id, err: e.message }, 'Error enviando notificación de trabajo cancelado');
+        }
+    }
+
+    getLogger().info({ trabajoId: id, usuarioId, reembolso: huboReembolso }, 'trabajo cancelado');
+    return job;
 };
 
 // Paso 4→5: Trabajador confirma llegada al lugar → estado pasa directo a trabajador_llego

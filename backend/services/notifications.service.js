@@ -222,6 +222,18 @@ const notificarTrabajoFinalizado = async (usuarioId, trabajoId) => {
     });
 };
 
+// C3: el trabajo fue cancelado — se notifica a la contraparte del que canceló
+const notificarTrabajoCancelado = async (usuarioId, trabajoTitulo, trabajoId, conReembolso = false) => {
+    await crearNotificacion({
+        usuarioId,
+        tipo: 'trabajo_cancelado',
+        titulo: 'Trabajo cancelado',
+        mensaje: `El trabajo "${trabajoTitulo}" fue cancelado.${conReembolso ? ' El pago retenido fue reembolsado al dueño.' : ''}`,
+        referenciaTipo: 'trabajo',
+        referenciaId: trabajoId
+    });
+};
+
 const notificarDisputaAbierta = async (usuarioId, trabajoTitulo, trabajoId) => {
     await crearNotificacion({
         usuarioId,
@@ -262,6 +274,7 @@ module.exports = {
     notificarPedirCalificacion,
     notificarTrabajoFinalizado,
     notificarPagoPendiente,
+    notificarTrabajoCancelado,
     notificarDisputaAbierta,
     notificarDisputaResuelta,
 };

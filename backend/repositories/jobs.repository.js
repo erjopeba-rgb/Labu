@@ -118,12 +118,61 @@ const findTrabajosAsignados = async (trabajador_id) => {
     return rows;
 };
 
-const cancelJob = async (id, dueno_id) => {
-    const { rows } = await pool.query(
-        `UPDATE trabajos SET estado = 'cancelado' WHERE id = $1 AND dueno_id = $2 AND estado NOT IN ('cancelado', 'completado') RETURNING *`,
-        [id, dueno_id]
+// ─── Cancelación (C3) ─────────────────────────────────────────────────────────
+
+const findJobParaCancelar = async (id, db = pool) => {
+    const { rows } = await db.query(
+        `SELECT id, estado, dueno_id, titulo FROM trabajos WHERE id = $1 FOR UPDATE`,
+        [id]
     );
     return rows[0] || null;
+};
+
+const setCancelado = async (id, db = pool) => {
+    const { rows } = await db.query(
+        `UPDATE trabajos SET estado = 'cancelado', actualizado_en = NOW() WHERE id = $1 RETURNING *`,
+        [id]
+    );
+    return rows[0] || null;
+};
+
+// Reembolso al cancelar un trabajo no iniciado: las distribuciones retenidas se anulan
+// (estado NULL: ni retenido ni liberado en el saldo) y el pago aprobado pasa a 'reembolsado'.
+const reembolsarPagoPorTrabajo = async (jobId, db = pool) => {
+    await db.query(
+        `UPDATE distribuciones_pago d
+         SET estado = NULL, procesado_en = NULL
+         FROM pagos p
+         WHERE d.pago_id = p.id
+           AND p.referencia_id = $1 AND p.tipo = 'trabajo' AND p.estado = 'aprobado'
+           AND d.estado = 'pendiente'`,
+        [jobId]
+    );
+    const { rows } = await db.query(
+        `UPDATE pagos SET estado = 'reembolsado', actualizado_en = NOW()
+         WHERE referencia_id = $1 AND tipo = 'trabajo' AND estado = 'aprobado'
+         RETURNING id, monto_total`,
+        [jobId]
+    );
+    return rows;
+};
+
+// Al cancelar, los slots del trabajador (tentativas o confirmadas) vuelven a estar libres
+const liberarReservasPorTrabajo = async (jobId, db = pool) => {
+    await db.query(
+        `UPDATE reservas_tentativas SET estado = 'liberada'
+         WHERE estado IN ('tentativa', 'confirmada')
+           AND oferta_id IN (SELECT id FROM ofertas WHERE trabajo_id = $1)`,
+        [jobId]
+    );
+};
+
+const findEsAdmin = async (usuarioId, db = pool) => {
+    const { rows } = await db.query(
+        `SELECT es_admin FROM usuarios WHERE id = $1`,
+        [usuarioId]
+    );
+    return rows[0]?.es_admin === true;
 };
 
 // ─── Flujo de trabajo ─────────────────────────────────────────────────────────
@@ -146,8 +195,8 @@ const setTrabajadorLlego = async (id, db = pool) => {
     return rows[0] || null;
 };
 
-const findOfertaAceptadaTrabajadorId = async (jobId) => {
-    const { rows } = await pool.query(
+const findOfertaAceptadaTrabajadorId = async (jobId, db = pool) => {
+    const { rows } = await db.query(
         `SELECT trabajador_id FROM ofertas WHERE trabajo_id = $1 AND estado = 'aceptada' LIMIT 1`,
         [jobId]
     );
@@ -307,7 +356,11 @@ module.exports = {
     findJobById,
     findMisTrabajos,
     findTrabajosAsignados,
-    cancelJob,
+    findJobParaCancelar,
+    setCancelado,
+    reembolsarPagoPorTrabajo,
+    liberarReservasPorTrabajo,
+    findEsAdmin,
     findOfertaAceptadaDelTrabajador,
     setTrabajadorLlego,
     findOfertaAceptadaTrabajadorId,
