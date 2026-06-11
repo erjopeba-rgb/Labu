@@ -117,6 +117,32 @@ const callback = (req, res) => {
   res.redirect(`/pages/pago-exitoso.html?${qs}`);
 };
 
+const getSaldo = async (req, res) => {
+  try {
+    res.json(await svc.getSaldo(req.usuario.id));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const solicitarRetiro = async (req, res) => {
+  try {
+    const { monto, datos_cobro } = req.body || {};
+    const retiro = await svc.solicitarRetiro(req.usuario.id, monto, datos_cobro);
+    res.status(201).json({ success: true, retiro });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+const getMisRetiros = async (req, res) => {
+  try {
+    res.json({ retiros: await svc.getMisRetiros(req.usuario.id) });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 const getHistorial = async (req, res) => {
   try {
     res.json(await svc.getHistorialPagos(req.usuario.id));
@@ -195,4 +221,4 @@ const devAprobarPago = async (req, res) => {
   }
 };
 
-module.exports = { verificarFirmaMP, getDesglose, iniciarPagoTrabajo, iniciarPagoVideo, pagarDirecto, webhook, callback, getHistorial, getVideos, checkAccesoVideo, getConfig, devAprobarPago };
+module.exports = { verificarFirmaMP, getDesglose, iniciarPagoTrabajo, iniciarPagoVideo, pagarDirecto, webhook, callback, getHistorial, getVideos, checkAccesoVideo, getConfig, devAprobarPago, getSaldo, solicitarRetiro, getMisRetiros };

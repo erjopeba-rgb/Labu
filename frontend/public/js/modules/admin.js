@@ -27,6 +27,7 @@ window.cambiarTab = (nombre) => {
   if (nombre === 'reportes')       cargarReportes();
   if (nombre === 'verificaciones') cargarVerificaciones();
   if (nombre === 'disputas')       cargarDisputas();
+  if (nombre === 'retiros')        cargarRetiros();
   if (nombre === 'config')         cargarConfig();
   if (nombre === 'errores')        cargarErrores();
   if (nombre === 'backups')        cargarBackups();
@@ -291,6 +292,88 @@ window.confirmarResolucionDisputa = async () => {
       fila.cells[7].innerHTML = `<span style="font-size:0.8rem;color:#64748b;max-width:160px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${disputa.resolucion}">${disputa.resolucion}</span>`;
     }
     cerrarModalResolverDisputa();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+// ─── Retiros ─────────────────────────────────────────────────────────────────
+
+const ESTADO_RETIRO_BADGE = {
+  solicitado: '<span class="badge badge-naranja">Solicitado</span>',
+  pagado:     '<span class="badge badge-verde">Pagado</span>',
+  rechazado:  '<span class="badge badge-rojo">Rechazado</span>',
+};
+
+const cargarRetiros = async () => {
+  const tbody = document.getElementById('tbodyRetiros');
+  tbody.innerHTML = '<tr><td colspan="8" class="admin-loading">Cargando...</td></tr>';
+  try {
+    const { retiros } = await api('GET', '/retiros');
+    if (!retiros.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="admin-empty">Sin retiros solicitados</td></tr>';
+      return;
+    }
+    tbody.innerHTML = retiros.map(r => `
+      <tr id="fila-ret-${r.id}">
+        <td>${r.id}</td>
+        <td>${r.nombre ? escHtml(`${r.nombre} ${r.apellido || ''}`.trim()) : '—'}</td>
+        <td>${escHtml(r.email)}</td>
+        <td style="white-space:nowrap;">$${Number(r.monto).toLocaleString('es-AR')}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.datos_cobro)}"><code>${escHtml(r.datos_cobro)}</code></td>
+        <td>${ESTADO_RETIRO_BADGE[r.estado] || r.estado}</td>
+        <td style="white-space:nowrap;">${new Date(r.creado_en).toLocaleDateString('es-AR')}</td>
+        <td>
+          ${r.estado === 'solicitado' ? `
+            <button class="btn-accion btn-activar"   onclick="marcarRetiroPagado(${r.id})">Marcar pagado</button>
+            <button class="btn-accion btn-suspender" onclick="abrirModalRechazarRetiro(${r.id})" style="margin-left:4px;">Rechazar</button>
+          ` : (r.nota_admin ? `<span style="font-size:0.8rem;color:#64748b;max-width:160px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(r.nota_admin)}">${escHtml(r.nota_admin)}</span>` : '—')}
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="admin-empty">Error: ${escHtml(err.message)}</td></tr>`;
+  }
+};
+
+window.marcarRetiroPagado = async (id) => {
+  if (!confirm('¿Confirmás que ya hiciste la transferencia al trabajador?')) return;
+  try {
+    const { retiro } = await api('PATCH', `/retiros/${id}/resolver`, { accion: 'pagado' });
+    const fila = document.getElementById(`fila-ret-${id}`);
+    if (fila) {
+      fila.cells[5].innerHTML = ESTADO_RETIRO_BADGE['pagado'];
+      fila.cells[7].innerHTML = '—';
+    }
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+};
+
+let _retiroIdPendiente = null;
+
+window.abrirModalRechazarRetiro = (id) => {
+  _retiroIdPendiente = id;
+  document.getElementById('motivoRechazoRetiro').value = '';
+  document.getElementById('modalRechazarRetiro').style.display = 'flex';
+};
+
+window.cerrarModalRechazarRetiro = () => {
+  document.getElementById('modalRechazarRetiro').style.display = 'none';
+  _retiroIdPendiente = null;
+};
+
+window.confirmarRechazoRetiro = async () => {
+  const nota = document.getElementById('motivoRechazoRetiro').value.trim();
+  if (!nota) { alert('El motivo es obligatorio'); return; }
+  try {
+    const { retiro } = await api('PATCH', `/retiros/${_retiroIdPendiente}/resolver`, { accion: 'rechazado', nota });
+    const fila = document.getElementById(`fila-ret-${_retiroIdPendiente}`);
+    if (fila) {
+      fila.cells[5].innerHTML = ESTADO_RETIRO_BADGE['rechazado'];
+      fila.cells[7].innerHTML = `<span style="font-size:0.8rem;color:#64748b;">${escHtml(retiro.nota_admin)}</span>`;
+    }
+    cerrarModalRechazarRetiro();
   } catch (err) {
     alert('Error: ' + err.message);
   }

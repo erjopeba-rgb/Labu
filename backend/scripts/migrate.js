@@ -73,7 +73,8 @@ function leerMigraciones() {
 }
 
 async function ejecutarMigracion(client, migracion) {
-  const sql = fs.readFileSync(migracion.ruta, 'utf8');
+  // Quitar BOM UTF-8 si el archivo fue guardado con él (PostgreSQL lo rechaza)
+  const sql = fs.readFileSync(migracion.ruta, 'utf8').replace(/^﻿/, '');
 
   await client.query('BEGIN');
   try {

@@ -20,6 +20,11 @@ router.post("/video/:video_id",     ...auth, ctrl.iniciarPagoVideo);
 // Historial
 router.get("/historial", ...auth, ctrl.getHistorial);
 
+// Saldo y retiros (payout manual del trabajador)
+router.get("/saldo",    ...auth, ctrl.getSaldo);
+router.get("/retiros",  ...auth, ctrl.getMisRetiros);
+router.post("/retiros", ...auth, ctrl.solicitarRetiro);
+
 // Videos
 router.get("/videos",                    ctrl.getVideos);
 router.get("/videos/:video_id/acceso",   ...auth, ctrl.checkAccesoVideo);

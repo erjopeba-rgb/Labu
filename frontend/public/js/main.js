@@ -83,6 +83,7 @@ const App = {
           'agenda':            '/pages/agenda.html',
           'busqueda':          '/pages/busqueda-avanzada.html',
           'catalogo':          '/pages/catalogo.html',
+          'mis-pagos':         '/pages/mis-pagos.html',
           'configuracion':     '/pages/configuracion.html',
           'perfil-publico':    '/pages/perfil-publico.html',
           'ayudantes':         '/pages/ayudantes.html'

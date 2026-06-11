@@ -69,6 +69,11 @@ const iniciarTrabajo = async (id, trabajador_id, latTrabajador, lonTrabajador) =
     const oferta = await jobsRepo.findOfertaAceptadaDelTrabajador(id, trabajador_id);
     if (!oferta) throw new AppError('No sos el trabajador de este trabajo', 403);
 
+    // Gate de pago: el trabajo no puede arrancar si el dueño no pagó (la aprobación
+    // viene solo de MercadoPago — webhook, pago directo o simulación en development)
+    const pago = await jobsRepo.findPagoAprobadoPorTrabajo(id);
+    if (!pago) throw new AppError('El dueño todavía no completó el pago de este trabajo. No podés confirmar la llegada hasta que el pago esté aprobado.', 402);
+
     const client = await pool.connect();
     let job;
     try {
@@ -153,6 +158,7 @@ const marcarCompletado = async (id, trabajador_id, fotoResultadoUrl, textoResult
 const confirmarCompletado = async (id, dueno_id) => {
     const client = await pool.connect();
     let job;
+    let distribucionesLiberadas = 0;
     try {
         await client.query('BEGIN');
 
@@ -174,6 +180,11 @@ const confirmarCompletado = async (id, dueno_id) => {
         if (jobActual.estado !== 'pendiente_confirmacion') throw new AppError('El trabajo no está pendiente de confirmación', 400);
 
         job = await jobsRepo.setCompletado(id, dueno_id, client);
+
+        // Paso 8a: Liberar el dinero retenido — las distribuciones del pago aprobado
+        // pasan a 'procesado' (saldo disponible del trabajador) en la misma transacción
+        distribucionesLiberadas = await jobsRepo.liberarDistribucionesPorTrabajo(id, client);
+
         await client.query('COMMIT');
     } catch (e) {
         await client.query('ROLLBACK');
@@ -182,21 +193,14 @@ const confirmarCompletado = async (id, dueno_id) => {
         client.release();
     }
 
-    // Encontrar al trabajador y monto acordado
-    const oferta = await jobsRepo.findOfertaAceptadaConMonto(id);
-
-    // Paso 8a: Liberar pago al trabajador (actualizar o crear registro en pagos)
-    if (oferta && oferta.monto_propuesto) {
-        try {
-            const monto = Number(oferta.monto_propuesto);
-            const rowCount = await jobsRepo.updatePagoAprobado(id, monto);
-            if (rowCount === 0) {
-                await jobsRepo.insertPago(dueno_id, id, monto);
-            }
-        } catch (e) {
-            logger.error({ trabajoId: id, err: e.message }, 'Error registrando pago liberado');
-        }
+    if (distribucionesLiberadas === 0) {
+        logger.warn({ trabajoId: id }, 'Trabajo completado sin distribuciones pendientes para liberar');
+    } else {
+        getLogger().info({ trabajoId: id, distribuciones: distribucionesLiberadas }, 'pago liberado al completar trabajo');
     }
+
+    // Encontrar al trabajador y monto acordado (para portfolio y notificaciones)
+    const oferta = await jobsRepo.findOfertaAceptadaConMonto(id);
 
     // Pasos 8b+8c: Auto-crear portfolio en segundo plano (desacoplado vía cola)
     await encolarPortfolio(job, oferta, dueno_id);

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>if(!localStorage.getItem('auth_token')&&!sessionStorage.getItem('auth_token')){window.location.replace('/index.html');}</script>
+    <title>Labu - Mis Pagos</title>
+    <link rel="stylesheet" href="/css/variables.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/mis-pagos.css">
+</head>
+<body>
+
+    <!-- Navbar — componente: /components/navbar.html -->
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo" onclick="App.navigateTo('feed')">Labu</div>
+            <div class="nav-search">
+                <span class="nav-search-icon">&#128269;</span>
+                <input type="text" id="navSearchInput" placeholder="Buscar trabajos, profesionales...">
+            </div>
+            <div class="nav-icons">
+                <div class="nav-icon" title="Notificaciones" onclick="App.navigateTo('notificaciones')">
+                    &#128276;
+                    <span class="badge" id="notification-badge"></span>
+                </div>
+                <div class="nav-icon" title="Mensajes" onclick="App.navigateTo('mensajes')">
+                    &#128172;
+                    <span class="badge" id="message-badge"></span>
+                </div>
+                <div class="nav-icon nav-avatar" title="Mi perfil" onclick="App.navigateTo('mi-perfil')" id="navAvatar">&#128100;</div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="pagos-layout">
+
+        <div class="page-header">
+            <div class="page-header-left">
+                <button class="btn-secondary" onclick="App.navigateTo('feed')">&#8592; Volver al Feed</button>
+                <h1>&#128176; Mis Pagos</h1>
+            </div>
+        </div>
+
+        <!-- Saldo -->
+        <div class="saldo-grid" id="saldoGrid">
+            <div class="card saldo-card">
+                <div class="saldo-label">Retenido en plataforma</div>
+                <div class="saldo-monto" id="saldoRetenido">—</div>
+                <div class="saldo-desc">Trabajos pagados por el due&ntilde;o, a&uacute;n no confirmados</div>
+            </div>
+            <div class="card saldo-card saldo-card-principal">
+                <div class="saldo-label">Disponible para retirar</div>
+                <div class="saldo-monto" id="saldoDisponible">—</div>
+                <div class="saldo-desc">Trabajos completados y confirmados</div>
+            </div>
+            <div class="card saldo-card">
+                <div class="saldo-label">Retiro en proceso</div>
+                <div class="saldo-monto" id="saldoEnRetiro">—</div>
+                <div class="saldo-desc">Solicitado, esperando transferencia</div>
+            </div>
+            <div class="card saldo-card">
+                <div class="saldo-label">Total retirado</div>
+                <div class="saldo-monto" id="saldoRetirado">—</div>
+                <div class="saldo-desc">Hist&oacute;rico de retiros pagados</div>
+            </div>
+        </div>
+
+        <!-- Solicitar retiro -->
+        <div class="card retiro-form-card">
+            <h2>Solicitar retiro</h2>
+            <p class="retiro-form-desc">Te transferimos el dinero disponible a tu cuenta bancaria. Indic&aacute; el monto y tu CBU/CVU o alias.</p>
+            <form id="formRetiro">
+                <div class="retiro-form-fields">
+                    <div class="form-group">
+                        <label for="retiroMonto">Monto a retirar *</label>
+                        <input type="number" id="retiroMonto" min="1" step="0.01" placeholder="0.00" required>
+                        <div class="form-error" id="errorMonto"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="retiroDatosCobro">CBU / CVU / Alias *</label>
+                        <input type="text" id="retiroDatosCobro" placeholder="ej: mi.alias.mp" maxlength="100" required>
+                        <div class="form-error" id="errorDatosCobro"></div>
+                    </div>
+                    <button type="submit" class="btn-primary" id="btnSolicitarRetiro">Solicitar retiro</button>
+                </div>
+                <div class="form-error" id="errorRetiro"></div>
+            </form>
+        </div>
+
+        <!-- Historial de retiros -->
+        <div class="card">
+            <h2>Mis retiros</h2>
+            <div id="listaRetiros">
+                <div class="empty-state">
+                    <div class="empty-icon">&#9203;</div>
+                    <p>Cargando retiros...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/main.js"></script>
+    <script src="/js/modules/mis-pagos.js"></script>
+</body>
+</html>

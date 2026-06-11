@@ -48,6 +48,9 @@
             <button class="admin-tab" data-tab="disputas" onclick="cambiarTab('disputas')">
                 Disputas
             </button>
+            <button class="admin-tab" data-tab="retiros" onclick="cambiarTab('retiros')">
+                Retiros
+            </button>
             <button class="admin-tab" data-tab="config" onclick="cambiarTab('config')">
                 Configuración
             </button>
@@ -173,6 +176,43 @@
                 <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
                     <button class="btn btn-secondary" onclick="cerrarModalResolverDisputa()">Cancelar</button>
                     <button class="btn btn-primary" onclick="confirmarResolucionDisputa()">Confirmar resolución</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Retiros -->
+        <div id="sec-retiros" class="admin-seccion">
+            <div class="admin-tabla-wrap">
+                <table class="admin-tabla">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Trabajador</th>
+                            <th>Email</th>
+                            <th>Monto</th>
+                            <th>Datos de cobro</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyRetiros">
+                        <tr><td colspan="8" class="admin-loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal rechazar retiro -->
+        <div id="modalRechazarRetiro" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+            <div style="background:#fff;border-radius:12px;padding:2rem;width:min(420px,90vw);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+                <h3 style="margin:0 0 1rem;">Rechazar retiro</h3>
+                <label style="font-size:0.9rem;font-weight:600;">Motivo del rechazo *</label>
+                <textarea id="motivoRechazoRetiro" rows="4" placeholder="Explicá por qué se rechaza el retiro (el monto vuelve al saldo disponible)..."
+                    style="width:100%;margin-top:0.5rem;padding:0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:0.75rem;margin-top:1.25rem;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="cerrarModalRechazarRetiro()">Cancelar</button>
+                    <button class="btn btn-primary" style="background:#dc2626;" onclick="confirmarRechazoRetiro()">Rechazar</button>
                 </div>
             </div>
         </div>

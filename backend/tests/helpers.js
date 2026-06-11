@@ -10,6 +10,7 @@ const limpiarTablas = async () => {
   // Truncate all user-data tables; CASCADE handles FK dependencies automatically.
   // Tables are ordered leaf-first so partial failures don't leave orphan data.
   const tablas = [
+    'retiros',
     'solicitudes_ayudante', 'aplicaciones_ayudante',
     'mensajes_disputa', 'evidencias_disputa', 'disputas',
     'verificaciones_identidad', 'trabajadores_confianza',
@@ -51,4 +52,31 @@ const registrarYLogin = async (opts) => {
   return login({ email: opts.email, password: opts.password });
 };
 
-module.exports = { limpiarTablas, registrar, login, registrarYLogin };
+/**
+ * Simula un pago aprobado por MercadoPago para un trabajo (lo que en producción
+ * hace el webhook): inserta el pago 'aprobado' + la distribución 'pendiente'
+ * (dinero retenido en plataforma hasta que el dueño confirme el trabajo).
+ * Devuelve { pago, neto } donde neto es lo que recibirá el trabajador.
+ */
+const aprobarPagoTrabajo = async ({ jobId, duenoId, trabajadorId, monto }) => {
+  const pool = require('../config/db');
+  const comision = Math.round(Math.max(monto * 0.10, 500) * 100) / 100;
+  const neto = Math.round((monto - comision) * 100) / 100;
+
+  const { rows: [pago] } = await pool.query(
+    `INSERT INTO pagos (usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, estado, mp_payment_id, mp_status, metadata)
+     VALUES ($1, 'trabajo', $2, $3, $4, $5, 'aprobado', $6, 'approved', $7) RETURNING *`,
+    [duenoId, jobId, monto, comision, neto, 'TEST_' + Date.now() + '_' + jobId,
+     JSON.stringify({ trabajo_id: jobId, trabajador_id: trabajadorId, monto })]
+  );
+
+  await pool.query(
+    `INSERT INTO distribuciones_pago (pago_id, destinatario_id, tipo_destinatario, monto, estado)
+     VALUES ($1, $2, 'trabajador', $3, 'pendiente')`,
+    [pago.id, trabajadorId, neto]
+  );
+
+  return { pago, neto };
+};
+
+module.exports = { limpiarTablas, registrar, login, registrarYLogin, aprobarPagoTrabajo };

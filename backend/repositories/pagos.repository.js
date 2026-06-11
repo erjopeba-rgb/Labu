@@ -64,10 +64,13 @@ const updatePagoEstado = async ({ pagoId, estado, paymentId, mpStatus, mpDetail 
     );
 };
 
+// Retención: la distribución nace 'pendiente' (dinero retenido en plataforma).
+// Pasa a 'procesado' recién cuando el dueño confirma el trabajo completado
+// (liberarDistribucionesPorTrabajo en jobs.repository).
 const insertDistribucion = async ({ pago_id, destinatario_id, tipo_destinatario, monto }, db) => {
     await db.query(
-        `INSERT INTO distribuciones_pago (pago_id, destinatario_id, tipo_destinatario, monto, estado, procesado_en)
-         VALUES ($1,$2,$3,$4,'procesado',NOW())`,
+        `INSERT INTO distribuciones_pago (pago_id, destinatario_id, tipo_destinatario, monto, estado)
+         VALUES ($1,$2,$3,$4,'pendiente')`,
         [pago_id, destinatario_id, tipo_destinatario, monto]
     );
 };
@@ -218,6 +221,77 @@ const findPagoByTrabajo = async (trabajoId, db) => {
     return pago || null;
 };
 
+// ─── Saldo y retiros ──────────────────────────────────────────────────────────
+
+// Saldo del usuario como destinatario de distribuciones (trabajador o ayudante):
+// retenido  = distribuciones pendientes (el trabajo aún no fue confirmado)
+// liberado  = distribuciones procesadas (acumulado histórico)
+// en_retiro = retiros solicitados aún no resueltos
+// retirado  = retiros ya pagados por el admin
+// disponible = liberado - en_retiro - retirado
+const findSaldoUsuario = async (usuarioId, db = pool) => {
+    const { rows: [d] } = await db.query(
+        `SELECT
+            COALESCE(SUM(dp.monto) FILTER (WHERE dp.estado = 'pendiente'), 0)::float AS retenido,
+            COALESCE(SUM(dp.monto) FILTER (WHERE dp.estado = 'procesado'), 0)::float AS liberado
+         FROM distribuciones_pago dp
+         JOIN pagos p ON p.id = dp.pago_id AND p.estado = 'aprobado'
+         WHERE dp.destinatario_id = $1 AND dp.tipo_destinatario IN ('trabajador','ayudante')`,
+        [usuarioId]
+    );
+    const { rows: [r] } = await db.query(
+        `SELECT
+            COALESCE(SUM(monto) FILTER (WHERE estado = 'solicitado'), 0)::float AS en_retiro,
+            COALESCE(SUM(monto) FILTER (WHERE estado = 'pagado'), 0)::float AS retirado
+         FROM retiros WHERE usuario_id = $1`,
+        [usuarioId]
+    );
+    const disponible = Math.round((d.liberado - r.en_retiro - r.retirado) * 100) / 100;
+    return { retenido: d.retenido, liberado: d.liberado, en_retiro: r.en_retiro, retirado: r.retirado, disponible };
+};
+
+const insertRetiro = async ({ usuario_id, monto, datos_cobro }, db = pool) => {
+    const { rows: [retiro] } = await db.query(
+        `INSERT INTO retiros (usuario_id, monto, datos_cobro) VALUES ($1,$2,$3) RETURNING *`,
+        [usuario_id, monto, datos_cobro]
+    );
+    return retiro;
+};
+
+const findRetirosUsuario = async (usuarioId) => {
+    const { rows } = await pool.query(
+        `SELECT * FROM retiros WHERE usuario_id = $1 ORDER BY creado_en DESC`,
+        [usuarioId]
+    );
+    return rows;
+};
+
+const findRetirosAdmin = async (estado) => {
+    const params = [];
+    let where = "";
+    if (estado) { where = "WHERE r.estado = $1"; params.push(estado); }
+    const { rows } = await pool.query(
+        `SELECT r.*, u.email, pe.nombre, pe.apellido
+         FROM retiros r
+         JOIN usuarios u ON u.id = r.usuario_id
+         LEFT JOIN perfiles pe ON pe.usuario_id = r.usuario_id
+         ${where}
+         ORDER BY (r.estado = 'solicitado') DESC, r.creado_en DESC`,
+        params
+    );
+    return rows;
+};
+
+// Resuelve un retiro solo si sigue 'solicitado' (evita doble resolución)
+const updateRetiroEstado = async (retiroId, estado, notaAdmin) => {
+    const { rows: [retiro] } = await pool.query(
+        `UPDATE retiros SET estado = $2, nota_admin = $3, actualizado_en = NOW()
+         WHERE id = $1 AND estado = 'solicitado' RETURNING *`,
+        [retiroId, estado, notaAdmin || null]
+    );
+    return retiro || null;
+};
+
 // ─── Deduplicación de webhooks ────────────────────────────────────────────────
 
 const findWebhookEvent = async (paymentId, tipo) => {
@@ -269,4 +343,9 @@ module.exports = {
     findVideoEsGratis,
     findWebhookEvent,
     insertWebhookEventIfNew,
+    findSaldoUsuario,
+    insertRetiro,
+    findRetirosUsuario,
+    findRetirosAdmin,
+    updateRetiroEstado,
 };

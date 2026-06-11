@@ -417,6 +417,69 @@ const pagarDirectoTrabajo = async ({ trabajoId, pagadorId, cardToken, paymentMet
   }
 };
 
+// ─── SALDO Y RETIROS (payout manual) ──────────────────────────────────────────
+
+// Namespace de advisory locks de retiros (scheduling usa 47001)
+const RETIRO_LOCK_CLASS = 47002;
+
+const getSaldo = async (usuarioId) => {
+  return pagosRepo.findSaldoUsuario(usuarioId);
+};
+
+// Solicita un retiro del saldo disponible. El advisory lock por usuario serializa
+// solicitudes concurrentes: sin él, dos requests simultáneos podrían pasar ambos
+// la validación de saldo y retirar el doble de lo disponible.
+const solicitarRetiro = async (usuarioId, monto, datosCobro) => {
+  const montoNum = Math.round(parseFloat(monto) * 100) / 100;
+  if (!montoNum || montoNum <= 0) throw new Error("El monto del retiro debe ser mayor a cero");
+  if (!datosCobro || !String(datosCobro).trim()) throw new Error("Indicá CBU/CVU o alias para recibir la transferencia");
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock($1, $2)", [RETIRO_LOCK_CLASS, usuarioId]);
+
+    const saldo = await pagosRepo.findSaldoUsuario(usuarioId, client);
+    if (montoNum > saldo.disponible) {
+      throw new Error(`Saldo insuficiente: disponible $${saldo.disponible}`);
+    }
+
+    const retiro = await pagosRepo.insertRetiro({
+      usuario_id: usuarioId,
+      monto: montoNum,
+      datos_cobro: String(datosCobro).trim()
+    }, client);
+
+    await client.query("COMMIT");
+    logger.info({ usuarioId, retiroId: retiro.id, monto: montoNum }, "[pagos] Retiro solicitado");
+    return retiro;
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+const getMisRetiros = async (usuarioId) => {
+  return pagosRepo.findRetirosUsuario(usuarioId);
+};
+
+const listarRetirosAdmin = async (estado) => {
+  return pagosRepo.findRetirosAdmin(estado);
+};
+
+// El admin marca el retiro como pagado (transferencia manual hecha) o rechazado.
+// Si lo rechaza, el monto vuelve a estar disponible automáticamente (deja de sumar
+// como 'en_retiro' en el cálculo de saldo).
+const resolverRetiro = async (retiroId, accion, notaAdmin) => {
+  if (!["pagado", "rechazado"].includes(accion)) throw new Error("accion debe ser 'pagado' o 'rechazado'");
+  const retiro = await pagosRepo.updateRetiroEstado(retiroId, accion, notaAdmin);
+  if (!retiro) throw new Error("Retiro no encontrado o ya resuelto");
+  logger.info({ retiroId, accion }, "[pagos] Retiro resuelto por admin");
+  return retiro;
+};
+
 // ─── HISTORIAL ────────────────────────────────────────────────────────────────
 
 const getHistorialPagos = async (usuarioId) => {
@@ -465,5 +528,7 @@ module.exports = {
   pagarDirectoTrabajo,
   procesarWebhook, getHistorialPagos, getDesgloseTrabajo,
   getVideos, tieneAccesoVideo,
-  simularPagoAprobadoDev
+  simularPagoAprobadoDev,
+  getSaldo, solicitarRetiro, getMisRetiros,
+  listarRetirosAdmin, resolverRetiro
 };

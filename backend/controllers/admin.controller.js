@@ -163,6 +163,38 @@ const getErrores = async (req, res) => {
   }
 };
 
+const pagosSvc = require("../services/pagos.service");
+
+const getRetiros = async (req, res) => {
+  try {
+    const estado = req.query.estado || null;
+    const retiros = await pagosSvc.listarRetirosAdmin(estado);
+    res.json({ retiros });
+  } catch (err) {
+    getLogger().error({ err }, "[AdminController] getRetiros fallido");
+    res.status(500).json({ error: "Error al obtener retiros" });
+  }
+};
+
+const resolverRetiro = async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (!id || id < 1) return res.status(400).json({ error: "ID de retiro inválido" });
+    const { accion, nota } = req.body;
+    if (!["pagado", "rechazado"].includes(accion)) {
+      return res.status(400).json({ error: "accion debe ser 'pagado' o 'rechazado'" });
+    }
+    if (accion === "rechazado" && (!nota || !nota.trim())) {
+      return res.status(400).json({ error: "El motivo de rechazo es obligatorio" });
+    }
+    const retiro = await pagosSvc.resolverRetiro(id, accion, nota ? nota.trim() : null);
+    res.json({ retiro });
+  } catch (err) {
+    getLogger().error({ err }, "[AdminController] resolverRetiro fallido");
+    res.status(400).json({ error: err.message || "Error al resolver el retiro" });
+  }
+};
+
 const backupService = require("../services/backup.service");
 
 const getBackups = async (req, res) => {
@@ -222,6 +254,8 @@ module.exports = {
   marcarDisputaEnRevision,
   resolverDisputaAdmin,
   getErrores,
+  getRetiros,
+  resolverRetiro,
   getBackups,
   runManualBackup,
   downloadBackup,

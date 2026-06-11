@@ -1,9 +1,10 @@
 const request = require('supertest');
 const app = require('./app');
-const { limpiarTablas, registrar } = require('./helpers');
+const { limpiarTablas, registrar, aprobarPagoTrabajo } = require('./helpers');
 
 let pool;
 let tokenDueno, tokenTrabajador;
+let idDueno, idTrabajador;
 let jobConCoordsId, jobSinCoordsId;
 
 beforeAll(async () => {
@@ -13,9 +14,11 @@ beforeAll(async () => {
   // Registrar dueño y trabajador
   const regDueno = await registrar({ email: 'geo.dueno@test.com', tipo_perfil: 'dueno' });
   tokenDueno = regDueno.body.token;
+  idDueno = regDueno.body.usuario.id;
 
   const regTrabajador = await registrar({ email: 'geo.worker@test.com', tipo_perfil: 'trabajador' });
   tokenTrabajador = regTrabajador.body.token;
+  idTrabajador = regTrabajador.body.usuario.id;
 
   // Completar perfil del trabajador (requerido para ofertar)
   await request(app)
@@ -74,6 +77,10 @@ beforeAll(async () => {
   await request(app)
     .patch(`/api/offers/${resOferta2.body.oferta.id}/accept`)
     .set('Authorization', `Bearer ${tokenDueno}`);
+
+  // Pago aprobado simulado en ambos trabajos (requisito para confirmar llegada)
+  await aprobarPagoTrabajo({ jobId: jobConCoordsId, duenoId: idDueno, trabajadorId: idTrabajador, monto: 5000 });
+  await aprobarPagoTrabajo({ jobId: jobSinCoordsId, duenoId: idDueno, trabajadorId: idTrabajador, monto: 3000 });
 });
 
 afterAll(async () => {

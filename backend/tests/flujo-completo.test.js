@@ -11,7 +11,7 @@
  */
 const request = require('supertest');
 const app = require('./app');
-const { limpiarTablas, registrarYLogin, registrar } = require('./helpers');
+const { limpiarTablas, registrarYLogin, registrar, aprobarPagoTrabajo } = require('./helpers');
 
 let pool;
 let tokenDueno;
@@ -121,6 +121,34 @@ test('PASO 4c → trabajo aparece en trabajos asignados del trabajador', async (
   expect(asignado).toBeDefined();
 });
 
+// ─── Paso 4d: Gate de pago — sin pago aprobado no se puede confirmar llegada ──
+
+test('PASO 4d → confirmar llegada SIN pago aprobado devuelve 402', async () => {
+  const res = await request(app)
+    .patch(`/api/jobs/${jobId}/iniciar`)
+    .set('Authorization', `Bearer ${tokenTrabajador}`)
+    .send({ latitud: -34.6037, longitud: -58.3816 });
+
+  expect(res.status).toBe(402);
+});
+
+test('PASO 4e → dueño paga (pago aprobado simulado, dinero retenido)', async () => {
+  const { neto } = await aprobarPagoTrabajo({
+    jobId, duenoId: idDueno, trabajadorId: idTrabajador, monto: 8500
+  });
+  expect(neto).toBe(8500 - 850); // comisión 10%
+
+  // La distribución nace 'pendiente' — el dinero está retenido, no liberado
+  const { rows } = await pool.query(
+    `SELECT d.estado FROM distribuciones_pago d
+     JOIN pagos p ON p.id = d.pago_id
+     WHERE p.referencia_id = $1 AND p.tipo = 'trabajo'`,
+    [jobId]
+  );
+  expect(rows).toHaveLength(1);
+  expect(rows[0].estado).toBe('pendiente');
+});
+
 // ─── Paso 5: Trabajador confirma llegada ──────────────────────────────────────
 
 test('PASO 5 → trabajador confirma llegada (iniciar)', async () => {
@@ -181,6 +209,55 @@ test('PASO 7b → trabajo pasa a completado', async () => {
     .set('Authorization', `Bearer ${tokenDueno}`);
 
   expect(res.body.job.estado).toBe('completado');
+});
+
+test('PASO 7c → la confirmación libera el pago: distribución pasa a procesado', async () => {
+  const { rows } = await pool.query(
+    `SELECT d.estado, d.procesado_en FROM distribuciones_pago d
+     JOIN pagos p ON p.id = d.pago_id
+     WHERE p.referencia_id = $1 AND p.tipo = 'trabajo'`,
+    [jobId]
+  );
+  expect(rows).toHaveLength(1);
+  expect(rows[0].estado).toBe('procesado');
+  expect(rows[0].procesado_en).not.toBeNull();
+});
+
+test('PASO 7d → el saldo liberado aparece disponible para el trabajador', async () => {
+  const res = await request(app)
+    .get('/api/pagos/saldo')
+    .set('Authorization', `Bearer ${tokenTrabajador}`);
+
+  expect(res.status).toBe(200);
+  expect(res.body.retenido).toBe(0);
+  expect(res.body.liberado).toBe(7650);   // 8500 - 10% comisión
+  expect(res.body.disponible).toBe(7650);
+});
+
+test('PASO 7e → retiro por más del saldo disponible → 400', async () => {
+  const res = await request(app)
+    .post('/api/pagos/retiros')
+    .set('Authorization', `Bearer ${tokenTrabajador}`)
+    .send({ monto: 99999, datos_cobro: 'mi.alias.mp' });
+
+  expect(res.status).toBe(400);
+  expect(res.body.success).toBe(false);
+});
+
+test('PASO 7f → solicitar retiro válido → 201 y el saldo disponible baja', async () => {
+  const res = await request(app)
+    .post('/api/pagos/retiros')
+    .set('Authorization', `Bearer ${tokenTrabajador}`)
+    .send({ monto: 5000, datos_cobro: 'mi.alias.mp' });
+
+  expect(res.status).toBe(201);
+  expect(res.body.retiro.estado).toBe('solicitado');
+
+  const saldo = await request(app)
+    .get('/api/pagos/saldo')
+    .set('Authorization', `Bearer ${tokenTrabajador}`);
+  expect(saldo.body.en_retiro).toBe(5000);
+  expect(saldo.body.disponible).toBe(2650);
 });
 
 // ─── Paso 8: Calificación mutua ───────────────────────────────────────────────

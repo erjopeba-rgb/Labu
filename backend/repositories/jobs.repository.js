@@ -186,23 +186,31 @@ const findOfertaAceptadaConMonto = async (jobId) => {
     return rows[0] || null;
 };
 
-const updatePagoAprobado = async (jobId, monto) => {
-    const { rowCount } = await pool.query(
-        `UPDATE pagos SET estado = 'aprobado', monto_trabajador = $2, actualizado_en = NOW()
-         WHERE referencia_id = $1 AND tipo = 'trabajo'`,
-        [jobId, monto]
+// Un trabajo solo puede ejecutarse si el dueño ya pagó: la aprobación viene
+// exclusivamente de MercadoPago (webhook / pago directo), nunca de este módulo.
+const findPagoAprobadoPorTrabajo = async (jobId, db = pool) => {
+    const { rows } = await db.query(
+        `SELECT id, monto_total, monto_trabajador FROM pagos
+         WHERE referencia_id = $1 AND tipo = 'trabajo' AND estado = 'aprobado'
+         ORDER BY creado_en DESC LIMIT 1`,
+        [jobId]
     );
-    return rowCount;
+    return rows[0] || null;
 };
 
-const insertPago = async (duenoId, jobId, monto) => {
-    // Solo actualiza a aprobado si ya existe un pago pendiente de MercadoPago para este trabajo.
-    // Si no existe pago previo, no insertar nada (el pago real llega vía webhook de MP).
-    await pool.query(
-        `UPDATE pagos SET estado = 'aprobado', monto_trabajador = $2, actualizado_en = NOW()
-         WHERE referencia_id = $1 AND tipo = 'trabajo' AND estado = 'pendiente'`,
-        [jobId, monto]
+// Liberación del dinero retenido: las distribuciones del pago aprobado pasan
+// de 'pendiente' (retenido en plataforma) a 'procesado' (saldo disponible).
+const liberarDistribucionesPorTrabajo = async (jobId, db = pool) => {
+    const { rowCount } = await db.query(
+        `UPDATE distribuciones_pago d
+         SET estado = 'procesado', procesado_en = NOW()
+         FROM pagos p
+         WHERE d.pago_id = p.id
+           AND p.referencia_id = $1 AND p.tipo = 'trabajo' AND p.estado = 'aprobado'
+           AND d.estado = 'pendiente'`,
+        [jobId]
     );
+    return rowCount;
 };
 
 // ─── Agendar ──────────────────────────────────────────────────────────────────
@@ -306,8 +314,8 @@ module.exports = {
     setPendienteConfirmacion,
     setCompletado,
     findOfertaAceptadaConMonto,
-    updatePagoAprobado,
-    insertPago,
+    findPagoAprobadoPorTrabajo,
+    liberarDistribucionesPorTrabajo,
     findJobParaAgendar,
     updateFechaInicio,
     findTrabajosConUsuario,

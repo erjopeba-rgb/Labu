@@ -1,0 +1,122 @@
+/* ── MIS PAGOS ───────────────────────────────────────────── */
+
+.pagos-layout {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 90px 1rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ── SALDO ───────────────────────────────────────────────── */
+.saldo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+}
+
+.saldo-card {
+    text-align: center;
+    padding: 1.25rem 1rem;
+}
+
+.saldo-card-principal {
+    border: 2px solid var(--primary);
+}
+
+.saldo-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.saldo-monto {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--dark);
+    margin: 0.35rem 0;
+}
+
+.saldo-card-principal .saldo-monto { color: var(--primary); }
+
+.saldo-desc {
+    font-size: 0.78rem;
+    color: var(--gray);
+}
+
+/* ── FORM RETIRO ─────────────────────────────────────────── */
+.retiro-form-card h2,
+.pagos-layout .card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.retiro-form-desc {
+    font-size: 0.88rem;
+    color: var(--gray);
+    margin-bottom: 1rem;
+}
+
+.retiro-form-fields {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.retiro-form-fields .form-group {
+    flex: 1;
+    min-width: 180px;
+    margin-bottom: 0;
+}
+
+.retiro-form-fields button { white-space: nowrap; }
+
+/* ── LISTA DE RETIROS ────────────────────────────────────── */
+.retiro-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0.25rem;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.retiro-item:last-child { border-bottom: none; }
+
+.retiro-item-monto {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.retiro-item-datos {
+    font-size: 0.85rem;
+    color: var(--gray);
+    font-family: monospace;
+}
+
+.retiro-item-fecha {
+    font-size: 0.8rem;
+    color: var(--gray);
+}
+
+.retiro-item-nota {
+    font-size: 0.8rem;
+    color: var(--danger);
+    flex-basis: 100%;
+}
+
+.retiro-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+}
+
+.retiro-badge-solicitado { background: #fef3c7; color: #b45309; }
+.retiro-badge-pagado     { background: #dcfce7; color: #15803d; }
+.retiro-badge-rechazado  { background: #fee2e2; color: #b91c1c; }

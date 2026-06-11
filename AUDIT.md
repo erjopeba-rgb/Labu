@@ -247,3 +247,22 @@ Cambios en `backend/services/scheduling.service.js` (constante `TZ`):
 - **`_armarResultado`:** `fecha_inicio` se construye como instante real con `fromZonedTime('fecha hora', TZ)` (la hora del slot interpretada como hora argentina, independiente de la timezone del server) y `cuando` se formatea desde la fecha de calendario ART. El formato visible (`DD/MM/YYYY de HH:MM a HH:MM`) no cambió.
 
 El test (b) de la sección C1 ejercita exactamente el caso límite: trabajos a las 21:45 ART (= 00:45 UTC del día siguiente) se comparan en el día argentino correcto.
+
+---
+
+## C4 — RESUELTO (2026-06-10)
+
+El flujo retención→liberación→payout ahora existe de verdad. Decisión de producto tomada: **payout por saldo + retiro manual** (MP split payments queda descartado para el MVP — requiere onboarding OAuth de cada trabajador como vendedor de MP).
+
+1. **Gate de pago en `iniciarTrabajo`** (`jobs.service.js`): confirmar llegada exige un pago `tipo='trabajo'`, `estado='aprobado'` para el trabajo (nueva `findPagoAprobadoPorTrabajo` en `jobs.repository.js`) → si no hay, **402** con mensaje claro. La aprobación viene solo de MercadoPago (webhook, pago directo o `POST /api/pagos/dev/aprobar/:trabajo_id` en development). Como `marcarCompletado` y `confirmarCompletado` exigen estados posteriores a `trabajador_llego`, un solo gate cubre todo el flujo.
+2. **Retención real**: `insertDistribucion` (`pagos.repository.js`) ahora inserta las distribuciones con `estado='pendiente'` (antes nacían `'procesado'` en el momento de aprobarse el pago — la "retención" no existía).
+3. **Liberación real**: eliminadas `updatePagoAprobado` e `insertPago` de `jobs.repository.js` (falsificaban un pago aprobado que nunca pasó por MP, y encima pisaban `monto_trabajador` con el monto bruto sin descontar comisión). `confirmarCompletado` ahora llama `liberarDistribucionesPorTrabajo(id, client)` **dentro de la misma transacción** que `setCompletado`: las distribuciones del pago aprobado pasan a `'procesado'` + `procesado_en=NOW()`. Si no había nada para liberar se loguea `warn`.
+4. **Payout — saldo + retiro manual**:
+   - Migración `database/migrations/retiros.sql` (tabla `retiros`: monto, estado `solicitado|pagado|rechazado`, `datos_cobro` CBU/CVU/alias, `nota_admin`). Aplicada en `rtype1` y `rtype1_test`.
+   - Saldo (`findSaldoUsuario`): `retenido` (distribuciones pendientes), `liberado` (procesadas), `en_retiro` (retiros solicitados), `retirado` (pagados), `disponible = liberado − en_retiro − retirado`.
+   - Endpoints trabajador: `GET /api/pagos/saldo`, `GET/POST /api/pagos/retiros`. La solicitud valida saldo bajo `pg_advisory_xact_lock(47002, usuarioId)` (dos requests simultáneos no pueden retirar el doble del disponible).
+   - Endpoints admin: `GET /api/admin/retiros`, `PATCH /api/admin/retiros/:id/resolver` (`pagado` tras transferir manualmente, o `rechazado` con motivo — el monto rechazado vuelve solo al disponible). El UPDATE exige `estado='solicitado'` (sin doble resolución).
+   - UI: página nueva `mis-pagos.html` (+ `mis-pagos.css`, `mis-pagos.js`) con tarjetas de saldo, form de retiro y historial — link "Mis Pagos" en sidebar (rol trabajador) y en `main.js` pageMap; tab "Retiros" en `admin.html`/`admin.js`.
+5. **Fix lateral en `backend/scripts/migrate.js`**: strip de BOM UTF-8 al leer los `.sql` (`indices_escalabilidad.sql` tenía BOM y rompía el runner, bloqueando todas las migraciones alfabéticamente posteriores). Tras el fix, las 32 migraciones quedaron registradas en `migration_history` de ambas DBs (resuelve la nota de C2 sobre la tabla vacía).
+- **Tests** (`npm test` → **135/135**, 6 nuevos): helper `aprobarPagoTrabajo` en `tests/helpers.js` (simula lo que hace el webhook: pago aprobado + distribución pendiente); `flujo-completo.test.js` ahora cubre gate 402 sin pago, retención pendiente al pagar, liberación a `procesado` al confirmar, saldo disponible correcto (8500 − 10% = 7650), retiro mayor al disponible → 400, retiro válido → 201 con saldo actualizado; `geolocalizacion.test.js` siembra pagos aprobados antes de confirmar llegada.
+- **Pendiente relacionado:** C3 (cancelación sin refund), I7 e I17 siguen abiertos — el dinero retenido de un trabajo cancelado todavía no tiene camino de vuelta al dueño.

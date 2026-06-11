@@ -16,6 +16,8 @@ const {
   marcarDisputaEnRevision,
   resolverDisputaAdmin,
   getErrores,
+  getRetiros,
+  resolverRetiro,
   getBackups,
   runManualBackup,
   downloadBackup,
@@ -37,6 +39,8 @@ router.get("/disputas",                      getDisputas);
 router.patch("/disputas/:id/en-revision",    marcarDisputaEnRevision);
 router.patch("/disputas/:id/resolver",       resolverDisputaAdmin);
 router.get("/errores",                       getErrores);
+router.get("/retiros",                       getRetiros);
+router.patch("/retiros/:id/resolver",        resolverRetiro);
 router.get("/backups",                       getBackups);
 router.post("/backups/run",                  runManualBackup);
 router.get("/backups/:filename",             downloadBackup);
