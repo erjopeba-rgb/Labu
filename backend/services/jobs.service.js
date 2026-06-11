@@ -245,6 +245,13 @@ const confirmarCompletado = async (id, dueno_id) => {
 
         if (jobActual.estado !== 'pendiente_confirmacion') throw new AppError('El trabajo no está pendiente de confirmación', 400);
 
+        // I7: una disputa activa congela la liberación del dinero retenido —
+        // la decisión económica pasa a la resolución del admin (resolverDisputa)
+        const disputaActiva = await jobsRepo.findDisputaActivaPorTrabajo(id, client);
+        if (disputaActiva) {
+            throw new AppError('Hay una disputa activa. El pago se liberará cuando el admin la resuelva.', 403);
+        }
+
         job = await jobsRepo.setCompletado(id, dueno_id, client);
 
         // Paso 8a: Liberar el dinero retenido — las distribuciones del pago aprobado

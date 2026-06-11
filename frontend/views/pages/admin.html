@@ -169,6 +169,13 @@
             <div style="background:#fff;border-radius:12px;padding:2rem;width:min(480px,90vw);box-shadow:0 8px 32px rgba(0,0,0,0.2);">
                 <h3 style="margin:0 0 0.5rem;">Resolver disputa</h3>
                 <p id="resolverDisputaInfo" style="font-size:0.88rem;color:#64748b;margin:0 0 1rem;"></p>
+                <label style="font-size:0.9rem;font-weight:600;">Resultado *</label>
+                <select id="resolverDisputaResultado"
+                    style="width:100%;margin:0.5rem 0 1rem;padding:0.65rem 0.75rem;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;box-sizing:border-box;background:#fff;">
+                    <option value="">Elegí quién tiene razón...</option>
+                    <option value="trabajador">A favor del trabajador — liberar el pago retenido</option>
+                    <option value="dueno">A favor del dueño — reembolsar el pago</option>
+                </select>
                 <label style="font-size:0.9rem;font-weight:600;">Resolución *</label>
                 <textarea id="resolverDisputaTexto" rows="4"
                     placeholder="Describí la decisión tomada y los motivos..."

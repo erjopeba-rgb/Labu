@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const notif = require("./notifications.service");
 const logger = require("../config/logger");
+const jobsRepo = require("../repositories/jobs.repository");
 
 const crearDisputa = async ({ trabajoId, iniciadorId, motivo, descripcion, evidenciaUrls }) => {
   // Solo se permite abrir disputa en estados relevantes
@@ -101,18 +102,66 @@ const marcarEnRevision = async (disputaId) => {
   return d;
 };
 
-const resolverDisputa = async (disputaId, resolucion) => {
+// I7: la resolución de la disputa decide el destino del dinero retenido (C4):
+// resultado 'trabajador' → liberación (distribuciones 'pendiente' → 'procesado')
+// resultado 'dueno'      → reembolso contable (pago 'reembolsado', distribuciones anuladas)
+// Resolución parcial por porcentaje: pendiente (ver AUDIT.md, I7).
+const RESULTADOS_VALIDOS = ["dueno", "trabajador"];
+
+const resolverDisputa = async (disputaId, resolucion, resultado) => {
   if (!resolucion || !resolucion.trim()) {
     throw { status: 400, error: "La resolución es obligatoria" };
   }
+  if (!RESULTADOS_VALIDOS.includes(resultado)) {
+    throw { status: 400, error: "El resultado es obligatorio: 'dueno' (reembolsar al dueño) o 'trabajador' (liberar el pago al trabajador)" };
+  }
 
-  const { rows: [d] } = await pool.query(
-    `UPDATE disputas SET estado = 'resuelta', resolucion = $1
-     WHERE id = $2 AND estado IN ('abierta', 'en_revision')
-     RETURNING *`,
-    [resolucion.trim(), disputaId]
-  );
-  if (!d) throw { status: 404, error: "Disputa no encontrada o ya fue resuelta" };
+  const client = await pool.connect();
+  let d;
+  let efecto = {};
+  try {
+    await client.query("BEGIN");
+
+    // Lectura sin lock solo para conocer el trabajo: los locks se toman en el
+    // mismo orden que confirmarCompletado (trabajos → disputas) para evitar deadlocks
+    const { rows: [previa] } = await client.query(
+      `SELECT trabajo_id FROM disputas WHERE id = $1`,
+      [disputaId]
+    );
+    if (!previa) throw { status: 404, error: "Disputa no encontrada" };
+
+    await client.query(`SELECT id FROM trabajos WHERE id = $1 FOR UPDATE`, [previa.trabajo_id]);
+
+    const { rows: [activa] } = await client.query(
+      `SELECT id, trabajo_id FROM disputas
+       WHERE id = $1 AND estado IN ('abierta', 'en_revision')
+       FOR UPDATE`,
+      [disputaId]
+    );
+    if (!activa) throw { status: 404, error: "Disputa no encontrada o ya fue resuelta" };
+
+    // Efecto económico sobre el dinero retenido, en la misma transacción
+    if (resultado === "trabajador") {
+      const liberadas = await jobsRepo.liberarDistribucionesPorTrabajo(activa.trabajo_id, client);
+      efecto = { distribucionesLiberadas: liberadas };
+    } else {
+      const reembolsados = await jobsRepo.reembolsarPagoPorDisputa(activa.trabajo_id, client);
+      efecto = { pagosReembolsados: reembolsados.length };
+    }
+
+    ({ rows: [d] } = await client.query(
+      `UPDATE disputas SET estado = 'resuelta', resolucion = $1, resultado = $2
+       WHERE id = $3 RETURNING *`,
+      [resolucion.trim(), resultado, disputaId]
+    ));
+
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 
   // Notificar a ambas partes (no bloquea si falla)
   try {
@@ -126,7 +175,7 @@ const resolverDisputa = async (disputaId, resolucion) => {
     logger.error({ err: e.message }, "[disputas] Error enviando notificaciones al resolver disputa");
   }
 
-  logger.info({ disputaId, resolucion: d.resolucion }, "disputa resuelta");
+  logger.info({ disputaId, resolucion: d.resolucion, resultado, ...efecto }, "disputa resuelta");
   return d;
 };
 

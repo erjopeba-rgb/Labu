@@ -394,3 +394,168 @@ describe('C3 — PATCH /api/jobs/:id/cancel con pago y estados avanzados', () =>
     expect(await getEstadoTrabajo(trabajoId)).toBe('completado');
   });
 });
+
+// ─── I7: una disputa activa congela la liberación del pago ────────────────────
+
+describe('I7 — disputa activa congela el pago hasta la resolución del admin', () => {
+  let tokenDuenoI7, tokenTrabajadorI7, tokenAdminI7, idDuenoI7, idTrabajadorI7;
+
+  // Lleva un trabajo hasta pendiente_confirmacion con pago aprobado y retenido
+  const crearTrabajoEnPendienteConfirmacion = async (titulo) => {
+    const resJob = await request(app)
+      .post('/api/jobs')
+      .set('Authorization', `Bearer ${tokenDuenoI7}`)
+      .field('titulo', titulo)
+      .field('descripcion', 'Trabajo para tests de disputas I7');
+    const trabajoId = resJob.body.job.id;
+
+    const resOferta = await request(app)
+      .post('/api/offers')
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)
+      .send({ trabajo_id: trabajoId, monto_propuesto: 8000, mensaje: 'Puedo hacerlo', tiempo_estimado: 1, unidad_tiempo: 'dias' });
+
+    await request(app)
+      .patch(`/api/offers/${resOferta.body.oferta.id}/accept`)
+      .set('Authorization', `Bearer ${tokenDuenoI7}`);
+
+    await aprobarPagoTrabajo({ jobId: trabajoId, duenoId: idDuenoI7, trabajadorId: idTrabajadorI7, monto: 8000 });
+
+    const resIniciar = await request(app)
+      .patch(`/api/jobs/${trabajoId}/iniciar`)
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)
+      .send({ latitud: -34.6037, longitud: -58.3816 });
+    expect(resIniciar.status).toBe(200);
+
+    const resCompletar = await request(app)
+      .patch(`/api/jobs/${trabajoId}/completar`)
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)
+      .field('texto_resultado', 'Trabajo terminado')
+      .attach('foto_resultado', Buffer.from('fake-result'), { filename: 'resultado.jpg', contentType: 'image/jpeg' });
+    expect(resCompletar.status).toBe(200);
+
+    return trabajoId;
+  };
+
+  const abrirDisputa = async (trabajoId) => {
+    const res = await request(app)
+      .post('/api/disputas')
+      .set('Authorization', `Bearer ${tokenDuenoI7}`)
+      .send({ trabajo_id: trabajoId, motivo: 'trabajo_incompleto', descripcion: 'El trabajo quedó a la mitad' });
+    expect(res.status).toBe(201);
+    return res.body.disputa.id;
+  };
+
+  const getPagoYDistribucion = async (trabajoId) => {
+    const { rows } = await pool.query(
+      `SELECT p.estado AS pago_estado, d.estado AS dist_estado
+       FROM pagos p JOIN distribuciones_pago d ON d.pago_id = p.id
+       WHERE p.referencia_id = $1 AND p.tipo = 'trabajo'`,
+      [trabajoId]
+    );
+    return rows[0];
+  };
+
+  beforeAll(async () => {
+    const regDueno = await registrar({ email: 'dueno.i7@test.com', tipo_perfil: 'dueno' });
+    idDuenoI7 = regDueno.body.usuario.id;
+    tokenDuenoI7 = regDueno.body.token;
+
+    const regTrabajador = await registrar({ email: 'worker.i7@test.com', tipo_perfil: 'trabajador' });
+    idTrabajadorI7 = regTrabajador.body.usuario.id;
+    tokenTrabajadorI7 = regTrabajador.body.token;
+
+    await request(app)
+      .post('/api/profile/complete')
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)
+      .send({ nombre: 'Worker I7', medio_transporte: 'auto' });
+
+    const regAdmin = await registrar({ email: 'admin.i7@test.com', tipo_perfil: 'dueno' });
+    tokenAdminI7 = regAdmin.body.token;
+    await pool.query('UPDATE usuarios SET es_admin = TRUE WHERE id = $1', [regAdmin.body.usuario.id]);
+  });
+
+  test('confirmar-completado con disputa activa → 403 y el dinero sigue retenido', async () => {
+    const trabajoId = await crearTrabajoEnPendienteConfirmacion('I7 confirmación bloqueada por disputa');
+    await abrirDisputa(trabajoId);
+
+    const res = await request(app)
+      .patch(`/api/jobs/${trabajoId}/confirmar-completado`)
+      .set('Authorization', `Bearer ${tokenDuenoI7}`);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error || res.body.message).toMatch(/disputa activa/i);
+
+    // El trabajo no avanzó y la distribución sigue retenida
+    const { rows: [t] } = await pool.query('SELECT estado FROM trabajos WHERE id = $1', [trabajoId]);
+    expect(t.estado).toBe('pendiente_confirmacion');
+    const dinero = await getPagoYDistribucion(trabajoId);
+    expect(dinero.pago_estado).toBe('aprobado');
+    expect(dinero.dist_estado).toBe('pendiente');
+  });
+
+  test('resolver sin resultado → 400 (el efecto económico es obligatorio)', async () => {
+    const trabajoId = await crearTrabajoEnPendienteConfirmacion('I7 resolución sin resultado');
+    const disputaId = await abrirDisputa(trabajoId);
+
+    const res = await request(app)
+      .patch(`/api/admin/disputas/${disputaId}/resolver`)
+      .set('Authorization', `Bearer ${tokenAdminI7}`)
+      .send({ resolucion: 'Resolución sin definir quién tiene razón' });
+
+    expect(res.status).toBe(400);
+  });
+
+  test('resolución a favor del dueño → pago reembolsado y distribución anulada', async () => {
+    const trabajoId = await crearTrabajoEnPendienteConfirmacion('I7 resolución a favor del dueño');
+    const disputaId = await abrirDisputa(trabajoId);
+
+    const saldoAntes = (await request(app)
+      .get('/api/pagos/saldo')
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)).body;
+
+    const res = await request(app)
+      .patch(`/api/admin/disputas/${disputaId}/resolver`)
+      .set('Authorization', `Bearer ${tokenAdminI7}`)
+      .send({ resolucion: 'El trabajo quedó incompleto, corresponde reembolso', resultado: 'dueno' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.disputa.estado).toBe('resuelta');
+    expect(res.body.disputa.resultado).toBe('dueno');
+
+    const dinero = await getPagoYDistribucion(trabajoId);
+    expect(dinero.pago_estado).toBe('reembolsado');
+    expect(dinero.dist_estado).toBeNull();
+
+    // El saldo del trabajador deja de retener el neto de este trabajo (8000 - 10% comisión)
+    // y no se le acredita nada como liberado
+    const saldoDespues = (await request(app)
+      .get('/api/pagos/saldo')
+      .set('Authorization', `Bearer ${tokenTrabajadorI7}`)).body;
+    expect(saldoDespues.retenido).toBe(saldoAntes.retenido - 7200);
+    expect(saldoDespues.liberado).toBe(saldoAntes.liberado);
+  });
+
+  test('resolución a favor del trabajador → distribución liberada a procesado', async () => {
+    const trabajoId = await crearTrabajoEnPendienteConfirmacion('I7 resolución a favor del trabajador');
+    const disputaId = await abrirDisputa(trabajoId);
+
+    const res = await request(app)
+      .patch(`/api/admin/disputas/${disputaId}/resolver`)
+      .set('Authorization', `Bearer ${tokenAdminI7}`)
+      .send({ resolucion: 'El trabajo está bien hecho, se libera el pago', resultado: 'trabajador' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.disputa.resultado).toBe('trabajador');
+
+    const dinero = await getPagoYDistribucion(trabajoId);
+    expect(dinero.pago_estado).toBe('aprobado');
+    expect(dinero.dist_estado).toBe('procesado');
+
+    // Con la disputa resuelta, el dueño ya puede confirmar (idempotente sobre el dinero)
+    const resConfirmar = await request(app)
+      .patch(`/api/jobs/${trabajoId}/confirmar-completado`)
+      .set('Authorization', `Bearer ${tokenDuenoI7}`);
+    expect(resConfirmar.status).toBe(200);
+    expect((await getPagoYDistribucion(trabajoId)).dist_estado).toBe('procesado');
+  });
+});

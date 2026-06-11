@@ -141,11 +141,11 @@ const resolverDisputaAdmin = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     if (!id || id < 1) return res.status(400).json({ error: "ID de disputa inválido" });
-    const { resolucion } = req.body;
+    const { resolucion, resultado } = req.body;
     if (!resolucion || !resolucion.trim()) {
       return res.status(400).json({ error: "La resolución es obligatoria" });
     }
-    const disputa = await disputasSvc.resolverDisputa(id, resolucion.trim());
+    const disputa = await disputasSvc.resolverDisputa(id, resolucion.trim(), resultado);
     res.json({ disputa });
   } catch (err) {
     getLogger().error({ err }, "[AdminController] resolverDisputaAdmin fallido");

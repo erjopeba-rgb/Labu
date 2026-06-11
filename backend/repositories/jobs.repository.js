@@ -247,6 +247,41 @@ const findPagoAprobadoPorTrabajo = async (jobId, db = pool) => {
     return rows[0] || null;
 };
 
+// I7: una disputa activa congela la liberación del pago hasta que el admin resuelva.
+// FOR UPDATE serializa contra resolverDisputa (mismo orden de locks: trabajos → disputas).
+const findDisputaActivaPorTrabajo = async (jobId, db = pool) => {
+    const { rows } = await db.query(
+        `SELECT id, estado FROM disputas
+         WHERE trabajo_id = $1 AND estado IN ('abierta', 'en_revision')
+         LIMIT 1 FOR UPDATE`,
+        [jobId]
+    );
+    return rows[0] || null;
+};
+
+// I7: reembolso contable al resolver una disputa a favor del dueño. A diferencia
+// del reembolso de cancelación (C3) también revierte distribuciones ya 'procesado':
+// una disputa puede abrirse sobre un trabajo 'completado' cuyo dinero ya se liberó,
+// y sin esta reversión el trabajador cobraría además del reembolso al dueño.
+const reembolsarPagoPorDisputa = async (jobId, db = pool) => {
+    await db.query(
+        `UPDATE distribuciones_pago d
+         SET estado = NULL, procesado_en = NULL
+         FROM pagos p
+         WHERE d.pago_id = p.id
+           AND p.referencia_id = $1 AND p.tipo = 'trabajo' AND p.estado = 'aprobado'
+           AND d.estado IN ('pendiente', 'procesado')`,
+        [jobId]
+    );
+    const { rows } = await db.query(
+        `UPDATE pagos SET estado = 'reembolsado', actualizado_en = NOW()
+         WHERE referencia_id = $1 AND tipo = 'trabajo' AND estado = 'aprobado'
+         RETURNING id, monto_total`,
+        [jobId]
+    );
+    return rows;
+};
+
 // Liberación del dinero retenido: las distribuciones del pago aprobado pasan
 // de 'pendiente' (retenido en plataforma) a 'procesado' (saldo disponible).
 const liberarDistribucionesPorTrabajo = async (jobId, db = pool) => {
@@ -368,6 +403,8 @@ module.exports = {
     setCompletado,
     findOfertaAceptadaConMonto,
     findPagoAprobadoPorTrabajo,
+    findDisputaActivaPorTrabajo,
+    reembolsarPagoPorDisputa,
     liberarDistribucionesPorTrabajo,
     findJobParaAgendar,
     updateFechaInicio,

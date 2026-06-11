@@ -271,6 +271,7 @@ let _disputaIdPendiente = null;
 window.abrirModalResolverDisputa = (id, titulo) => {
   _disputaIdPendiente = id;
   document.getElementById('resolverDisputaTexto').value = '';
+  document.getElementById('resolverDisputaResultado').value = '';
   document.getElementById('resolverDisputaInfo').textContent = titulo ? `Trabajo: "${titulo}"` : '';
   const modal = document.getElementById('modalResolverDisputa');
   modal.style.display = 'flex';
@@ -283,9 +284,11 @@ window.cerrarModalResolverDisputa = () => {
 
 window.confirmarResolucionDisputa = async () => {
   const resolucion = document.getElementById('resolverDisputaTexto').value.trim();
+  const resultado = document.getElementById('resolverDisputaResultado').value;
+  if (!resultado) { alert('Elegí el resultado: a favor del trabajador (liberar pago) o del dueño (reembolso)'); return; }
   if (!resolucion) { alert('La resolución es obligatoria'); return; }
   try {
-    const { disputa } = await api('PATCH', `/disputas/${_disputaIdPendiente}/resolver`, { resolucion });
+    const { disputa } = await api('PATCH', `/disputas/${_disputaIdPendiente}/resolver`, { resolucion, resultado });
     const fila = document.getElementById(`fila-d-${_disputaIdPendiente}`);
     if (fila) {
       fila.cells[5].innerHTML = ESTADO_DISPUTA_BADGE['resuelta'];
