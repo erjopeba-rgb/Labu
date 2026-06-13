@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 // ─── ZONAS DEL TRABAJADOR ─────────────────────────────────────────────────────
 
@@ -49,7 +50,7 @@ const removeZona = async (trabajadorId, zonaId) => {
     "UPDATE zonas_trabajo SET activa = FALSE WHERE id = $1 AND trabajador_id = $2 RETURNING id",
     [zonaId, trabajadorId]
   );
-  if (!z) throw new Error("Zona no encontrada o sin permiso");
+  if (!z) throw new AppError("Zona no encontrada o sin permiso", 404);
 };
 
 // ─── FEED DE TRABAJOS POR ZONA ────────────────────────────────────────────────

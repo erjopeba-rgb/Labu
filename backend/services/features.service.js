@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 // ─── PLANNER ──────────────────────────────────────────────────────────────────
 
@@ -19,7 +20,7 @@ const getPlanner = async (plannerId, usuarioId) => {
     "SELECT * FROM planners WHERE id = $1 AND usuario_id = $2 AND activo = TRUE",
     [plannerId, usuarioId]
   );
-  if (!p) throw new Error("Planner no encontrado o sin permiso");
+  if (!p) throw new AppError("Planner no encontrado o sin permiso", 404);
   return p;
 };
 
@@ -45,7 +46,7 @@ const actualizarPlanner = async (plannerId, usuarioId, datos) => {
     [datos.nombre||null, datos.ancho_total||null, datos.alto_total||null,
      datos.datos_json||null, datos.trabajo_id||null, plannerId, usuarioId]
   );
-  if (!p) throw new Error("Planner no encontrado o sin permiso");
+  if (!p) throw new AppError("Planner no encontrado o sin permiso", 404);
   return p;
 };
 
@@ -54,7 +55,7 @@ const eliminarPlanner = async (plannerId, usuarioId) => {
     "UPDATE planners SET activo = FALSE WHERE id = $1 AND usuario_id = $2 RETURNING id",
     [plannerId, usuarioId]
   );
-  if (!p) throw new Error("Planner no encontrado o sin permiso");
+  if (!p) throw new AppError("Planner no encontrado o sin permiso", 404);
 };
 
 // ─── PROYECTOS ────────────────────────────────────────────────────────────────
@@ -79,7 +80,7 @@ const getProyecto = async (proyectoId, duenioId) => {
     "SELECT * FROM proyectos WHERE id = $1 AND dueno_id = $2 AND activo = TRUE",
     [proyectoId, duenioId]
   );
-  if (!p) throw new Error("Proyecto no encontrado o sin permiso");
+  if (!p) throw new AppError("Proyecto no encontrado o sin permiso", 404);
 
   const { rows: trabajos } = await pool.query(
     `SELECT tp.*, t.titulo, t.estado, t.rubro_id, r.nombre AS rubro_nombre,
@@ -109,7 +110,7 @@ const agregarTrabajoProyecto = async (proyectoId, duenioId, trabajoId, orden, de
   const { rows: [proy] } = await pool.query(
     "SELECT id FROM proyectos WHERE id = $1 AND dueno_id = $2", [proyectoId, duenioId]
   );
-  if (!proy) throw new Error("Proyecto no encontrado o sin permiso");
+  if (!proy) throw new AppError("Proyecto no encontrado o sin permiso", 404);
 
   const { rows: [tp] } = await pool.query(
     `INSERT INTO trabajos_proyecto (proyecto_id, trabajo_id, orden, depende_de)
@@ -136,7 +137,7 @@ const actualizarProyecto = async (proyectoId, duenioId, datos) => {
     `UPDATE proyectos SET ${sets.join(',')} WHERE id = $${i++} AND dueno_id = $${i++} RETURNING *`,
     params
   );
-  if (!p) throw new Error("Proyecto no encontrado o sin permiso");
+  if (!p) throw new AppError("Proyecto no encontrado o sin permiso", 404);
   return p;
 };
 
@@ -168,7 +169,7 @@ const updateHerramienta = async (herramientaId, trabajadorId, datos) => {
      WHERE id=$6 AND trabajador_id=$7 RETURNING *`,
     [datos.nombre||null, datos.descripcion||null, datos.categoria||null, datos.marca||null, datos.disponible??null, herramientaId, trabajadorId]
   );
-  if (!h) throw new Error("Herramienta no encontrada o sin permiso");
+  if (!h) throw new AppError("Herramienta no encontrada o sin permiso", 404);
   return h;
 };
 
@@ -177,7 +178,7 @@ const deleteHerramienta = async (herramientaId, trabajadorId) => {
     "UPDATE herramientas SET activo = FALSE WHERE id = $1 AND trabajador_id = $2 RETURNING id",
     [herramientaId, trabajadorId]
   );
-  if (!h) throw new Error("Herramienta no encontrada o sin permiso");
+  if (!h) throw new AppError("Herramienta no encontrada o sin permiso", 404);
 };
 
 // ─── VIDEOS ───────────────────────────────────────────────────────────────────

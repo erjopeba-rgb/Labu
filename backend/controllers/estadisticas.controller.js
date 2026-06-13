@@ -1,57 +1,53 @@
-﻿const { getEstadisticas, getBadges, getAllBadges, actualizarEstadisticas, getComparativa } = require("../services/estadisticas.service");
+const { getEstadisticas, getBadges, getAllBadges, actualizarEstadisticas, getComparativa } = require("../services/estadisticas.service");
+const { successResponse } = require("../utils/apiResponse");
 
-const getMisEstadisticas = async (req, res) => {
+const getMisEstadisticas = async (req, res, next) => {
   try {
-    const data = await getEstadisticas(req.usuario.id);
-    res.json(data);
+    successResponse(res, { estadisticas: await getEstadisticas(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getEstadisticasPublicas = async (req, res) => {
+const getEstadisticasPublicas = async (req, res, next) => {
   try {
-    const data = await getEstadisticas(parseInt(req.params.trabajador_id));
-    res.json(data);
+    successResponse(res, { estadisticas: await getEstadisticas(parseInt(req.params.trabajador_id)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getMisBadges = async (req, res) => {
+const getMisBadges = async (req, res, next) => {
   try {
-    const data = await getAllBadges(req.usuario.id);
-    res.json(data);
+    successResponse(res, { badges: await getAllBadges(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getBadgesPublicos = async (req, res) => {
+const getBadgesPublicos = async (req, res, next) => {
   try {
-    const data = await getBadges(parseInt(req.params.trabajador_id));
-    res.json(data);
+    successResponse(res, { badges: await getBadges(parseInt(req.params.trabajador_id)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getComparativaRubro = async (req, res) => {
+const getComparativaRubro = async (req, res, next) => {
   try {
     const rubroId = parseInt(req.params.rubro_id);
-    const data = await getComparativa(req.usuario.id, rubroId);
-    res.json(data);
+    successResponse(res, { comparativa: await getComparativa(req.usuario.id, rubroId) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const recalcular = async (req, res) => {
+const recalcular = async (req, res, next) => {
   try {
     await actualizarEstadisticas(req.usuario.id);
-    res.json({ mensaje: "Estadisticas actualizadas" });
+    successResponse(res, { mensaje: "Estadisticas actualizadas" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

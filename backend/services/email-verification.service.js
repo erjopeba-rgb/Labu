@@ -2,6 +2,7 @@
 const pool = require("../config/db");
 const { encolarEmail } = require("../workers/emailWorker");
 const logger = require("../config/logger");
+const AppError = require("../utils/AppError");
 
 // TTL del token: 24 horas
 const EXPIRACION_MS = 24 * 60 * 60 * 1000;
@@ -60,7 +61,7 @@ const generarTokenVerificacion = async (usuarioId) => {
 };
 
 const verificarEmailToken = async (token) => {
-    if (!token) throw { status: 400, error: "Token requerido" };
+    if (!token) throw new AppError("Token requerido", 400);
 
     const { rows } = await pool.query(
         "SELECT usuario_id FROM email_verifications WHERE token = $1 AND expires_at > NOW()",
@@ -68,7 +69,7 @@ const verificarEmailToken = async (token) => {
     );
 
     if (rows.length === 0) {
-        throw { status: 400, error: "El link de verificación es inválido o ya expiró" };
+        throw new AppError("El link de verificación es inválido o ya expiró", 400);
     }
 
     const usuarioId = rows[0].usuario_id;
@@ -85,8 +86,8 @@ const reenviarVerificacion = async (usuarioId) => {
         [usuarioId]
     );
 
-    if (rows.length === 0) throw { status: 404, error: "Usuario no encontrado" };
-    if (rows[0].email_verificado) throw { status: 400, error: "El email ya está verificado" };
+    if (rows.length === 0) throw new AppError("Usuario no encontrado", 404);
+    if (rows[0].email_verificado) throw new AppError("El email ya está verificado", 400);
 
     await generarTokenVerificacion(usuarioId);
 

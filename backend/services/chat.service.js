@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const logger = require("../config/logger");
 const chatRepo = require("../repositories/chat.repository");
+const AppError = require("../utils/AppError");
 
 // ─── CONVERSACIONES ───────────────────────────────────────────────────────────
 
@@ -51,7 +52,7 @@ const getMisConversaciones = async (usuarioId, limit = 30, offset = 0) => {
 
 const getMensajes = async (conversacionId, usuarioId, limit, offset) => {
   const acceso = await chatRepo.findAccesoConversacion(conversacionId, usuarioId);
-  if (acceso.length === 0) throw { status: 403, error: "Sin acceso a esta conversacion" };
+  if (acceso.length === 0) throw new AppError("Sin acceso a esta conversacion", 403);
 
   const rows = await chatRepo.findMensajes(conversacionId, limit, offset);
 
@@ -63,7 +64,7 @@ const getMensajes = async (conversacionId, usuarioId, limit, offset) => {
 const enviarMensaje = async ({ conversacionId, remitenteId, contenido, tipo }) => {
   const acceso = await chatRepo.findAccesoConversacion(conversacionId, remitenteId);
   if (acceso.length === 0) {
-    throw { status: 403, error: "Sin acceso a esta conversacion" };
+    throw new AppError("Sin acceso a esta conversacion", 403);
   }
 
   const msg = await chatRepo.insertMensaje(conversacionId, remitenteId, contenido, tipo);

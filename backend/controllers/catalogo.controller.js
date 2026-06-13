@@ -1,55 +1,53 @@
-﻿const {
+const {
   getRubrosConConteo,
   getRubrosConTareas, getTareasByRubro,
   getCatalogoTrabajador, upsertCatalogoItem, deleteCatalogoItem,
   getPrecioPromedio, compararPrecio,
   generarComprobante, getComprobante
 } = require("../services/catalogo.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getEstadisticas = async (req, res) => {
+const getEstadisticas = async (req, res, next) => {
   try {
-    const data = await getRubrosConConteo();
-    res.json(data);
+    successResponse(res, { data: await getRubrosConConteo() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getRubros = async (req, res) => {
+const getRubros = async (req, res, next) => {
   try {
-    const data = await getRubrosConTareas();
-    res.json(data);
+    successResponse(res, { rubros: await getRubrosConTareas() });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getTareas = async (req, res) => {
+const getTareas = async (req, res, next) => {
   try {
-    const data = await getTareasByRubro(parseInt(req.params.rubro_id));
-    res.json(data);
+    successResponse(res, { tareas: await getTareasByRubro(parseInt(req.params.rubro_id)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getCatalogo = async (req, res) => {
+const getCatalogo = async (req, res, next) => {
   try {
     const trabajadorId = req.params.trabajador_id
       ? parseInt(req.params.trabajador_id)
       : req.usuario.id;
-    const data = await getCatalogoTrabajador(trabajadorId);
-    res.json(data);
+    successResponse(res, { items: await getCatalogoTrabajador(trabajadorId) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const upsertItem = async (req, res) => {
+const upsertItem = async (req, res, next) => {
   try {
     const { tarea_id, precio, unidad_medida, descripcion_extra } = req.body;
     if (!tarea_id || !precio) {
-      return res.status(400).json({ error: "tarea_id y precio son requeridos" });
+      throw new AppError("tarea_id y precio son requeridos", 400);
     }
     const item = await upsertCatalogoItem({
       trabajadorId: req.usuario.id,
@@ -58,58 +56,56 @@ const upsertItem = async (req, res) => {
       unidadMedida: unidad_medida || "por_proyecto",
       descripcionExtra: descripcion_extra || null
     });
-    res.status(201).json(item);
+    successResponse(res, { item }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const deleteItem = async (req, res) => {
+const deleteItem = async (req, res, next) => {
   try {
     await deleteCatalogoItem(req.usuario.id, parseInt(req.params.tarea_id));
-    res.json({ mensaje: "Item eliminado del catalogo" });
+    successResponse(res, { mensaje: "Item eliminado del catalogo" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getPromedio = async (req, res) => {
+const getPromedio = async (req, res, next) => {
   try {
-    const data = await getPrecioPromedio(parseInt(req.params.tarea_id));
-    res.json(data);
+    successResponse(res, await getPrecioPromedio(parseInt(req.params.tarea_id)));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const comparar = async (req, res) => {
+const comparar = async (req, res, next) => {
   try {
     const { tarea_id, monto } = req.query;
     if (!tarea_id || !monto) {
-      return res.status(400).json({ error: "tarea_id y monto son requeridos" });
+      throw new AppError("tarea_id y monto son requeridos", 400);
     }
-    const data = await compararPrecio(parseInt(tarea_id), parseFloat(monto));
-    res.json(data);
+    successResponse(res, await compararPrecio(parseInt(tarea_id), parseFloat(monto)));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const crearComprobante = async (req, res) => {
+const crearComprobante = async (req, res, next) => {
   try {
     const comp = await generarComprobante(parseInt(req.params.trabajo_id));
-    res.status(201).json(comp);
+    successResponse(res, { comprobante: comp }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const verComprobante = async (req, res) => {
+const verComprobante = async (req, res, next) => {
   try {
     const comp = await getComprobante(parseInt(req.params.trabajo_id), req.usuario.id);
-    res.json(comp);
+    successResponse(res, { comprobante: comp });
   } catch (err) {
-    res.status(403).json({ error: err.message });
+    next(err);
   }
 };
 

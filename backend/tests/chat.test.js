@@ -112,8 +112,8 @@ describe('GET /api/chat/:id/mensajes — obtener mensajes', () => {
       .set('Authorization', `Bearer ${tokenUser1}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(res.body.mensajes)).toBe(true);
+    expect(res.body.mensajes.length).toBeGreaterThanOrEqual(1);
   });
 
   test('acceso denegado a conversación ajena → 403', async () => {
@@ -134,8 +134,8 @@ describe('GET /api/chat — mis conversaciones', () => {
       .set('Authorization', `Bearer ${tokenUser1}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThanOrEqual(1);
+    expect(Array.isArray(res.body.conversaciones)).toBe(true);
+    expect(res.body.conversaciones.length).toBeGreaterThanOrEqual(1);
   });
 
   test('usuario sin conversaciones devuelve array vacío → 200', async () => {
@@ -144,7 +144,7 @@ describe('GET /api/chat — mis conversaciones', () => {
       .set('Authorization', `Bearer ${tokenUser3}`);
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.conversaciones)).toBe(true);
   });
 
   test('rechaza sin autenticación → 401', async () => {

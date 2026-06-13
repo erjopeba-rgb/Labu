@@ -1,29 +1,31 @@
-﻿const {
+const {
   getPortfolio, addPortfolioItem, updatePortfolioItem, deletePortfolioItem,
   getHistorial, registrarHistorial, getCalendario, addEvento, getPortfolioFeed
 } = require("../services/portfolio.service");
 const { saveFile, generarNombreArchivo } = require("../config/storage");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getPortfolioPublico = async (req, res) => {
+const getPortfolioPublico = async (req, res, next) => {
   try {
-    res.json(await getPortfolio(parseInt(req.params.trabajador_id)));
+    successResponse(res, { items: await getPortfolio(parseInt(req.params.trabajador_id)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getMiPortfolio = async (req, res) => {
+const getMiPortfolio = async (req, res, next) => {
   try {
-    res.json(await getPortfolio(req.usuario.id));
+    successResponse(res, { items: await getPortfolio(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const addItem = async (req, res) => {
+const addItem = async (req, res, next) => {
   try {
     const { titulo, descripcion, trabajo_id, rubro_id, foto_antes_url, foto_despues_url, fotos_urls, video_url, destacado } = req.body;
-    if (!titulo) return res.status(400).json({ error: "titulo es requerido" });
+    if (!titulo) throw new AppError("titulo es requerido", 400);
 
     let fotoAntesUrl  = foto_antes_url  || null;
     let fotoDespuesUrl = foto_despues_url || null;
@@ -49,72 +51,72 @@ const addItem = async (req, res) => {
       videoUrl: video_url || null,
       destacado: destacado || false
     });
-    res.status(201).json({ success: true, item });
+    successResponse(res, { item }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const updateItem = async (req, res) => {
+const updateItem = async (req, res, next) => {
   try {
     const item = await updatePortfolioItem(parseInt(req.params.id), req.usuario.id, req.body);
-    res.json(item);
+    successResponse(res, { item });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const deleteItem = async (req, res) => {
+const deleteItem = async (req, res, next) => {
   try {
     await deletePortfolioItem(parseInt(req.params.id), req.usuario.id);
-    res.json({ mensaje: "Item eliminado del portfolio" });
+    successResponse(res, { mensaje: "Item eliminado del portfolio" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getHistorialPublico = async (req, res) => {
+const getHistorialPublico = async (req, res, next) => {
   try {
-    res.json(await getHistorial(parseInt(req.params.trabajador_id)));
+    successResponse(res, { historial: await getHistorial(parseInt(req.params.trabajador_id)) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getCalendarioTrabajador = async (req, res) => {
+const getCalendarioTrabajador = async (req, res, next) => {
   try {
     const mes = parseInt(req.query.mes) || new Date().getMonth() + 1;
     const anio = parseInt(req.query.anio) || new Date().getFullYear();
-    res.json(await getCalendario(parseInt(req.params.trabajador_id), mes, anio));
+    successResponse(res, { eventos: await getCalendario(parseInt(req.params.trabajador_id), mes, anio) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const addEventoCalendario = async (req, res) => {
+const addEventoCalendario = async (req, res, next) => {
   try {
     const { trabajo_id, titulo, fecha_inicio, fecha_fin, rubro_id, tipo } = req.body;
-    if (!titulo || !fecha_inicio) return res.status(400).json({ error: "titulo y fecha_inicio son requeridos" });
+    if (!titulo || !fecha_inicio) throw new AppError("titulo y fecha_inicio son requeridos", 400);
     const ev = await addEvento({
       trabajadorId: req.usuario.id,
       trabajoId: trabajo_id || null,
       titulo, fechaInicio: fecha_inicio, fechaFin: fecha_fin || null,
       rubroId: rubro_id || null, tipo: tipo || 'trabajo'
     });
-    res.status(201).json(ev);
+    successResponse(res, { evento: ev }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getPortfolioFeedController = async (req, res) => {
+const getPortfolioFeedController = async (req, res, next) => {
   try {
     const limit  = Math.min(parseInt(req.query.limit)  || 20, 50);
     const offset = parseInt(req.query.offset) || 0;
     const items  = await getPortfolioFeed(limit, offset);
-    res.json({ success: true, items });
+    successResponse(res, { items });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

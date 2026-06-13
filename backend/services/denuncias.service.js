@@ -1,13 +1,14 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 const CATEGORIAS = ["fraude","contenido_inapropiado","acoso","identidad_falsa","servicio_prohibido","incumplimiento","otro"];
 const TIPOS = ["usuario","trabajo","oferta","comportamiento"];
 
 const createDenuncia = async ({ denuncianteId, denunciadoId, trabajoId, tipo, categoria, descripcion, evidenciaUrls=[] }) => {
-  if (!TIPOS.includes(tipo)) throw new Error("Tipo de denuncia invalido");
-  if (!CATEGORIAS.includes(categoria)) throw new Error("Categoria invalida");
-  if (!descripcion || descripcion.length < 20) throw new Error("La descripcion debe tener al menos 20 caracteres");
-  if (denunciadoId && denunciadoId === denuncianteId) throw new Error("No puedes denunciarte a ti mismo");
+  if (!TIPOS.includes(tipo)) throw new AppError("Tipo de denuncia invalido", 400);
+  if (!CATEGORIAS.includes(categoria)) throw new AppError("Categoria invalida", 400);
+  if (!descripcion || descripcion.length < 20) throw new AppError("La descripcion debe tener al menos 20 caracteres", 400);
+  if (denunciadoId && denunciadoId === denuncianteId) throw new AppError("No puedes denunciarte a ti mismo", 400);
   const { rows: [d] } = await pool.query(
     `INSERT INTO denuncias (denunciante_id, denunciado_id, trabajo_id, tipo, categoria, descripcion, evidencia_urls)
      VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, tipo, categoria, estado, created_at`,
@@ -32,13 +33,13 @@ const getDenuncias = async (estado) => {
 };
 
 const resolverDenuncia = async ({ denunciaId, moderadorId, estado, resolucion }) => {
-  if (!["resuelta","desestimada","en_revision"].includes(estado)) throw new Error("Estado invalido");
+  if (!["resuelta","desestimada","en_revision"].includes(estado)) throw new AppError("Estado invalido", 400);
   const { rows: [d] } = await pool.query(
     `UPDATE denuncias SET estado=$1, resolucion=$2, moderador_id=$3, updated_at=NOW()
      WHERE id=$4 RETURNING *`,
     [estado, resolucion, moderadorId, denunciaId]
   );
-  if (!d) throw new Error("Denuncia no encontrada");
+  if (!d) throw new AppError("Denuncia no encontrada", 404);
   return d;
 };
 

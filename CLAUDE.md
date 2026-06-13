@@ -11,7 +11,7 @@ Labu es una plataforma que conecta personas con complejidades técnicas en su ho
 - **Base de datos:** PostgreSQL
 - **Tiempo real:** Socket.io
 - **Auth:** JWT + bcrypt
-- **Pagos:** MercadoPago (integrado en sandbox, falta credenciales de producción)
+- **Pagos:** MercadoPago (integrado en sandbox, falta credenciales de producción). Credenciales: el valor en la tabla `configuracion_plataforma` (panel admin) tiene precedencia; `MP_ACCESS_TOKEN`/`MP_PUBLIC_KEY` del `.env` actúan como fallback inicial de despliegue (desactivado en `NODE_ENV=test`)
 
 ---
 
@@ -43,7 +43,7 @@ labu.com gpt5.2/
 ├── database/
 │   ├── data/blueprints/    # SQLs de creación de tablas
 │   └── migrations/         # Migraciones posteriores
-└── skills/                 # Skills de Claude Code
+└── .claude/skills/         # Skills de Claude Code (slash commands invocables)
 ```
 
 ---
@@ -126,7 +126,13 @@ Labu tiene dos perfiles intercambiables con la misma cuenta:
 ---
 
 ## Skills disponibles
-Las skills están en la carpeta `/skills/` en la raíz del proyecto. Revisarlas antes de trabajar en features específicas.
+Las skills están en `.claude/skills/` (formato SKILL.md, invocables como slash commands). Revisarlas antes de trabajar en features específicas:
+- `/debug` — diagnóstico y fix de errores (error_logs, pino + requestId, errores comunes catalogados)
+- `/feature` — features nuevas (patrón route → controller → service → repository, checklist completo)
+- `/refactor` — mejoras sin cambio de comportamiento (zonas sensibles: outbox, scheduling, orden de locks)
+- `/pagos-mercadopago` — **leer obligatoriamente antes de tocar pagos** (outbox, estados del CHECK, webhook dedupe, credenciales DB > env)
+- `/migraciones-db` — migraciones SQL (idempotencia, aplicar en dev Y test, TABLAS_CORE, lista TRUNCATE)
+- `/nueva-pagina-frontend` — checklist de página nueva (HTML/CSS/JS, pageMap, navbar.js, socket.io local)
 
 ---
 
@@ -162,7 +168,7 @@ Las skills están en la carpeta `/skills/` en la raíz del proyecto. Revisarlas 
 - ✅ Comentarios en publicaciones (tabla `comentarios`, endpoint + UI en feed)
 - ✅ Sistema de reportes de comentarios y publicaciones (tabla `reportes`, `POST /api/reportes`, modal UI)
 - ✅ AppError class + middleware global de errores
-- ✅ Formato de respuesta API unificado (`apiResponse.js`)
+- ✅ Formato de respuesta API unificado (`apiResponse.js`) — **completado de verdad en I2/I3 del AUDIT.md (2026-06-12)**: los 25 controllers usan `successResponse` + `next(err)`, 0 throws de negocio sin `AppError` en services
 - ✅ Repository layer completo para todos los módulos (`jobs`, `offers`, `auth`, `chat`, `notificaciones`, `calificaciones`, `portfolio`, `disponibilidad`, `pagos`, `profile`) — 10/10
 - ✅ Logging avanzado con pino + requestId por request (AsyncLocalStorage)
 - ✅ Redis real integrado — cache con `ioredis` (`cache.js`) y Socket.io adapter (`socketAdapter.js`) listos para multi-proceso
@@ -182,6 +188,8 @@ Las skills están en la carpeta `/skills/` en la raíz del proyecto. Revisarlas 
 - ✅ Flujo de dinero real (C4 del AUDIT.md): gate de pago aprobado para confirmar llegada (402 si el dueño no pagó), retención real (distribuciones nacen `pendiente`), liberación al confirmar completado (→ `procesado` en la misma transacción), payout por saldo + retiro manual (tabla `retiros`, `GET /api/pagos/saldo`, `POST /api/pagos/retiros` con advisory lock, página `mis-pagos.html`, tab Retiros en admin)
 - ✅ Cancelación con salvaguardas (C3 del AUDIT.md): reglas por estado y rol — libre sin pago; con pago aprobado no iniciado reembolso automático (pago → `reembolsado`, distribuciones anuladas); bloqueada para el dueño si el trabajo está iniciado (403, solo trabajador/admin, dinero retenido para disputa); bloqueada para todos salvo admin en `pendiente_confirmacion`/`completado`; liberación de reservas + notificación `trabajo_cancelado` en la misma transacción
 - ✅ Disputa activa congela el pago (I7 del AUDIT.md): `confirmarCompletado` → 403 con disputa `abierta`/`en_revision`; el admin resuelve con `resultado` obligatorio — `trabajador` libera las distribuciones, `dueno` reembolso contable (incluye reversión de `procesado` si la disputa es sobre un trabajo ya completado); columna `disputas.resultado` + select en el modal de admin; resolución parcial por porcentaje pendiente (documentada en AUDIT.md)
+- ✅ Config/deploy alineada (I1, I5, I6, I15, I16 del AUDIT.md): `REDIS_URL` única fuente Redis (+ timeout/maxRetries en cache y socketAdapter, `queue.js` sin default a localhost), `OSRM_URL` leída por `scheduling.service.js` (http/https según protocolo, warn en producción sin configurar), credenciales MP con precedencia DB > env (fallback desactivado en test), pool de PostgreSQL configurable (`DB_POOL_MIN/MAX`, `DB_SSL`), inventario de env vars sincronizado (`.env.example` raíz como único canónico → destino `backend/.env`; `backend/.env.example` eliminado)
+- ✅ Frontend puntual (I9, I10, I11 del AUDIT.md): `navbar.js` cargado en las 5 páginas con navbar completo (feed, notificaciones, mensajes, mis-ofertas, mis-pagos) + console.log de debug eliminados; Socket.io con única fuente `/socket.io/socket.io.js` servida por el server (CDN eliminado de feed y mis-ofertas-laborales); `planner-3d` en el `pageMap` de `main.js` y botón "Videos" sin página eliminado de `components/sidebar-right.html`
 - ✅ Patrón outbox en pagos (I17 del AUDIT.md): ninguna transacción de DB abierta durante llamadas de red a MercadoPago — el pago nace `iniciando` commiteado antes de llamar a MP, una transacción corta final aplica el resultado (`pendiente`/`aprobado`/`fallido`); webhook idempotente con dedupe `webhook_events` + guard de estado `FOR UPDATE` (no duplica distribuciones)
 - ✅ Versionado de API `/api/v1/` con alias de compatibilidad `/api/` (`v1.router.js` + `apiVersion.middleware.js`)
 - ✅ Búsqueda avanzada con mapa Leaflet interactivo y filtros por rubro/distancia/precio/disponibilidad (`busqueda-avanzada.html`)
@@ -248,6 +256,9 @@ Todas las mejoras están reflejadas en el Estado del MVP. Para detalles de imple
 - **2026-06-10 noche:** **C3 resuelto** (cancelación con salvaguardas) — `cancelarTrabajo` reescrito con transacción + `FOR UPDATE`: reglas por estado/rol (libre sin pago; reembolso automático con pago aprobado no iniciado; bloqueada para dueño si iniciado — solo trabajador/admin, dinero retenido para disputa; bloqueada para todos salvo admin en `pendiente_confirmacion`/`completado`), `reembolsarPagoPorTrabajo` (distribuciones `pendiente` → NULL + pago `aprobado` → `reembolsado`), `liberarReservasPorTrabajo` (tentativas y confirmadas → liberadas), `notificarTrabajoCancelado` a la contraparte. Migración `pagos_reembolsado.sql` (CHECK de `pagos.estado` + `'reembolsado'`) aplicada en ambas DBs. Tests: 140/140 (5 nuevos en `jobs.test.js`, describe C3).
 - **2026-06-11:** **I7 resuelto** (disputa activa congela el pago) — gate en `confirmarCompletado` (403 si hay disputa `abierta`/`en_revision`, chequeo con `FOR UPDATE` dentro de la transacción existente), `resolverDisputa` reescrito en transacción con `resultado` obligatorio (`'trabajador'` → `liberarDistribucionesPorTrabajo`; `'dueno'` → `reembolsarPagoPorDisputa`, que además revierte distribuciones `'procesado'` para disputas sobre trabajos ya completados), orden de locks trabajos → disputas en ambos caminos para evitar deadlocks, migración `disputas_resultado.sql` (columna `resultado`) aplicada en ambas DBs, select de resultado en el modal de admin. Resolución parcial por porcentaje documentada como pendiente en AUDIT.md. Tests: 144/144 (4 nuevos en `jobs.test.js`, describe I7).
 - **2026-06-11 tarde:** **I17 resuelto** (patrón outbox — cierra el paquete "dinero") — `crearPreferenciaTrabajo`, `pagarDirectoTrabajo` y `procesarWebhook` ya no retienen transacciones de DB durante las llamadas de red a MP: el pago nace `'iniciando'` commiteado antes de llamar (estados `'iniciando'`/`'procesando'`/`'fallido'` agregados al CHECK vía `pagos_estados_outbox.sql`, aplicada en ambas DBs), la llamada HTTP con retry corre sin conexión retenida, y una transacción corta final aplica el resultado (`activarPagoConPreferencia` / `aplicarResultadoMP` con `FOR UPDATE` + guard idempotente que evita duplicar distribuciones cuando el webhook llega tras un pago directo ya aplicado; si MP falla → `marcarPagoFallido`). En el webhook el marcador pre-red es `webhook_events` (el pago se identifica recién con `Payment.get`); el dedupe definitivo va `ON CONFLICT` en la misma transacción que los efectos. Fix lateral: `webhook_events` en el TRUNCATE de `tests/helpers.js`. Tests: 150/150 (suite nueva `pagos.test.js`, 6 tests con SDK de MP mockeado — verifica que el pago está commiteado durante la llamada de red).
+- **2026-06-11 noche:** **Paquete config/deploy resuelto (I1, I5, I6, I15, I16 del AUDIT.md)** — Redis unificado a `REDIS_URL` en examples + `connectTimeout`/`maxRetriesPerRequest` en `cache.js`/`socketAdapter.js` + `queue.js` retorna `null` sin `REDIS_URL` (antes defaulteaba a localhost y los jobs quedaban encolados offline para siempre); `OSRM_URL` configurable en `scheduling.service.js` con cliente http/https según protocolo y warn en producción sin configurar; credenciales MP con precedencia DB > env (`getMPToken`, fallback env desactivado en `NODE_ENV=test` para no provocar llamadas de red en suites sin mock); pool PostgreSQL lee `DB_POOL_MIN/MAX` (defaults 5/50 = comportamiento previo) y `DB_SSL=true` → `rejectUnauthorized: false`; inventario de env vars alineado en `.env.example` y `.env.production.example` (+`REDIS_URL`/`DB_BACKUP_PATH`/`PGPASSWORD_BACKUP`/`PSQL_PATH`, −`SMTP_SECURE`/`ADMIN_SECRET_KEY`/`REDIS_HOST/PORT/PASSWORD`, renombre `BACKUP_EMAIL_ALERT`→`ADMIN_EMAIL`); `backend/.env.example` eliminado — el canónico es `.env.example` de raíz copiado a `backend/.env`; `setup.js` (mensaje + `VARS_OPCIONALES` 28 vars) y `README.md` actualizados. Tests: 150/150 + `setup.js` exit 0.
+- **2026-06-12:** **I2 e I3 resueltos** (estandarización de API y errores) — los 25 controllers migrados a `successResponse` (`{success: true, ...}`) + `try/catch → next(err)` (antes 17 con formas ad-hoc); 0 `throw new Error`/`throw {status, error}` de negocio en services (74 ocurrencias en 16 services convertidas a `AppError` con código correcto: 400/403/404/409/502/503); arrays crudos envueltos con clave semántica (`{conversaciones}`, `{trabajadores}`, `{items}`, …) y objetos spreadeados (claves preservadas → frontend mayormente intacto); frontend actualizado donde la forma cambió (`perfil-publico.js`, `mensajes.js`) — `mi-perfil.js`/`busqueda-avanzada.js`/`marketplace.js`/`catalogo.js` ya eran defensivos; tests `geolocalizacion.test.js` y `chat.test.js` actualizados al contrato nuevo; webhook MP mantiene su contrato 200/500 (excepción deliberada); `relaciones.service.js` detectado huérfano. Pendiente del paquete: I4 (express-validator) + I12/I13 (tests). Tests: 150/150.
+- **2026-06-11 (frontend puntual):** **I9, I10, I11 resueltos** — I9: `navbar.js` agregado a notificaciones/mensajes/mis-ofertas/mis-pagos (las 4 páginas con navbar de badges + avatar; fuera de feed no hay markup de dropdowns, lo único roto era la inicial del avatar) + 5 `console.log` de debug eliminados de `navbar.js`; I10: CDN de socket.io eliminado de `mis-ofertas-laborales.html` (doble carga) y `feed.html` migrado del CDN al cliente local `/socket.io/socket.io.js` (única fuente, siempre matchea la versión del server); I11: `'planner-3d'` agregado al `pageMap` de `main.js` y botón "Videos" eliminado de `components/sidebar-right.html` (sin página destino; el componente no se inyecta en runtime — bug latente, no manifiesto). Tests: 150/150.
 
 ---
 
@@ -256,4 +267,4 @@ Todas las mejoras están reflejadas en el Estado del MVP. Para detalles de imple
 Antes de ejecutar cualquier cambio en el código:
 1. **Reformular el prompt dos veces a detalle** — reescribir el pedido del usuario con precisión técnica, identificar archivos afectados, posibles efectos secundarios y casos borde.
 2. **Confirmar el plan con el usuario** — presentar el plan reformulado y esperar aprobación explícita antes de tocar código.
-3. **Usar la skill correspondiente** — `/debug` para errores, `/feature` para nuevas funcionalidades, `/refactor` para mejoras de código; revisar `/skills/` antes de empezar.
+3. **Usar la skill correspondiente** — `/debug` para errores, `/feature` para nuevas funcionalidades, `/refactor` para mejoras de código; revisar `.claude/skills/` antes de empezar. Si el cambio toca pagos, `/pagos-mercadopago` es de lectura obligatoria.

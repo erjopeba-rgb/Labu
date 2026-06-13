@@ -96,7 +96,7 @@ describe('GET /api/geo/trabajadores', () => {
       .query({ lat: '-34.6037', lng: '-58.3816' });
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.trabajadores)).toBe(true);
   });
 
   test('sin coordenadas → 200 (devuelve todos sin filtro de distancia)', async () => {
@@ -104,7 +104,7 @@ describe('GET /api/geo/trabajadores', () => {
       .get('/api/geo/trabajadores');
 
     expect(res.status).toBe(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(Array.isArray(res.body.trabajadores)).toBe(true);
   });
 
   test('con solo lat sin lng → 400', async () => {

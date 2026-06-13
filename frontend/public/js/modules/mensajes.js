@@ -80,7 +80,7 @@ async function cargarConversaciones() {
     if (lista) lista.innerHTML = _spinnerHtml('Cargando conversaciones...');
     try {
         const data = await App.apiRequest('/chat');
-        conversaciones = Array.isArray(data) ? data : [];
+        conversaciones = Array.isArray(data) ? data : (data.conversaciones || []);
         renderConversaciones();
     } catch (err) {
         console.error('Error cargando conversaciones:', err);
@@ -153,7 +153,7 @@ async function cargarMensajes(convId) {
             area.innerHTML = _errorHtml(data && data.error || 'No se pudieron cargar los mensajes.');
             return;
         }
-        const mensajes = Array.isArray(data) ? data : [];
+        const mensajes = Array.isArray(data) ? data : (data.mensajes || []);
         renderMensajes(mensajes);
         scrollAlFinal();
     } catch (err) {

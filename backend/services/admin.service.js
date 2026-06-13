@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 const listarUsuarios = async () => {
   const { rows } = await pool.query(`
@@ -17,7 +18,7 @@ const suspenderUsuario = async (id, suspendido) => {
     "UPDATE usuarios SET activo = $1, updated_at = NOW() WHERE id = $2 RETURNING id, email, activo",
     [nuevoActivo, id]
   );
-  if (!rows.length) throw { status: 404, error: "Usuario no encontrado" };
+  if (!rows.length) throw new AppError("Usuario no encontrado", 404);
   return rows[0];
 };
 
@@ -39,7 +40,7 @@ const resolverReporte = async (id, accion) => {
      WHERE id = $2 RETURNING id, estado, resolucion`,
     [resolucion, id]
   );
-  if (!rows.length) throw { status: 404, error: "Reporte no encontrado" };
+  if (!rows.length) throw new AppError("Reporte no encontrado", 404);
   return rows[0];
 };
 

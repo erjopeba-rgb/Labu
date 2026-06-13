@@ -1,11 +1,13 @@
 const svc            = require("../services/disputas.service");
 const { uploadToS3 } = require("../services/upload.service");
+const AppError       = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const crear = async (req, res) => {
+const crear = async (req, res, next) => {
   try {
     const { trabajo_id, motivo, descripcion, evidencia_urls } = req.body;
     if (!trabajo_id || !motivo) {
-      return res.status(400).json({ error: "trabajo_id y motivo son obligatorios" });
+      throw new AppError("trabajo_id y motivo son obligatorios", 400);
     }
     const disputa = await svc.crearDisputa({
       trabajoId:    parseInt(trabajo_id),
@@ -14,33 +16,33 @@ const crear = async (req, res) => {
       descripcion:  descripcion || null,
       evidenciaUrls: evidencia_urls || [],
     });
-    res.status(201).json({ success: true, disputa });
+    successResponse(res, { disputa }, 201);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.error || err.message || "Error al crear la disputa" });
+    next(err);
   }
 };
 
-const getMisDisputas = async (req, res) => {
+const getMisDisputas = async (req, res, next) => {
   try {
     const disputas = await svc.getMisDisputas(req.usuario.id);
-    res.json({ success: true, disputas });
+    successResponse(res, { disputas });
   } catch (err) {
-    res.status(500).json({ error: "Error al obtener tus disputas" });
+    next(err);
   }
 };
 
-const subirEvidencia = async (req, res) => {
+const subirEvidencia = async (req, res, next) => {
     try {
         if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ error: "Se requiere al menos un archivo" });
+            throw new AppError("Se requiere al menos un archivo", 400);
         }
         const urls = await Promise.all(
             req.files.map(f => uploadToS3(f, "evidencia-disputas"))
         );
         const evidencia_urls = await svc.agregarEvidencia(parseInt(req.params.id), req.usuario.id, urls);
-        res.json({ success: true, evidencia_urls });
+        successResponse(res, { evidencia_urls });
     } catch (err) {
-        res.status(err.status || 500).json({ error: err.error || err.message || "Error al subir evidencia" });
+        next(err);
     }
 };
 

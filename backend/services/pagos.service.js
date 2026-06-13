@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const { MercadoPagoConfig, Preference, Payment } = require("mercadopago");
 const logger = require("../config/logger");
 const pagosRepo = require("../repositories/pagos.repository");
+const AppError = require("../utils/AppError");
 
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
@@ -34,9 +35,20 @@ const getConfig = async (clave) => pagosRepo.findConfigValue(clave);
 
 const getConfigMulti = async (claves) => pagosRepo.findConfigValues(claves);
 
+// Credenciales MP: la DB (panel admin, tabla configuracion_plataforma) tiene
+// precedencia; el .env actúa como valor inicial de despliegue.
+// En tests el fallback a env se desactiva: las suites controlan MP solo vía DB
+// y un token real en .env provocaría llamadas de red en los tests sin mock.
+const getMPToken = async () => {
+  const desdeDB = await getConfig('mp_access_token');
+  if (desdeDB) return desdeDB;
+  if (process.env.NODE_ENV === 'test') return null;
+  return process.env.MP_ACCESS_TOKEN || null;
+};
+
 const getMPClient = async () => {
-  const token = await getConfig('mp_access_token');
-  if (!token) throw new Error("MercadoPago no configurado");
+  const token = await getMPToken();
+  if (!token) throw new AppError("MercadoPago no configurado", 503);
   return new MercadoPagoConfig({ accessToken: token });
 };
 
@@ -63,16 +75,16 @@ const calcularComision = async (montoTotal) => {
 // reintentos puede demorar varios segundos y agotar el pool bajo carga).
 const crearPreferenciaTrabajo = async ({ trabajoId, pagadorId, montoTotal, conSeguro }) => {
   const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, pool);
-  if (!trabajo) throw new Error("Trabajo no encontrado");
-  if (trabajo.dueno_id !== pagadorId) throw new Error("Solo el dueño puede iniciar el pago");
+  if (!trabajo) throw new AppError("Trabajo no encontrado", 404);
+  if (trabajo.dueno_id !== pagadorId) throw new AppError("Solo el dueño puede iniciar el pago", 403);
 
   const monto = montoTotal || trabajo.monto_propuesto;
-  if (!monto) throw new Error("No se pudo determinar el monto del trabajo");
+  if (!monto) throw new AppError("No se pudo determinar el monto del trabajo", 400);
 
   // Validar credenciales antes de insertar: si MP no está configurado no queda
   // un registro 'iniciando' huérfano.
-  const token = await getConfig('mp_access_token');
-  if (!token) throw new Error("MercadoPago no configurado");
+  const token = await getMPToken();
+  if (!token) throw new AppError("MercadoPago no configurado", 503);
 
   const precioSeguro = conSeguro ? parseFloat(await getConfig('seguro_precio') || '2000') : 0;
   const montoFinal = monto + precioSeguro;
@@ -129,7 +141,7 @@ const crearPreferenciaTrabajo = async ({ trabajoId, pagadorId, montoTotal, conSe
       mpErrFull: JSON.stringify(mpErr)
     }, `[pagos] MercadoPago preference.create falló después de reintentos: ${causa}`);
     await pagosRepo.marcarPagoFallido(pago.id, causa);
-    throw new Error(`MercadoPago error: ${causa}`);
+    throw new AppError(`MercadoPago error: ${causa}`, 502);
   }
 
   // Transacción corta de cierre: activar el pago con la preferencia ya creada en MP
@@ -147,11 +159,11 @@ const crearPreferenciaTrabajo = async ({ trabajoId, pagadorId, montoTotal, conSe
 
 const crearPreferenciaVideo = async ({ videoId, usuarioId }) => {
   const video = await pagosRepo.findVideoActivo(videoId);
-  if (!video) throw new Error("Video no encontrado");
-  if (video.es_gratis) throw new Error("Este video es gratuito");
+  if (!video) throw new AppError("Video no encontrado", 404);
+  if (video.es_gratis) throw new AppError("Este video es gratuito", 400);
 
   const acceso = await pagosRepo.findAccesoVideo(usuarioId, videoId);
-  if (acceso.length > 0) throw new Error("Ya tenés acceso a este video");
+  if (acceso.length > 0) throw new AppError("Ya tenés acceso a este video", 409);
 
   const pago = await pagosRepo.insertPagoVideo({
     usuario_id: usuarioId,
@@ -238,7 +250,7 @@ const procesarWebhook = async (paymentId) => {
 // aplicó el resultado del mismo payment.
 const aplicarResultadoMP = async ({ pagoId, paymentId, mpStatus, mpDetail }, client) => {
   const pago = await pagosRepo.findPagoByIdForUpdate(pagoId, client);
-  if (!pago) throw new Error("Pago no encontrado");
+  if (!pago) throw new AppError("Pago no encontrado", 404);
 
   if (pago.estado === 'aprobado' || pago.estado === 'reembolsado') {
     logger.info({ pagoId, estado: pago.estado, mpStatus }, '[pagos] Resultado MP ignorado: el pago ya tiene estado final');
@@ -309,7 +321,7 @@ const procesarPagoAprobado = async (client, pago) => {
 // ─── SIMULACIÓN DE PAGO APROBADO (solo development) ──────────────────────────
 
 const simularPagoAprobadoDev = async (trabajoId, pagadorId) => {
-  if (process.env.NODE_ENV !== 'development') throw new Error('Solo disponible en desarrollo');
+  if (process.env.NODE_ENV !== 'development') throw new AppError('Solo disponible en desarrollo', 403);
 
   const client = await pool.connect();
   try {
@@ -319,8 +331,8 @@ const simularPagoAprobadoDev = async (trabajoId, pagadorId) => {
 
     if (!pago) {
       const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, client);
-      if (!trabajo) throw new Error('Trabajo no encontrado o sin oferta aceptada');
-      if (trabajo.dueno_id !== pagadorId) throw new Error('Solo el dueño puede simular el pago');
+      if (!trabajo) throw new AppError('Trabajo no encontrado o sin oferta aceptada', 404);
+      if (trabajo.dueno_id !== pagadorId) throw new AppError('Solo el dueño puede simular el pago', 403);
 
       const monto = parseFloat(trabajo.monto_propuesto);
       const comision = await calcularComision(monto);
@@ -370,11 +382,11 @@ const simularPagoAprobadoDev = async (trabajoId, pagadorId) => {
 // de un cobro real, el webhook de MP aplica el resultado más tarde (aplicarResultadoMP).
 const pagarDirectoTrabajo = async ({ trabajoId, pagadorId, cardToken, paymentMethodId, payerEmail, installments = 1 }) => {
   const trabajo = await pagosRepo.findTrabajoPagoData(trabajoId, pool);
-  if (!trabajo) throw new Error('Trabajo no encontrado');
-  if (trabajo.dueno_id !== pagadorId) throw new Error('Solo el dueño puede pagar');
+  if (!trabajo) throw new AppError('Trabajo no encontrado', 404);
+  if (trabajo.dueno_id !== pagadorId) throw new AppError('Solo el dueño puede pagar', 403);
 
   const monto = parseFloat(trabajo.monto_propuesto);
-  if (!monto) throw new Error('No se pudo determinar el monto del trabajo');
+  if (!monto) throw new AppError('No se pudo determinar el monto del trabajo', 400);
 
   // Validar credenciales antes de insertar: sin MP configurado no queda registro huérfano
   const mpClient = await getMPClient();
@@ -412,7 +424,7 @@ const pagarDirectoTrabajo = async ({ trabajoId, pagadorId, cardToken, paymentMet
     const causa = mpErr?.cause?.[0]?.description || mpErr?.message || String(mpErr);
     logger.error({ err: mpErr, trabajoId, causa }, '[pagos] Payment.create (directo) falló');
     await pagosRepo.marcarPagoFallido(pago.id, causa);
-    throw new Error(`MercadoPago error: ${causa}`);
+    throw new AppError(`MercadoPago error: ${causa}`, 502);
   }
 
   // Transacción corta: estado final + efectos (distribuciones, seguro) atómicos
@@ -456,8 +468,8 @@ const getSaldo = async (usuarioId) => {
 // la validación de saldo y retirar el doble de lo disponible.
 const solicitarRetiro = async (usuarioId, monto, datosCobro) => {
   const montoNum = Math.round(parseFloat(monto) * 100) / 100;
-  if (!montoNum || montoNum <= 0) throw new Error("El monto del retiro debe ser mayor a cero");
-  if (!datosCobro || !String(datosCobro).trim()) throw new Error("Indicá CBU/CVU o alias para recibir la transferencia");
+  if (!montoNum || montoNum <= 0) throw new AppError("El monto del retiro debe ser mayor a cero", 400);
+  if (!datosCobro || !String(datosCobro).trim()) throw new AppError("Indicá CBU/CVU o alias para recibir la transferencia", 400);
 
   const client = await pool.connect();
   try {
@@ -466,7 +478,7 @@ const solicitarRetiro = async (usuarioId, monto, datosCobro) => {
 
     const saldo = await pagosRepo.findSaldoUsuario(usuarioId, client);
     if (montoNum > saldo.disponible) {
-      throw new Error(`Saldo insuficiente: disponible $${saldo.disponible}`);
+      throw new AppError(`Saldo insuficiente: disponible $${saldo.disponible}`, 400);
     }
 
     const retiro = await pagosRepo.insertRetiro({
@@ -498,9 +510,9 @@ const listarRetirosAdmin = async (estado) => {
 // Si lo rechaza, el monto vuelve a estar disponible automáticamente (deja de sumar
 // como 'en_retiro' en el cálculo de saldo).
 const resolverRetiro = async (retiroId, accion, notaAdmin) => {
-  if (!["pagado", "rechazado"].includes(accion)) throw new Error("accion debe ser 'pagado' o 'rechazado'");
+  if (!["pagado", "rechazado"].includes(accion)) throw new AppError("accion debe ser 'pagado' o 'rechazado'", 400);
   const retiro = await pagosRepo.updateRetiroEstado(retiroId, accion, notaAdmin);
-  if (!retiro) throw new Error("Retiro no encontrado o ya resuelto");
+  if (!retiro) throw new AppError("Retiro no encontrado o ya resuelto", 404);
   logger.info({ retiroId, accion }, "[pagos] Retiro resuelto por admin");
   return retiro;
 };
@@ -513,12 +525,13 @@ const getHistorialPagos = async (usuarioId) => {
 
 const getDesgloseTrabajo = async (trabajoId, usuarioId) => {
   const trabajo = await pagosRepo.findTrabajoDueno(trabajoId);
+  if (!trabajo) throw new AppError("Trabajo no encontrado", 404);
   const oferta = await pagosRepo.findOfertaAceptadaMonto(trabajoId);
-  if (!oferta) throw new Error("No hay oferta aceptada para este trabajo");
+  if (!oferta) throw new AppError("No hay oferta aceptada para este trabajo", 404);
 
   const esDueno = trabajo.dueno_id === usuarioId;
   const esTrabajador = oferta.trabajador_id === usuarioId;
-  if (!esDueno && !esTrabajador) throw new Error("Sin permiso");
+  if (!esDueno && !esTrabajador) throw new AppError("Sin permiso", 403);
 
   const comision = await calcularComision(parseFloat(oferta.monto_propuesto));
   const precioSeguro = parseFloat(await getConfig('seguro_precio') || '2000');
@@ -541,7 +554,7 @@ const getVideos = async ({ rubroId, gratis, limit, offset }) => {
 
 const tieneAccesoVideo = async (usuarioId, videoId) => {
   const v = await pagosRepo.findVideoEsGratis(videoId);
-  if (!v) throw new Error("Video no encontrado");
+  if (!v) throw new AppError("Video no encontrado", 404);
   if (v.es_gratis) return true;
   const rows = await pagosRepo.findAccesoVideo(usuarioId, videoId);
   return rows.length > 0;

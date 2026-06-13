@@ -1,6 +1,7 @@
-﻿const { createDenuncia, getDenuncias, resolverDenuncia } = require("../services/denuncias.service");
+const { createDenuncia, getDenuncias, resolverDenuncia } = require("../services/denuncias.service");
+const { successResponse } = require("../utils/apiResponse");
 
-const create = async (req, res) => {
+const create = async (req, res, next) => {
   try {
     const { denunciado_id, trabajo_id, tipo, categoria, descripcion, evidencia_urls } = req.body;
     const d = await createDenuncia({
@@ -12,21 +13,21 @@ const create = async (req, res) => {
       descripcion,
       evidenciaUrls: evidencia_urls || []
     });
-    res.status(201).json(d);
+    successResponse(res, { denuncia: d }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getAll = async (req, res) => {
+const getAll = async (req, res, next) => {
   try {
-    res.json(await getDenuncias(req.query.estado || null));
+    successResponse(res, { denuncias: await getDenuncias(req.query.estado || null) });
   } catch (err) {
-    res.status(500).json({ error: "Error al obtener denuncias" });
+    next(err);
   }
 };
 
-const resolver = async (req, res) => {
+const resolver = async (req, res, next) => {
   try {
     const d = await resolverDenuncia({
       denunciaId: parseInt(req.params.id),
@@ -34,9 +35,9 @@ const resolver = async (req, res) => {
       estado: req.body.estado,
       resolucion: req.body.resolucion
     });
-    res.json(d);
+    successResponse(res, { denuncia: d });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 

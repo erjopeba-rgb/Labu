@@ -1,31 +1,33 @@
-﻿const svc = require("../services/chat.service");
+const svc = require("../services/chat.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getConversaciones = async (req, res) => {
+const getConversaciones = async (req, res, next) => {
   try {
     const limit = parseInt(req.query.limit) || 30;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
-    res.json(await svc.getMisConversaciones(req.usuario.id, limit, offset));
+    successResponse(res, { conversaciones: await svc.getMisConversaciones(req.usuario.id, limit, offset) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const iniciarConversacion = async (req, res) => {
+const iniciarConversacion = async (req, res, next) => {
   try {
     const { tipo, referencia_id, participantes } = req.body;
     if (!tipo || !participantes || participantes.length === 0) {
-      return res.status(400).json({ error: "tipo y participantes son requeridos" });
+      throw new AppError("tipo y participantes son requeridos", 400);
     }
     const todos = [...new Set([req.usuario.id, ...participantes])];
     const convId = await svc.getOrCreateConversacion(tipo, referencia_id || null, todos);
-    res.status(201).json({ conversacion_id: convId });
+    successResponse(res, { conversacion_id: convId }, 201);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.error || err.message });
+    next(err);
   }
 };
 
-const getMensajes = async (req, res) => {
+const getMensajes = async (req, res, next) => {
   try {
     const msgs = await svc.getMensajes(
       parseInt(req.params.id),
@@ -33,17 +35,17 @@ const getMensajes = async (req, res) => {
       parseInt(req.query.limit) || 50,
       parseInt(req.query.offset) || 0
     );
-    res.json(msgs);
+    successResponse(res, { mensajes: msgs });
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.error || err.message });
+    next(err);
   }
 };
 
-const enviarMensaje = async (req, res) => {
+const enviarMensaje = async (req, res, next) => {
   try {
     const { contenido, tipo } = req.body;
     if (!contenido) {
-      return res.status(400).json({ error: "contenido es requerido" });
+      throw new AppError("contenido es requerido", 400);
     }
     const msg = await svc.enviarMensaje({
       conversacionId: parseInt(req.params.id),
@@ -55,49 +57,49 @@ const enviarMensaje = async (req, res) => {
     if (req.app.get('io')) {
       req.app.get('io').to(`conv_${msg.conversacion_id}`).emit('nuevo_mensaje', msg);
     }
-    res.status(201).json(msg);
+    successResponse(res, msg, 201);
   } catch (err) {
-    res.status(err.status || 500).json({ error: err.error || err.message });
+    next(err);
   }
 };
 
-const getNotificaciones = async (req, res) => {
+const getNotificaciones = async (req, res, next) => {
   try {
     const soloNoLeidas = req.query.no_leidas === 'true';
     const limit = parseInt(req.query.limit) || 20;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
     const { data, total } = await svc.getNotificaciones(req.usuario.id, soloNoLeidas, limit, offset);
-    res.json({ data, total, page, limit });
+    successResponse(res, { data, total, page, limit });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getConteoNoLeidas = async (req, res) => {
+const getConteoNoLeidas = async (req, res, next) => {
   try {
     const count = await svc.getNoLeidasCount(req.usuario.id);
-    res.json({ count });
+    successResponse(res, { count });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const marcarLeida = async (req, res) => {
+const marcarLeida = async (req, res, next) => {
   try {
     await svc.marcarLeida(parseInt(req.params.id), req.usuario.id);
-    res.json({ mensaje: "Notificacion marcada como leida" });
+    successResponse(res, { mensaje: "Notificacion marcada como leida" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const marcarTodasLeidas = async (req, res) => {
+const marcarTodasLeidas = async (req, res, next) => {
   try {
     await svc.marcarTodasLeidas(req.usuario.id);
-    res.json({ mensaje: "Todas las notificaciones marcadas como leidas" });
+    successResponse(res, { mensaje: "Todas las notificaciones marcadas como leidas" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

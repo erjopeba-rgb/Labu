@@ -1,242 +1,222 @@
 const adminService = require("../services/admin.service");
 const disputasSvc = require("../services/disputas.service");
-const logger = require("../config/logger");
-const { getLogger } = logger;
+const pagosSvc = require("../services/pagos.service");
+const backupService = require("../services/backup.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getUsuarios = async (req, res) => {
+const getUsuarios = async (req, res, next) => {
   try {
     const usuarios = await adminService.listarUsuarios();
-    res.json({ usuarios });
+    successResponse(res, { usuarios });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getUsuarios fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al obtener usuarios" });
+    next(err);
   }
 };
 
-const suspenderUsuario = async (req, res) => {
+const suspenderUsuario = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de usuario inválido" });
+    if (!id || id < 1) throw new AppError("ID de usuario inválido", 400);
     const { suspendido } = req.body;
     const resultado = await adminService.suspenderUsuario(id, suspendido);
-    res.json({ usuario: resultado });
+    successResponse(res, { usuario: resultado });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] suspenderUsuario fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al actualizar usuario" });
+    next(err);
   }
 };
 
-const getReportes = async (req, res) => {
+const getReportes = async (req, res, next) => {
   try {
     const reportes = await adminService.listarReportes();
-    res.json({ reportes });
+    successResponse(res, { reportes });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getReportes fallido");
-    res.status(500).json({ error: "Error al obtener reportes" });
+    next(err);
   }
 };
 
-const resolverReporte = async (req, res) => {
+const resolverReporte = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de reporte inválido" });
+    if (!id || id < 1) throw new AppError("ID de reporte inválido", 400);
     const { accion } = req.body;
     if (!["resolver", "desestimar"].includes(accion)) {
-      return res.status(400).json({ error: "accion debe ser 'resolver' o 'desestimar'" });
+      throw new AppError("accion debe ser 'resolver' o 'desestimar'", 400);
     }
     const resultado = await adminService.resolverReporte(id, accion);
-    res.json({ reporte: resultado });
+    successResponse(res, { reporte: resultado });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] resolverReporte fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al resolver reporte" });
+    next(err);
   }
 };
 
-const getConfig = async (req, res) => {
+const getConfig = async (req, res, next) => {
   try {
     const config = await adminService.obtenerConfig();
-    res.json({ config });
+    successResponse(res, { config });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getConfig fallido");
-    res.status(500).json({ error: "Error al obtener configuración" });
+    next(err);
   }
 };
 
-const updateConfig = async (req, res) => {
+const updateConfig = async (req, res, next) => {
   try {
     const { updates } = req.body;
     if (!Array.isArray(updates) || !updates.length) {
-      return res.status(400).json({ error: "updates debe ser un array con al menos un item" });
+      throw new AppError("updates debe ser un array con al menos un item", 400);
     }
     const resultado = await adminService.actualizarConfig(updates);
-    res.json({ config: resultado });
+    successResponse(res, { config: resultado });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] updateConfig fallido");
-    res.status(500).json({ error: "Error al actualizar configuración" });
+    next(err);
   }
 };
 
-const getVerificaciones = async (req, res) => {
+const getVerificaciones = async (req, res, next) => {
   try {
     const estado = req.query.estado || null;
     const verificaciones = await adminService.listarVerificaciones(estado);
-    res.json({ verificaciones });
+    successResponse(res, { verificaciones });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getVerificaciones fallido");
-    res.status(500).json({ error: "Error al obtener verificaciones" });
+    next(err);
   }
 };
 
-const aprobarVerificacion = async (req, res) => {
+const aprobarVerificacion = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de verificación inválido" });
+    if (!id || id < 1) throw new AppError("ID de verificación inválido", 400);
     const resultado = await adminService.aprobarVerificacion(id);
-    res.json({ verificacion: resultado });
+    successResponse(res, { verificacion: resultado });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] aprobarVerificacion fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al aprobar verificación" });
+    next(err);
   }
 };
 
-const rechazarVerificacion = async (req, res) => {
+const rechazarVerificacion = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de verificación inválido" });
+    if (!id || id < 1) throw new AppError("ID de verificación inválido", 400);
     const { motivo } = req.body;
     if (!motivo || !motivo.trim()) {
-      return res.status(400).json({ error: "El motivo de rechazo es obligatorio" });
+      throw new AppError("El motivo de rechazo es obligatorio", 400);
     }
     const resultado = await adminService.rechazarVerificacion(id, motivo.trim());
-    res.json({ verificacion: resultado });
+    successResponse(res, { verificacion: resultado });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] rechazarVerificacion fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al rechazar verificación" });
+    next(err);
   }
 };
 
-const getDisputas = async (req, res) => {
+const getDisputas = async (req, res, next) => {
   try {
     const disputas = await disputasSvc.getDisputasAdmin();
-    res.json({ disputas });
+    successResponse(res, { disputas });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getDisputas fallido");
-    res.status(500).json({ error: "Error al obtener disputas" });
+    next(err);
   }
 };
 
-const marcarDisputaEnRevision = async (req, res) => {
+const marcarDisputaEnRevision = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de disputa inválido" });
+    if (!id || id < 1) throw new AppError("ID de disputa inválido", 400);
     const disputa = await disputasSvc.marcarEnRevision(id);
-    res.json({ disputa });
+    successResponse(res, { disputa });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] marcarDisputaEnRevision fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al actualizar la disputa" });
+    next(err);
   }
 };
 
-const resolverDisputaAdmin = async (req, res) => {
+const resolverDisputaAdmin = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de disputa inválido" });
+    if (!id || id < 1) throw new AppError("ID de disputa inválido", 400);
     const { resolucion, resultado } = req.body;
     if (!resolucion || !resolucion.trim()) {
-      return res.status(400).json({ error: "La resolución es obligatoria" });
+      throw new AppError("La resolución es obligatoria", 400);
     }
     const disputa = await disputasSvc.resolverDisputa(id, resolucion.trim(), resultado);
-    res.json({ disputa });
+    successResponse(res, { disputa });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] resolverDisputaAdmin fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al resolver la disputa" });
+    next(err);
   }
 };
 
-const getErrores = async (req, res) => {
+const getErrores = async (req, res, next) => {
   try {
     const errores = await adminService.listarErrores();
-    res.json({ errores });
+    successResponse(res, { errores });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getErrores fallido");
-    res.status(500).json({ error: "Error al obtener el log de errores" });
+    next(err);
   }
 };
 
-const pagosSvc = require("../services/pagos.service");
-
-const getRetiros = async (req, res) => {
+const getRetiros = async (req, res, next) => {
   try {
     const estado = req.query.estado || null;
     const retiros = await pagosSvc.listarRetirosAdmin(estado);
-    res.json({ retiros });
+    successResponse(res, { retiros });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getRetiros fallido");
-    res.status(500).json({ error: "Error al obtener retiros" });
+    next(err);
   }
 };
 
-const resolverRetiro = async (req, res) => {
+const resolverRetiro = async (req, res, next) => {
   try {
     const id = parseInt(req.params.id);
-    if (!id || id < 1) return res.status(400).json({ error: "ID de retiro inválido" });
+    if (!id || id < 1) throw new AppError("ID de retiro inválido", 400);
     const { accion, nota } = req.body;
     if (!["pagado", "rechazado"].includes(accion)) {
-      return res.status(400).json({ error: "accion debe ser 'pagado' o 'rechazado'" });
+      throw new AppError("accion debe ser 'pagado' o 'rechazado'", 400);
     }
     if (accion === "rechazado" && (!nota || !nota.trim())) {
-      return res.status(400).json({ error: "El motivo de rechazo es obligatorio" });
+      throw new AppError("El motivo de rechazo es obligatorio", 400);
     }
     const retiro = await pagosSvc.resolverRetiro(id, accion, nota ? nota.trim() : null);
-    res.json({ retiro });
+    successResponse(res, { retiro });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] resolverRetiro fallido");
-    res.status(400).json({ error: err.message || "Error al resolver el retiro" });
+    next(err);
   }
 };
 
-const backupService = require("../services/backup.service");
-
-const getBackups = async (req, res) => {
+const getBackups = async (req, res, next) => {
   try {
     const status = await backupService.getBackupStatus();
-    res.json(status);
+    successResponse(res, status);
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] getBackups fallido");
-    res.status(500).json({ error: "Error al obtener backups" });
+    next(err);
   }
 };
 
-const runManualBackup = async (req, res) => {
+const runManualBackup = async (req, res, next) => {
   try {
     const resultado = await backupService.runBackup();
     const s3Url = await backupService.uploadBackupToS3(resultado.filePath);
     const keepLast = parseInt(process.env.BACKUP_KEEP_LAST) || 7;
     const { eliminados } = await backupService.cleanOldBackups(keepLast);
-    res.json({ ok: true, backup: resultado, s3Url, eliminados });
+    successResponse(res, { ok: true, backup: resultado, s3Url, eliminados });
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] runManualBackup fallido");
-    res.status(500).json({ error: `Error ejecutando backup: ${err.message}` });
+    next(err);
   }
 };
 
-const downloadBackup = async (req, res) => {
+const downloadBackup = async (req, res, next) => {
   try {
     const { filename } = req.params;
     if (!/^backup-[\d-]+\.sql\.gz$/.test(filename)) {
-      return res.status(400).json({ error: "Nombre de archivo inválido" });
+      throw new AppError("Nombre de archivo inválido", 400);
     }
     const path = require("path");
     const fs   = require("fs");
     const backupDir = process.env.BACKUP_DIR || path.join(__dirname, "../../backups");
     const filePath  = path.join(backupDir, filename);
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "Backup no encontrado" });
+      throw new AppError("Backup no encontrado", 404);
     }
     res.download(filePath, filename);
   } catch (err) {
-    getLogger().error({ err }, "[AdminController] downloadBackup fallido");
-    res.status(500).json({ error: "Error al descargar backup" });
+    next(err);
   }
 };
 

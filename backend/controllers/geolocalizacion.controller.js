@@ -1,43 +1,45 @@
-﻿const svc = require("../services/geolocalizacion.service");
+const svc = require("../services/geolocalizacion.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getZonas = async (req, res) => {
+const getZonas = async (req, res, next) => {
   try {
-    res.json(await svc.getZonasTrabajador(req.usuario.id));
+    successResponse(res, { zonas: await svc.getZonasTrabajador(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const setZonas = async (req, res) => {
+const setZonas = async (req, res, next) => {
   try {
     const { zonas } = req.body;
-    if (!zonas || !Array.isArray(zonas)) return res.status(400).json({ error: "zonas debe ser un array" });
-    res.json(await svc.setZonasTrabajador(req.usuario.id, zonas));
+    if (!zonas || !Array.isArray(zonas)) throw new AppError("zonas debe ser un array", 400);
+    successResponse(res, { zonas: await svc.setZonasTrabajador(req.usuario.id, zonas) });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const addZona = async (req, res) => {
+const addZona = async (req, res, next) => {
   try {
     const { provincia, localidad } = req.body;
-    if (!provincia || !localidad) return res.status(400).json({ error: "provincia y localidad son requeridos" });
-    res.status(201).json(await svc.addZona(req.usuario.id, provincia, localidad));
+    if (!provincia || !localidad) throw new AppError("provincia y localidad son requeridos", 400);
+    successResponse(res, { zona: await svc.addZona(req.usuario.id, provincia, localidad) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const removeZona = async (req, res) => {
+const removeZona = async (req, res, next) => {
   try {
     await svc.removeZona(req.usuario.id, parseInt(req.params.id));
-    res.json({ mensaje: "Zona eliminada" });
+    successResponse(res, { mensaje: "Zona eliminada" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getFeed = async (req, res) => {
+const getFeed = async (req, res, next) => {
   try {
     const { estado, rubro_id, limit, offset } = req.query;
     const trabajos = await svc.getTrabajosPorZona(req.usuario.id, {
@@ -46,22 +48,22 @@ const getFeed = async (req, res) => {
       limit: limit ? parseInt(limit) : 20,
       offset: offset ? parseInt(offset) : 0
     });
-    res.json(trabajos);
+    successResponse(res, { data: trabajos });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const buscarTrabajadores = async (req, res) => {
+const buscarTrabajadores = async (req, res, next) => {
   try {
     const { lat, lng, radio, rubro_id, q, calificacion_min, tarifa_min, tarifa_max, orden, dia_semana } = req.query;
 
     // Si se provee solo una coordenada, la petición es inválida
     if ((lat && !lng) || (!lat && lng)) {
-      return res.status(400).json({ error: "Se requieren lat y lng juntos, o ninguno" });
+      throw new AppError("Se requieren lat y lng juntos, o ninguno", 400);
     }
 
-    res.json(await svc.buscarTrabajadoresCercanos({
+    successResponse(res, { trabajadores: await svc.buscarTrabajadoresCercanos({
       latitud:        lat  ? parseFloat(lat)  : null,
       longitud:       lng  ? parseFloat(lng)  : null,
       radioKm:        radio          ? parseFloat(radio)          : 20,
@@ -72,55 +74,55 @@ const buscarTrabajadores = async (req, res) => {
       tarifaMax:      tarifa_max     || null,
       orden:          orden          || null,
       diaSemana:      dia_semana != null && dia_semana !== '' ? dia_semana : null
-    }));
+    }) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const buscarTiendas = async (req, res) => {
+const buscarTiendas = async (req, res, next) => {
   try {
     const { lat, lng, radio } = req.query;
-    if (!lat || !lng) return res.status(400).json({ error: "lat y lng son requeridos" });
-    res.json(await svc.buscarTiendasCercanas({
+    if (!lat || !lng) throw new AppError("lat y lng son requeridos", 400);
+    successResponse(res, { tiendas: await svc.buscarTiendasCercanas({
       latitud: parseFloat(lat),
       longitud: parseFloat(lng),
       radioKm: radio ? parseFloat(radio) : 20
-    }));
+    }) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getMapa = async (req, res) => {
+const getMapa = async (req, res, next) => {
   try {
     const { lat, lng, radio, tipo } = req.query;
-    if (!lat || !lng) return res.status(400).json({ error: "lat y lng son requeridos" });
-    res.json(await svc.getMapaDisponibilidad({
+    if (!lat || !lng) throw new AppError("lat y lng son requeridos", 400);
+    successResponse(res, await svc.getMapaDisponibilidad({
       latitud: parseFloat(lat),
       longitud: parseFloat(lng),
       radioKm: radio ? parseFloat(radio) : 30,
       tipo: tipo || null
     }));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const actualizarUbicacion = async (req, res) => {
+const actualizarUbicacion = async (req, res, next) => {
   try {
     await svc.actualizarUbicacionPerfil(req.usuario.id, req.body);
-    res.json({ mensaje: "Ubicacion actualizada" });
+    successResponse(res, { mensaje: "Ubicacion actualizada" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
 // Alias público usado por el mapa del sidebar y feed
-const nearby = async (req, res) => {
+const nearby = async (req, res, next) => {
   try {
     const { lat, lng, radio } = req.query;
-    if (!lat || !lng) return res.status(400).json({ error: "lat y lng son requeridos" });
+    if (!lat || !lng) throw new AppError("lat y lng son requeridos", 400);
     const workers = await svc.buscarTrabajadoresCercanos({
       latitud: parseFloat(lat),
       longitud: parseFloat(lng),
@@ -133,9 +135,9 @@ const nearby = async (req, res) => {
       lng: w.longitud,
       distancia: w.distancia_km
     }));
-    res.json(result);
+    successResponse(res, { workers: result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

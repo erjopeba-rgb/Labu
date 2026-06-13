@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 const crearReporte = async ({ tipo, referenciaId, reportadoPor, motivo }) => {
   const { rows } = await pool.query(
@@ -9,7 +10,7 @@ const crearReporte = async ({ tipo, referenciaId, reportadoPor, motivo }) => {
     [tipo, referenciaId, reportadoPor, motivo]
   );
   if (rows.length === 0) {
-    throw { status: 409, error: "Ya reportaste este contenido anteriormente" };
+    throw new AppError("Ya reportaste este contenido anteriormente", 409);
   }
   return rows[0];
 };

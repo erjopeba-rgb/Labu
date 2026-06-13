@@ -354,8 +354,9 @@ function renderResena(r) {
 
 async function cargarPortfolio(userId) {
     try {
-        const items = await App.apiRequest(`/portfolio/trabajador/${userId}`);
-        if (!Array.isArray(items) || items.length === 0) return;
+        const resp = await App.apiRequest(`/portfolio/trabajador/${userId}`);
+        const items = Array.isArray(resp) ? resp : (resp.items || []);
+        if (items.length === 0) return;
 
         const mainContent = document.querySelector('.profile-main-content');
         if (!mainContent) return;

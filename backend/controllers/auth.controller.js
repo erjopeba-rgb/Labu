@@ -2,12 +2,13 @@ const { registrarUsuario, loginUsuario, cambiarPerfilActivo, aceptarTyC, cambiar
 const { solicitarRecuperacion, resetearPassword } = require("../services/passwordReset.service");
 const { verificarEmailToken, reenviarVerificacion } = require("../services/email-verification.service");
 const { successResponse } = require("../utils/apiResponse");
+const AppError = require("../utils/AppError");
 
 const register = async (req, res, next) => {
     const { email, password, tipo_perfil, fecha_nacimiento } = req.body;
 
     if (!email || !password || !tipo_perfil || !fecha_nacimiento) {
-        return res.status(400).json({ error: "Todos los campos son requeridos" });
+        return next(new AppError("Todos los campos son requeridos", 400));
     }
 
     try {
@@ -22,7 +23,7 @@ const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ error: "Email y contraseña requeridos" });
+        return next(new AppError("Email y contraseña requeridos", 400));
     }
 
     try {
@@ -52,7 +53,7 @@ const cambiarPerfil = async (req, res, next) => {
     const { nuevo_perfil } = req.body;
 
     if (!nuevo_perfil) {
-        return res.status(400).json({ error: "nuevo_perfil es requerido" });
+        return next(new AppError("nuevo_perfil es requerido", 400));
     }
 
     try {
@@ -74,7 +75,7 @@ const aceptarTyCController = async (req, res, next) => {
 
 const olvideMiPassword = async (req, res, next) => {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "El email es requerido" });
+    if (!email) return next(new AppError("El email es requerido", 400));
 
     try {
         const resultado = await solicitarRecuperacion(email);
@@ -118,7 +119,7 @@ const cambiarPasswordController = async (req, res, next) => {
     const { password_actual, password_nueva } = req.body;
 
     if (!password_actual || !password_nueva) {
-        return res.status(400).json({ error: "password_actual y password_nueva son requeridos" });
+        return next(new AppError("password_actual y password_nueva son requeridos", 400));
     }
 
     try {

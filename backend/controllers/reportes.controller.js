@@ -1,7 +1,7 @@
 const { crearReporte } = require("../services/reportes.service");
-const { getLogger } = require("../config/logger");
+const { successResponse } = require("../utils/apiResponse");
 
-const crear = async (req, res) => {
+const crear = async (req, res, next) => {
   try {
     const { tipo, referencia_id, motivo } = req.body;
     await crearReporte({
@@ -10,10 +10,9 @@ const crear = async (req, res) => {
       reportadoPor: req.usuario.id,
       motivo,
     });
-    res.status(201).json({ mensaje: "Tu reporte fue enviado, lo revisaremos" });
+    successResponse(res, { mensaje: "Tu reporte fue enviado, lo revisaremos" }, 201);
   } catch (err) {
-    getLogger().error({ err }, "[ReportesController] crear fallido");
-    res.status(err.status || 500).json({ error: err.error || "Error al enviar el reporte" });
+    next(err);
   }
 };
 

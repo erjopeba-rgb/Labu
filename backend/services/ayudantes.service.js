@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 const crearSolicitud = async ({ trabajoId, trabajadorLiderId, cantidadNecesaria, pagoPorAyudante, descripcion }) => {
   const client = await pool.connect();
@@ -11,8 +12,8 @@ const crearSolicitud = async ({ trabajoId, trabajadorLiderId, cantidadNecesaria,
        WHERE t.id = $1`,
       [trabajoId]
     );
-    if (!trabajo) throw new Error("Trabajo no encontrado");
-    if (trabajo.trabajador_id !== trabajadorLiderId) throw new Error("Solo el trabajador principal puede solicitar ayudantes");
+    if (!trabajo) throw new AppError("Trabajo no encontrado", 404);
+    if (trabajo.trabajador_id !== trabajadorLiderId) throw new AppError("Solo el trabajador principal puede solicitar ayudantes", 403);
 
     const { rows: [sol] } = await client.query(
       `INSERT INTO solicitudes_ayudante (trabajo_id, trabajador_lider_id, cantidad_necesaria, pago_por_ayudante, descripcion)
@@ -45,7 +46,7 @@ const getSolicitud = async (solicitudId) => {
      WHERE s.id = $1`,
     [solicitudId]
   );
-  if (!sol) throw new Error("Solicitud no encontrada");
+  if (!sol) throw new AppError("Solicitud no encontrada", 404);
   return sol;
 };
 
@@ -70,9 +71,9 @@ const aplicarComoAyudante = async ({ solicitudId, ayudanteId }) => {
     "SELECT id, trabajador_lider_id, estado FROM solicitudes_ayudante WHERE id = $1",
     [solicitudId]
   );
-  if (!sol) throw new Error("Solicitud no encontrada");
-  if (sol.estado !== 'abierta') throw new Error("Esta solicitud ya no esta disponible");
-  if (sol.trabajador_lider_id === ayudanteId) throw new Error("No puedes aplicar a tu propia solicitud");
+  if (!sol) throw new AppError("Solicitud no encontrada", 404);
+  if (sol.estado !== 'abierta') throw new AppError("Esta solicitud ya no esta disponible", 409);
+  if (sol.trabajador_lider_id === ayudanteId) throw new AppError("No puedes aplicar a tu propia solicitud", 400);
 
   const { rows: [app] } = await pool.query(
     `INSERT INTO aplicaciones_ayudante (solicitud_id, ayudante_id)
@@ -94,8 +95,8 @@ const responderAplicacion = async ({ aplicacionId, liderId, estado }) => {
        WHERE a.id = $1`,
       [aplicacionId]
     );
-    if (!app) throw new Error("Aplicacion no encontrada");
-    if (app.trabajador_lider_id !== liderId) throw new Error("Sin permiso");
+    if (!app) throw new AppError("Aplicacion no encontrada", 404);
+    if (app.trabajador_lider_id !== liderId) throw new AppError("Sin permiso", 403);
 
     await client.query(
       "UPDATE aplicaciones_ayudante SET estado = $1 WHERE id = $2",

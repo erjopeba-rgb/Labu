@@ -1,5 +1,6 @@
 const logger = require("../config/logger");
 const { successResponse } = require("../utils/apiResponse");
+const AppError = require("../utils/AppError");
 const { saveFile, generarNombreArchivo } = require("../config/storage");
 const {
     obtenerTrabajos, crearTrabajo, obtenerTrabajoPorId, obtenerMisTrabajos,
@@ -27,7 +28,7 @@ const createJob = async (req, res, next) => {
 
     let { titulo, descripcion } = body;
     if (!titulo && !descripcion) {
-        return res.status(400).json({ error: "La descripción del trabajo es requerida" });
+        return next(new AppError("La descripción del trabajo es requerida", 400));
     }
     if (!titulo) titulo = descripcion;
     if (!descripcion) descripcion = titulo;
@@ -137,7 +138,7 @@ const getTrabajosConUsuario = async (req, res, next) => {
 const scheduleJob = async (req, res, next) => {
     try {
         const { fecha_inicio } = req.body;
-        if (!fecha_inicio) return res.status(400).json({ error: 'fecha_inicio es requerida' });
+        if (!fecha_inicio) throw new AppError('fecha_inicio es requerida', 400);
         const job = await agendarTrabajo(req.params.id, req.usuario.id, fecha_inicio);
         successResponse(res, { job });
     } catch (err) {
@@ -148,7 +149,7 @@ const scheduleJob = async (req, res, next) => {
 const addComentario = async (req, res, next) => {
     const { contenido } = req.body || {};
     if (!contenido || !contenido.trim()) {
-        return res.status(400).json({ error: 'El comentario no puede estar vacío' });
+        return next(new AppError('El comentario no puede estar vacío', 400));
     }
     try {
         const comentario = await agregarComentario(req.params.id, req.usuario.id, contenido.trim());

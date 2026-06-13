@@ -1,10 +1,11 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 // ─── PERFIL TIENDA ────────────────────────────────────────────────────────────
 
 const crearPerfilTienda = async ({ usuarioId, nombreTienda, descripcion, telefono, whatsapp, emailContacto, direccion, ciudad, provincia, latitud, longitud, radioEntregaKm, haceEnvios, costoEnvioBase, envioGratisDesde, horarios, logoUrl, bannerUrl }) => {
   const { rows: [u] } = await pool.query("SELECT tipo_perfil FROM usuarios WHERE id = $1", [usuarioId]);
-  if (u.tipo_perfil !== 'tienda') throw new Error("Solo cuentas de tipo tienda pueden crear un perfil de tienda");
+  if (u.tipo_perfil !== 'tienda') throw new AppError("Solo cuentas de tipo tienda pueden crear un perfil de tienda", 403);
 
   const { rows: [t] } = await pool.query(
     `INSERT INTO perfiles_tienda (usuario_id, nombre_tienda, descripcion, telefono, whatsapp, email_contacto, direccion, ciudad, provincia, latitud, longitud, radio_entrega_km, hace_envios, costo_envio_base, envio_gratis_desde, horarios, logo_url, banner_url)
@@ -105,7 +106,7 @@ const upsertProducto = async ({ tiendaId, productoId, nombre, descripcion, preci
        WHERE id=$13 AND tienda_id=$14 RETURNING *`,
       [nombre, descripcion||null, precio, precioOferta||null, unidad||'unidad', stock||0, stockIlimitado||false, fotosUrls||null, marca||null, codigoSku||null, categoriaId||null, destacado||false, productoId, tiendaId]
     );
-    if (!p) throw new Error("Producto no encontrado o sin permiso");
+    if (!p) throw new AppError("Producto no encontrado o sin permiso", 404);
     return p;
   } else {
     const { rows: [p] } = await pool.query(
@@ -122,7 +123,7 @@ const deleteProducto = async (tiendaId, productoId) => {
     "UPDATE productos SET activo = FALSE WHERE id = $1 AND tienda_id = $2 RETURNING id",
     [productoId, tiendaId]
   );
-  if (!p) throw new Error("Producto no encontrado o sin permiso");
+  if (!p) throw new AppError("Producto no encontrado o sin permiso", 404);
 };
 
 // ─── PEDIDOS DE MATERIALES ────────────────────────────────────────────────────
@@ -165,7 +166,7 @@ const getPedido = async (pedidoId) => {
      WHERE p.id = $1`,
     [pedidoId]
   );
-  if (!pedido) throw new Error("Pedido no encontrado");
+  if (!pedido) throw new AppError("Pedido no encontrado", 404);
 
   const { rows: items } = await pool.query(
     "SELECT * FROM items_pedido WHERE pedido_id = $1",
@@ -245,8 +246,8 @@ const aceptarOfertaTienda = async ({ ofertaId, duenioId }) => {
        WHERE ot.id = $1`,
       [ofertaId]
     );
-    if (!oferta) throw new Error("Oferta no encontrada");
-    if (oferta.dueno_id !== duenioId) throw new Error("Sin permiso");
+    if (!oferta) throw new AppError("Oferta no encontrada", 404);
+    if (oferta.dueno_id !== duenioId) throw new AppError("Sin permiso", 403);
 
     await client.query("UPDATE ofertas_tienda SET estado = 'aceptada' WHERE id = $1", [ofertaId]);
     await client.query("UPDATE ofertas_tienda SET estado = 'rechazada' WHERE pedido_id = $1 AND id != $2", [oferta.pedido_id, ofertaId]);

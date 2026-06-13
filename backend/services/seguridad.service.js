@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 const ADVERTENCIAS = [
   { id:1, icono:"camara",   texto:"Ten camaras de seguridad activas en el hogar durante el servicio." },
@@ -94,7 +95,7 @@ const registrarGrabacion = async ({ trabajoId, trabajadorId, archivoUrl, duracio
      WHERE t.id=$1 AND o.trabajador_id=$2 AND t.estado IN ('en_progreso','completado')`,
     [trabajoId, trabajadorId]
   );
-  if (!trabajo) throw new Error("No puedes registrar grabaciones para este trabajo");
+  if (!trabajo) throw new AppError("No puedes registrar grabaciones para este trabajo", 403);
   const { rows: [reg] } = await pool.query(
     `INSERT INTO registros_camara (trabajo_id, trabajador_id, archivo_url, duracion_segundos, tamanio_bytes, fecha_grabacion)
      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
@@ -112,9 +113,9 @@ const getGrabaciones = async (trabajoId, solicitanteId) => {
      WHERE t.id=$1`,
     [trabajoId, solicitanteId]
   );
-  if (!acceso) throw new Error("Trabajo no encontrado");
+  if (!acceso) throw new AppError("Trabajo no encontrado", 404);
   if (acceso.dueno_id !== solicitanteId && acceso.trabajador_id !== solicitanteId && acceso.tipo_perfil !== "moderador") {
-    throw new Error("No tienes permiso para ver estas grabaciones");
+    throw new AppError("No tienes permiso para ver estas grabaciones", 403);
   }
   const { rows } = await pool.query(
     `SELECT r.*, u.nombre AS trabajador_nombre

@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const pool = require("../config/db");
 const { encolarEmail } = require("../workers/emailWorker");
 const logger = require("../config/logger");
+const AppError = require("../utils/AppError");
 
 // Tiempo de expiración del token: 1 hora
 const EXPIRACION_MS = 60 * 60 * 1000;
@@ -77,11 +78,11 @@ const solicitarRecuperacion = async (email) => {
 
 const resetearPassword = async (token, nuevaPassword) => {
     if (!token || !nuevaPassword) {
-        throw { status: 400, error: "Token y nueva contraseña son requeridos" };
+        throw new AppError("Token y nueva contraseña son requeridos", 400);
     }
 
     if (nuevaPassword.length < 8) {
-        throw { status: 400, error: "La contraseña debe tener al menos 8 caracteres" };
+        throw new AppError("La contraseña debe tener al menos 8 caracteres", 400);
     }
 
     // Buscar token válido y no expirado
@@ -91,7 +92,7 @@ const resetearPassword = async (token, nuevaPassword) => {
     );
 
     if (rows.length === 0) {
-        throw { status: 400, error: "El link de recuperación es inválido o ya expiró" };
+        throw new AppError("El link de recuperación es inválido o ya expiró", 400);
     }
 
     const resetData = rows[0];
@@ -104,7 +105,7 @@ const resetearPassword = async (token, nuevaPassword) => {
     );
 
     if (resultado.rowCount === 0) {
-        throw { status: 404, error: "Usuario no encontrado" };
+        throw new AppError("Usuario no encontrado", 404);
     }
 
     // Eliminar el token usado (single-use)

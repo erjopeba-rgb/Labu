@@ -1,11 +1,12 @@
 const { obtenerRubros } = require("../services/rubros.service");
+const { successResponse } = require("../utils/apiResponse");
 
-const getRubros = async (req, res) => {
+const getRubros = async (req, res, next) => {
     try {
         const rubros = await obtenerRubros();
-        res.json({ success: true, rubros });
+        successResponse(res, { rubros });
     } catch (err) {
-        res.status(err.status || 500).json({ error: err.error || "Error interno" });
+        next(err);
     }
 };
 

@@ -4,11 +4,12 @@ const {
     obtenerMisOfertas, cancelarOferta, contraofertar, aceptarContraoferta, rechazarContraoferta
 } = require("../services/offers.service");
 const { successResponse } = require("../utils/apiResponse");
+const AppError = require("../utils/AppError");
 
 const createOffer = async (req, res, next) => {
     const { trabajo_id, monto_propuesto } = req.body;
     if (!trabajo_id || !monto_propuesto) {
-        return res.status(400).json({ error: "Trabajo y monto son requeridos" });
+        return next(new AppError("Trabajo y monto son requeridos", 400));
     }
     try {
         const oferta = await crearOferta({ trabajador_id: req.usuario.id, ...req.body });
@@ -68,7 +69,7 @@ const cancelOffer = async (req, res, next) => {
 
 const counterOffer = async (req, res, next) => {
     const { monto_contraoferta } = req.body;
-    if (!monto_contraoferta) return res.status(400).json({ error: "El monto de la contraoferta es requerido" });
+    if (!monto_contraoferta) return next(new AppError("El monto de la contraoferta es requerido", 400));
     try {
         await contraofertar({ id: req.params.id, dueno_id: req.usuario.id, ...req.body });
         successResponse(res, {});
@@ -102,7 +103,7 @@ const getOfferDetail = async (req, res, next) => {
         const oferta = await obtenerOfertaConDetalle(req.params.oferta_id);
         const userId = req.usuario.id;
         if (oferta.trabajador_id !== userId && oferta.dueno_id !== userId) {
-            return res.status(403).json({ error: 'No autorizado' });
+            throw new AppError('No autorizado', 403);
         }
         successResponse(res, { oferta });
     } catch (err) {

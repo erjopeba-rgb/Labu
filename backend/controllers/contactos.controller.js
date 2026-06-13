@@ -1,70 +1,71 @@
 const svc = require("../services/contactos.service");
+const { successResponse } = require("../utils/apiResponse");
 
-const getEstado = async (req, res) => {
+const getEstado = async (req, res, next) => {
     try {
         const data = await svc.getEstadoContacto(req.usuario.id, parseInt(req.params.userId));
-        res.json(data);
+        successResponse(res, data);
     } catch (err) {
-        res.status(500).json({ error: "Error interno" });
+        next(err);
     }
 };
 
-const solicitar = async (req, res) => {
+const solicitar = async (req, res, next) => {
     try {
         const io   = req.app.get("io");
         const data = await svc.enviarSolicitud(req.usuario.id, parseInt(req.params.userId), io);
-        res.json({ success: true, ...data });
+        successResponse(res, data);
     } catch (err) {
-        res.status(err.status || 409).json({ error: err.message || "Error interno" });
+        next(err);
     }
 };
 
-const aceptar = async (req, res) => {
+const aceptar = async (req, res, next) => {
     try {
         const io   = req.app.get("io");
         const data = await svc.aceptarSolicitud(parseInt(req.params.id), req.usuario.id, io);
-        res.json({ success: true, ...data });
+        successResponse(res, data);
     } catch (err) {
-        res.status(400).json({ error: err.message || "Error interno" });
+        next(err);
     }
 };
 
-const rechazar = async (req, res) => {
+const rechazar = async (req, res, next) => {
     try {
         const data = await svc.eliminarContacto(parseInt(req.params.id), req.usuario.id);
-        res.json({ success: true, ...data });
+        successResponse(res, data);
     } catch (err) {
-        res.status(400).json({ error: err.message || "Error interno" });
+        next(err);
     }
 };
 
-const eliminar = async (req, res) => {
+const eliminar = async (req, res, next) => {
     try {
         const data = await svc.eliminarContacto(parseInt(req.params.id), req.usuario.id);
-        res.json({ success: true, ...data });
+        successResponse(res, data);
     } catch (err) {
-        res.status(400).json({ error: err.message || "Error interno" });
+        next(err);
     }
 };
 
-const getConteos = async (req, res) => {
+const getConteos = async (req, res, next) => {
     try {
         const data = await svc.getConteos(parseInt(req.params.userId));
-        res.json(data);
+        successResponse(res, data);
     } catch (err) {
-        res.status(500).json({ error: "Error interno" });
+        next(err);
     }
 };
 
-const listarContactos = async (req, res) => {
+const listarContactos = async (req, res, next) => {
     try {
         const limit = parseInt(req.query.limit) || 20;
         const page = parseInt(req.query.page) || 1;
         const offset = (page - 1) * limit;
         const { data, total } = await svc.getMisContactos(req.usuario.id, limit, offset);
-        res.json({ success: true, data, total, page, limit });
+        successResponse(res, { data, total, page, limit });
     } catch (err) {
-        res.status(500).json({ error: "Error interno" });
+        next(err);
     }
 };
 

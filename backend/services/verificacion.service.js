@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 /**
  * Crea una solicitud de verificación de identidad con 3 fotos.
@@ -15,8 +16,8 @@ const solicitarVerificacion = async (usuarioId, { dniFrenteUrl, dniDorsoUrl, sel
 
   if (existente.length) {
     const est = existente[0].estado;
-    if (est === "aprobado") throw { status: 400, error: "Tu identidad ya está verificada" };
-    if (est === "pendiente") throw { status: 400, error: "Ya tenés una solicitud pendiente de revisión" };
+    if (est === "aprobado") throw new AppError("Tu identidad ya está verificada", 400);
+    if (est === "pendiente") throw new AppError("Ya tenés una solicitud pendiente de revisión", 400);
   }
 
   // Eliminar rechazadas anteriores para permitir reenvío
@@ -96,7 +97,7 @@ const aprobarVerificacion = async (id) => {
        RETURNING id, usuario_id, estado`,
       [id]
     );
-    if (!rows.length) throw { status: 404, error: "Verificación no encontrada o ya procesada" };
+    if (!rows.length) throw new AppError("Verificación no encontrada o ya procesada", 404);
     await client.query(
       `UPDATE perfiles SET verificado = TRUE WHERE usuario_id = $1`,
       [rows[0].usuario_id]
@@ -122,7 +123,7 @@ const rechazarVerificacion = async (id, motivo) => {
      RETURNING id, usuario_id, estado, motivo_rechazo`,
     [motivo, id]
   );
-  if (!rows.length) throw { status: 404, error: "Verificación no encontrada o ya procesada" };
+  if (!rows.length) throw new AppError("Verificación no encontrada o ya procesada", 404);
   return rows[0];
 };
 

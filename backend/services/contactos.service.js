@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 /**
  * Determina el tipo de relacion segun los roles de los dos usuarios.
@@ -57,7 +58,7 @@ const getEstadoContacto = async (userId, otroId) => {
  */
 const enviarSolicitud = async (solicitanteId, receptorId, io) => {
     if (String(solicitanteId) === String(receptorId)) {
-        throw new Error('No podes agregarte a vos mismo');
+        throw new AppError('No podes agregarte a vos mismo', 400);
     }
 
     const tipo   = await _determinarTipo(solicitanteId, receptorId);
@@ -71,7 +72,7 @@ const enviarSolicitud = async (solicitanteId, receptorId, io) => {
         [solicitanteId, receptorId, tipo, estado]
     );
 
-    if (rows.length === 0) throw new Error('Ya existe una relacion con este usuario');
+    if (rows.length === 0) throw new AppError('Ya existe una relacion con este usuario', 409);
 
     // Solo notificar si es solicitud de amistad pendiente
     if (tipo === 'amigo') {
@@ -113,7 +114,7 @@ const aceptarSolicitud = async (relacionId, receptorId, io) => {
         [relacionId, receptorId]
     );
 
-    if (rows.length === 0) throw new Error('Solicitud no encontrada o ya procesada');
+    if (rows.length === 0) throw new AppError('Solicitud no encontrada o ya procesada', 404);
 
     const solicitanteId = rows[0].solicitante_id;
 
@@ -153,7 +154,7 @@ const eliminarContacto = async (relacionId, usuarioId) => {
          RETURNING id`,
         [relacionId, usuarioId]
     );
-    if (rows.length === 0) throw new Error('Relacion no encontrada');
+    if (rows.length === 0) throw new AppError('Relacion no encontrada', 404);
     return { ok: true };
 };
 

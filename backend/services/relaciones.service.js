@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 /**
  * Determina el tipo de relacion entre dos usuarios segun sus roles.
@@ -66,7 +67,7 @@ const solicitarContacto = async (solicitanteId, receptorId, io) => {
     );
 
     if (res.rows.length === 0) {
-        throw { status: 409, error: "Ya existe una relacion con este usuario" };
+        throw new AppError("Ya existe una relacion con este usuario", 409);
     }
 
     // Notificar solo si es solicitud de amistad (seguidor no necesita notificacion de accion)
@@ -110,7 +111,7 @@ const aceptarSolicitud = async (relacionId, receptorId, io) => {
     );
 
     if (res.rows.length === 0) {
-        throw { status: 404, error: "Solicitud no encontrada o ya procesada" };
+        throw new AppError("Solicitud no encontrada o ya procesada", 404);
     }
 
     const solicitanteId = res.rows[0].solicitante_id;
@@ -154,7 +155,7 @@ const eliminarRelacion = async (relacionId, usuarioId) => {
     );
 
     if (res.rows.length === 0) {
-        throw { status: 404, error: "Relacion no encontrada" };
+        throw new AppError("Relacion no encontrada", 404);
     }
 
     return { ok: true };

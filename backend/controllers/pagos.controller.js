@@ -1,6 +1,8 @@
-﻿const crypto = require("crypto");
+const crypto = require("crypto");
 const svc = require("../services/pagos.service");
 const logger = require("../config/logger");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
 /**
  * Middleware que verifica la firma HMAC-SHA256 del webhook de MercadoPago.
@@ -60,18 +62,18 @@ const verificarFirmaMP = (req, res, next) => {
   next();
 };
 
-const getDesglose = async (req, res) => {
+const getDesglose = async (req, res, next) => {
   try {
     const data = await svc.getDesgloseTrabajo(parseInt(req.params.trabajo_id), req.usuario.id);
-    res.json(data);
+    successResponse(res, data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
 // DEPRECADO - Se mantiene como fallback cuando el SDK de MercadoPago.js no carga.
 // El flujo principal usa pagarDirectoTrabajo con Checkout API.
-const iniciarPagoTrabajo = async (req, res) => {
+const iniciarPagoTrabajo = async (req, res, next) => {
   try {
     const { monto_total, con_seguro } = req.body || {};
     const data = await svc.crearPreferenciaTrabajo({
@@ -80,24 +82,25 @@ const iniciarPagoTrabajo = async (req, res) => {
       montoTotal: monto_total ? parseFloat(monto_total) : null,
       conSeguro: con_seguro || false
     });
-    res.json(data);
+    successResponse(res, data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const iniciarPagoVideo = async (req, res) => {
+const iniciarPagoVideo = async (req, res, next) => {
   try {
     const data = await svc.crearPreferenciaVideo({
       videoId: parseInt(req.params.video_id),
       usuarioId: req.usuario.id
     });
-    res.json(data);
+    successResponse(res, data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
+// Contrato con MercadoPago: siempre 200 (procesado) o 500 (reintentar) — no usa apiResponse
 const webhook = async (req, res) => {
   try {
     const { type, data } = req.body;
@@ -113,86 +116,87 @@ const webhook = async (req, res) => {
 
 const callback = (req, res) => {
   const { status, payment_id } = req.query;
-  const qs = new URLSearchParams({ status: status || 'pending', payment_id });
+  const qs = new URLSearchParams({ status: status || 'pending' });
+  if (payment_id) qs.set('payment_id', payment_id);
   res.redirect(`/pages/pago-exitoso.html?${qs}`);
 };
 
-const getSaldo = async (req, res) => {
+const getSaldo = async (req, res, next) => {
   try {
-    res.json(await svc.getSaldo(req.usuario.id));
+    successResponse(res, await svc.getSaldo(req.usuario.id));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const solicitarRetiro = async (req, res) => {
+const solicitarRetiro = async (req, res, next) => {
   try {
     const { monto, datos_cobro } = req.body || {};
     const retiro = await svc.solicitarRetiro(req.usuario.id, monto, datos_cobro);
-    res.status(201).json({ success: true, retiro });
+    successResponse(res, { retiro }, 201);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    next(err);
   }
 };
 
-const getMisRetiros = async (req, res) => {
+const getMisRetiros = async (req, res, next) => {
   try {
-    res.json({ retiros: await svc.getMisRetiros(req.usuario.id) });
+    successResponse(res, { retiros: await svc.getMisRetiros(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getHistorial = async (req, res) => {
+const getHistorial = async (req, res, next) => {
   try {
-    res.json(await svc.getHistorialPagos(req.usuario.id));
+    successResponse(res, { data: await svc.getHistorialPagos(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getVideos = async (req, res) => {
+const getVideos = async (req, res, next) => {
   try {
     const { rubro_id, gratis, limit, offset } = req.query;
-    res.json(await svc.getVideos({
+    successResponse(res, { data: await svc.getVideos({
       rubroId: rubro_id ? parseInt(rubro_id) : null,
       gratis: gratis !== undefined ? gratis === 'true' : undefined,
       limit: limit ? parseInt(limit) : 20,
       offset: offset ? parseInt(offset) : 0
-    }));
+    }) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const checkAccesoVideo = async (req, res) => {
+const checkAccesoVideo = async (req, res, next) => {
   try {
     const tiene = await svc.tieneAccesoVideo(req.usuario.id, parseInt(req.params.video_id));
-    res.json({ tiene_acceso: tiene });
+    successResponse(res, { tiene_acceso: tiene });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getConfig = async (req, res) => {
+const getConfig = async (req, res, next) => {
   try {
     const configs = await svc.getConfigMulti(['comision_porcentaje', 'seguro_precio', 'mp_public_key']);
-    res.json({
+    successResponse(res, {
       comision_porcentaje: configs.comision_porcentaje || null,
       seguro_precio:       configs.seguro_precio || null,
-      mp_public_key:       configs.mp_public_key || null,
+      mp_public_key:       configs.mp_public_key || process.env.MP_PUBLIC_KEY || null,
       dev_mode:            process.env.NODE_ENV === 'development'
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const pagarDirecto = async (req, res) => {
+const pagarDirecto = async (req, res, next) => {
   try {
     const { card_token, payment_method_id, payer_email, installments } = req.body || {};
     if (!card_token || !payment_method_id || !payer_email) {
-      return res.status(400).json({ error: 'card_token, payment_method_id y payer_email son requeridos' });
+      throw new AppError('card_token, payment_method_id y payer_email son requeridos', 400);
     }
     const data = await svc.pagarDirectoTrabajo({
       trabajoId: parseInt(req.params.trabajo_id),
@@ -202,22 +206,22 @@ const pagarDirecto = async (req, res) => {
       payerEmail: payer_email,
       installments: installments || 1
     });
-    res.json(data);
+    successResponse(res, data);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const devAprobarPago = async (req, res) => {
-  if (process.env.NODE_ENV !== 'development') return res.status(404).json({ error: 'No disponible' });
+const devAprobarPago = async (req, res, next) => {
   try {
+    if (process.env.NODE_ENV !== 'development') throw new AppError('No disponible', 404);
     const result = await svc.simularPagoAprobadoDev(
       parseInt(req.params.trabajo_id),
       req.usuario.id
     );
-    res.json({ success: true, ...result });
+    successResponse(res, result);
   } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
+    next(err);
   }
 };
 

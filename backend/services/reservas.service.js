@@ -1,6 +1,7 @@
 const pool = require("../config/db");
 const notif = require("./notifications.service");
 const logger = require("../config/logger");
+const AppError = require("../utils/AppError");
 
 const crearReservasTentativas = async (oferta_id, trabajador_id, trabajo_id, slots) => {
     const client = await pool.connect();
@@ -12,7 +13,7 @@ const crearReservasTentativas = async (oferta_id, trabajador_id, trabajo_id, slo
             "SELECT id FROM ofertas WHERE id = $1 AND trabajador_id = $2",
             [oferta_id, trabajador_id]
         );
-        if (!oferta) throw { status: 403, error: "No autorizado" };
+        if (!oferta) throw new AppError("No autorizado", 403);
 
         await client.query(
             "DELETE FROM reservas_tentativas WHERE oferta_id = $1 AND estado = 'tentativa'",
@@ -64,7 +65,7 @@ const confirmarReserva = async (reserva_id, dueno_id, hora_inicio_elegida, hora_
              WHERE rt.id = $1`,
             [reserva_id]
         );
-        if (reservaRes.rows.length === 0) throw { status: 404, error: "Reserva no encontrada" };
+        if (reservaRes.rows.length === 0) throw new AppError("Reserva no encontrada", 404);
 
         const reserva = reservaRes.rows[0];
 
@@ -72,7 +73,7 @@ const confirmarReserva = async (reserva_id, dueno_id, hora_inicio_elegida, hora_
             "SELECT id, titulo FROM trabajos WHERE id = $1 AND dueno_id = $2",
             [reserva.job_id, dueno_id]
         );
-        if (jobRes.rows.length === 0) throw { status: 403, error: "No autorizado" };
+        if (jobRes.rows.length === 0) throw new AppError("No autorizado", 403);
 
         if (hora_inicio_elegida && hora_fin_elegida) {
             await client.query(
@@ -149,9 +150,9 @@ const confirmarSlotDirecto = async (oferta_id, dueno_id, dia_semana, hora_inicio
              WHERE o.id = $1`,
             [oferta_id]
         );
-        if (ofertaRes.rows.length === 0) throw { status: 404, error: "Oferta no encontrada" };
+        if (ofertaRes.rows.length === 0) throw new AppError("Oferta no encontrada", 404);
         const oferta = ofertaRes.rows[0];
-        if (oferta.dueno_id !== dueno_id) throw { status: 403, error: "No autorizado" };
+        if (oferta.dueno_id !== dueno_id) throw new AppError("No autorizado", 403);
 
         await client.query(
             "UPDATE reservas_tentativas SET estado = 'liberada' WHERE oferta_id = $1 AND estado = 'tentativa'",

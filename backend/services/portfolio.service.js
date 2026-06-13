@@ -1,5 +1,6 @@
 const logger = require("../config/logger");
 const repo = require("../repositories/portfolio.repository");
+const AppError = require("../utils/AppError");
 
 const getPortfolio = (trabajadorId) => repo.findByTrabajador(trabajadorId);
 
@@ -10,13 +11,13 @@ const addPortfolioItem = async (datos) => {
 
 const updatePortfolioItem = async (itemId, trabajadorId, datos) => {
     const item = await repo.updateItem(itemId, trabajadorId, datos);
-    if (!item) throw new Error("Item no encontrado o sin permiso");
+    if (!item) throw new AppError("Item no encontrado o sin permiso", 404);
     return item;
 };
 
 const deletePortfolioItem = async (itemId, trabajadorId) => {
     const item = await repo.softDeleteItem(itemId, trabajadorId);
-    if (!item) throw new Error("Item no encontrado o sin permiso");
+    if (!item) throw new AppError("Item no encontrado o sin permiso", 404);
 };
 
 const getHistorial = (trabajadorId) => repo.findHistorialByTrabajador(trabajadorId);

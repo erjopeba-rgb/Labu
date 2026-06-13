@@ -1,47 +1,49 @@
-﻿const svc = require("../services/equipate.service");
+const svc = require("../services/equipate.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
-const getProductos = async (req, res) => {
+const getProductos = async (req, res, next) => {
   try {
     const { rubro_id, destacado, limit, offset } = req.query;
-    res.json(await svc.getProductosRecomendados({
+    successResponse(res, { productos: await svc.getProductosRecomendados({
       rubroId: rubro_id ? parseInt(rubro_id) : null,
       destacado: destacado === 'true',
       limit: limit ? parseInt(limit) : 20,
       offset: offset ? parseInt(offset) : 0
-    }));
+    }) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const click = async (req, res) => {
+const click = async (req, res, next) => {
   try {
     await svc.registrarClick({
       productoRecomendadoId: parseInt(req.params.id),
       usuarioId: req.usuario?.id || null,
       ipAddress: req.ip
     });
-    res.json({ ok: true });
+    successResponse(res, { ok: true });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getEstadisticas = async (req, res) => {
+const getEstadisticas = async (req, res, next) => {
   try {
     const tienda = await require("../services/tienda.service").getPerfilTienda(req.usuario.id);
-    if (!tienda) return res.status(404).json({ error: "Perfil de tienda no encontrado" });
-    res.json(await svc.getEstadisticasEquipate(tienda.id));
+    if (!tienda) throw new AppError("Perfil de tienda no encontrado", 404);
+    successResponse(res, await svc.getEstadisticasEquipate(tienda.id));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getBadgeCamara = async (req, res) => {
+const getBadgeCamara = async (req, res, next) => {
   try {
-    res.json(await svc.getBadgeCamara(req.usuario.id));
+    successResponse(res, await svc.getBadgeCamara(req.usuario.id));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 

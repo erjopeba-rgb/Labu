@@ -2,6 +2,7 @@ const pool = require("../config/db");
 const notif = require("./notifications.service");
 const logger = require("../config/logger");
 const jobsRepo = require("../repositories/jobs.repository");
+const AppError = require("../utils/AppError");
 
 const crearDisputa = async ({ trabajoId, iniciadorId, motivo, descripcion, evidenciaUrls }) => {
   // Solo se permite abrir disputa en estados relevantes
@@ -13,13 +14,13 @@ const crearDisputa = async ({ trabajoId, iniciadorId, motivo, descripcion, evide
     [trabajoId]
   );
   if (!trabajo) {
-    throw { status: 400, error: "El trabajo no existe o no está en un estado que permita abrir una disputa (debe ser completado o pendiente_confirmacion)" };
+    throw new AppError("El trabajo no existe o no está en un estado que permita abrir una disputa (debe ser completado o pendiente_confirmacion)", 400);
   }
 
   const esDueno = trabajo.dueno_id === iniciadorId;
   const esTrabajador = trabajo.trabajador_id === iniciadorId;
   if (!esDueno && !esTrabajador) {
-    throw { status: 403, error: "No tenés permiso para abrir una disputa en este trabajo" };
+    throw new AppError("No tenés permiso para abrir una disputa en este trabajo", 403);
   }
 
   const acusadoId = esDueno ? trabajo.trabajador_id : trabajo.dueno_id;
@@ -30,7 +31,7 @@ const crearDisputa = async ({ trabajoId, iniciadorId, motivo, descripcion, evide
     [trabajoId]
   );
   if (existente.length > 0) {
-    throw { status: 409, error: "Ya existe una disputa activa para este trabajo" };
+    throw new AppError("Ya existe una disputa activa para este trabajo", 409);
   }
 
   const { rows: [disputa] } = await pool.query(
@@ -98,7 +99,7 @@ const marcarEnRevision = async (disputaId) => {
      RETURNING *`,
     [disputaId]
   );
-  if (!d) throw { status: 404, error: "Disputa no encontrada o ya no está en estado abierta" };
+  if (!d) throw new AppError("Disputa no encontrada o ya no está en estado abierta", 404);
   return d;
 };
 
@@ -110,10 +111,10 @@ const RESULTADOS_VALIDOS = ["dueno", "trabajador"];
 
 const resolverDisputa = async (disputaId, resolucion, resultado) => {
   if (!resolucion || !resolucion.trim()) {
-    throw { status: 400, error: "La resolución es obligatoria" };
+    throw new AppError("La resolución es obligatoria", 400);
   }
   if (!RESULTADOS_VALIDOS.includes(resultado)) {
-    throw { status: 400, error: "El resultado es obligatorio: 'dueno' (reembolsar al dueño) o 'trabajador' (liberar el pago al trabajador)" };
+    throw new AppError("El resultado es obligatorio: 'dueno' (reembolsar al dueño) o 'trabajador' (liberar el pago al trabajador)", 400);
   }
 
   const client = await pool.connect();
@@ -128,7 +129,7 @@ const resolverDisputa = async (disputaId, resolucion, resultado) => {
       `SELECT trabajo_id FROM disputas WHERE id = $1`,
       [disputaId]
     );
-    if (!previa) throw { status: 404, error: "Disputa no encontrada" };
+    if (!previa) throw new AppError("Disputa no encontrada", 404);
 
     await client.query(`SELECT id FROM trabajos WHERE id = $1 FOR UPDATE`, [previa.trabajo_id]);
 
@@ -138,7 +139,7 @@ const resolverDisputa = async (disputaId, resolucion, resultado) => {
        FOR UPDATE`,
       [disputaId]
     );
-    if (!activa) throw { status: 404, error: "Disputa no encontrada o ya fue resuelta" };
+    if (!activa) throw new AppError("Disputa no encontrada o ya fue resuelta", 404);
 
     // Efecto económico sobre el dinero retenido, en la misma transacción
     if (resultado === "trabajador") {
@@ -184,9 +185,9 @@ const agregarEvidencia = async (disputaId, usuarioId, urls) => {
         `SELECT id, estado FROM disputas WHERE id = $1 AND (iniciador_id = $2 OR acusado_id = $2)`,
         [disputaId, usuarioId]
     );
-    if (!disputa) throw { status: 404, error: "Disputa no encontrada o no tenés permiso" };
+    if (!disputa) throw new AppError("Disputa no encontrada o no tenés permiso", 404);
     if (['resuelta', 'cerrada'].includes(disputa.estado)) {
-        throw { status: 400, error: "No se puede agregar evidencia a una disputa cerrada" };
+        throw new AppError("No se puede agregar evidencia a una disputa cerrada", 400);
     }
     const { rows: [updated] } = await pool.query(
         `UPDATE disputas SET evidencia_urls = evidencia_urls || $1::jsonb WHERE id = $2 RETURNING evidencia_urls`,

@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 // ─── TRABAJADORES DE CONFIANZA ────────────────────────────────────────────────
 
@@ -16,11 +17,11 @@ const getTrabajadoresConfianza = async (duenioId) => {
 };
 
 const addTrabajadorConfianza = async (duenioId, trabajadorId, nota) => {
-  if (duenioId === trabajadorId) throw new Error("No puedes agregarte a ti mismo");
+  if (duenioId === trabajadorId) throw new AppError("No puedes agregarte a ti mismo", 400);
   const { rows: [u] } = await pool.query(
     "SELECT tipo_perfil FROM usuarios WHERE id = $1", [trabajadorId]
   );
-  if (!u || u.tipo_perfil !== 'trabajador') throw new Error("El usuario no es un trabajador");
+  if (!u || u.tipo_perfil !== 'trabajador') throw new AppError("El usuario no es un trabajador", 400);
   const { rows: [tc] } = await pool.query(
     `INSERT INTO trabajadores_confianza (dueno_id, trabajador_id, nota)
      VALUES ($1,$2,$3)
@@ -36,7 +37,7 @@ const removeTrabajadorConfianza = async (duenioId, trabajadorId) => {
     "DELETE FROM trabajadores_confianza WHERE dueno_id = $1 AND trabajador_id = $2 RETURNING id",
     [duenioId, trabajadorId]
   );
-  if (!tc) throw new Error("Trabajador no encontrado en tu lista de confianza");
+  if (!tc) throw new AppError("Trabajador no encontrado en tu lista de confianza", 404);
 };
 
 // ─── HISTORIAL COMPARTIDO ─────────────────────────────────────────────────────
@@ -83,7 +84,7 @@ const crearMantenimiento = async ({ duenioId, trabajadorId, tareaId, rubroId, ti
     "SELECT id FROM trabajadores_confianza WHERE dueno_id = $1 AND trabajador_id = $2",
     [duenioId, trabajadorId]
   );
-  if (!tc) throw new Error("Solo puedes programar mantenimiento con trabajadores de tu lista de confianza");
+  if (!tc) throw new AppError("Solo puedes programar mantenimiento con trabajadores de tu lista de confianza", 403);
 
   const { rows: [m] } = await pool.query(
     `INSERT INTO mantenimientos_recurrentes (dueno_id, trabajador_id, tarea_id, rubro_id, titulo, descripcion, frecuencia, proximo_vencimiento)
@@ -98,7 +99,7 @@ const actualizarVencimiento = async (mantenimientoId, duenioId, trabajoId) => {
     "SELECT * FROM mantenimientos_recurrentes WHERE id = $1 AND dueno_id = $2",
     [mantenimientoId, duenioId]
   );
-  if (!m) throw new Error("Mantenimiento no encontrado");
+  if (!m) throw new AppError("Mantenimiento no encontrado", 404);
 
   const fechas = {
     semanal: 7, quincenal: 15, mensual: 30,
@@ -122,7 +123,7 @@ const eliminarMantenimiento = async (mantenimientoId, duenioId) => {
     "UPDATE mantenimientos_recurrentes SET activo = FALSE WHERE id = $1 AND dueno_id = $2 RETURNING id",
     [mantenimientoId, duenioId]
   );
-  if (!m) throw new Error("Mantenimiento no encontrado o sin permiso");
+  if (!m) throw new AppError("Mantenimiento no encontrado o sin permiso", 404);
 };
 
 const getProximosVencimientos = async (duenioId, dias) => {

@@ -1,4 +1,5 @@
 ﻿const pool = require("../config/db");
+const AppError = require("../utils/AppError");
 
 // Obtener rubros con conteo de trabajadores por rubro
 const getRubrosConConteo = async () => {
@@ -66,7 +67,7 @@ const upsertCatalogoItem = async ({ trabajadorId, tareaId, precio, unidadMedida,
     [trabajadorId, tareaId]
   );
   if (activos.length > 0) {
-    throw new Error("No puedes modificar el precio de una tarea con un trabajo activo");
+    throw new AppError("No puedes modificar el precio de una tarea con un trabajo activo", 409);
   }
 
   const { rows: [item] } = await pool.query(
@@ -94,7 +95,7 @@ const deleteCatalogoItem = async (trabajadorId, tareaId) => {
     [trabajadorId, tareaId]
   );
   if (activos.length > 0) {
-    throw new Error("No puedes eliminar una tarea con un trabajo activo");
+    throw new AppError("No puedes eliminar una tarea con un trabajo activo", 409);
   }
   await pool.query(
     "UPDATE catalogo_trabajador SET activo = FALSE WHERE trabajador_id = $1 AND tarea_id = $2",
@@ -108,7 +109,7 @@ const getPrecioPromedio = async (tareaId) => {
     "SELECT nombre, unidad_medida, precio_referencia_min, precio_referencia_max FROM tareas WHERE id = $1",
     [tareaId]
   );
-  if (!tarea) throw new Error("Tarea no encontrada");
+  if (!tarea) throw new AppError("Tarea no encontrada", 404);
 
   const { rows: [stats] } = await pool.query(
     `SELECT 
@@ -171,14 +172,14 @@ const generarComprobante = async (trabajoId) => {
       [trabajoId]
     );
 
-    if (!trabajo) throw new Error("Trabajo no encontrado o no completado");
+    if (!trabajo) throw new AppError("Trabajo no encontrado o no completado", 404);
 
     // Verificar que no tenga ya comprobante
     const { rows: existe } = await client.query(
       "SELECT id FROM comprobantes WHERE trabajo_id = $1",
       [trabajoId]
     );
-    if (existe.length > 0) throw new Error("Este trabajo ya tiene un comprobante");
+    if (existe.length > 0) throw new AppError("Este trabajo ya tiene un comprobante", 409);
 
     const numero = `RT-${Date.now()}-${String(await client.query("SELECT nextval('comprobantes_numero_seq')").then(r => r.rows[0].nextval)).padStart(6,'0')}`;
 
@@ -215,9 +216,9 @@ const getComprobante = async (trabajoId, usuarioId) => {
      WHERE c.trabajo_id = $1`,
     [trabajoId]
   );
-  if (!comp) throw new Error("Comprobante no encontrado");
+  if (!comp) throw new AppError("Comprobante no encontrado", 404);
   if (comp.dueno_id !== usuarioId && comp.trabajador_id !== usuarioId) {
-    throw new Error("No tienes permiso para ver este comprobante");
+    throw new AppError("No tienes permiso para ver este comprobante", 403);
   }
   return comp;
 };

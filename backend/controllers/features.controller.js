@@ -1,153 +1,155 @@
-﻿const svc = require("../services/features.service");
+const svc = require("../services/features.service");
+const AppError = require("../utils/AppError");
+const { successResponse } = require("../utils/apiResponse");
 
 // ─── PLANNER ──────────────────────────────────────────────────────────────────
 
-const getPlanners = async (req, res) => {
+const getPlanners = async (req, res, next) => {
   try {
-    res.json(await svc.getPlanners(req.usuario.id));
+    successResponse(res, { planners: await svc.getPlanners(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getPlanner = async (req, res) => {
+const getPlanner = async (req, res, next) => {
   try {
-    res.json(await svc.getPlanner(parseInt(req.params.id), req.usuario.id));
+    successResponse(res, { planner: await svc.getPlanner(parseInt(req.params.id), req.usuario.id) });
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    next(err);
   }
 };
 
-const crearPlanner = async (req, res) => {
+const crearPlanner = async (req, res, next) => {
   try {
     const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ error: "nombre es requerido" });
-    res.status(201).json(await svc.crearPlanner({ usuarioId: req.usuario.id, ...req.body }));
+    if (!nombre) throw new AppError("nombre es requerido", 400);
+    successResponse(res, { planner: await svc.crearPlanner({ usuarioId: req.usuario.id, ...req.body }) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const actualizarPlanner = async (req, res) => {
+const actualizarPlanner = async (req, res, next) => {
   try {
-    res.json(await svc.actualizarPlanner(parseInt(req.params.id), req.usuario.id, req.body));
+    successResponse(res, { planner: await svc.actualizarPlanner(parseInt(req.params.id), req.usuario.id, req.body) });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const eliminarPlanner = async (req, res) => {
+const eliminarPlanner = async (req, res, next) => {
   try {
     await svc.eliminarPlanner(parseInt(req.params.id), req.usuario.id);
-    res.json({ mensaje: "Planner eliminado" });
+    successResponse(res, { mensaje: "Planner eliminado" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
 // ─── PROYECTOS ────────────────────────────────────────────────────────────────
 
-const getProyectos = async (req, res) => {
+const getProyectos = async (req, res, next) => {
   try {
-    res.json(await svc.getProyectos(req.usuario.id));
+    successResponse(res, { proyectos: await svc.getProyectos(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const getProyecto = async (req, res) => {
+const getProyecto = async (req, res, next) => {
   try {
-    res.json(await svc.getProyecto(parseInt(req.params.id), req.usuario.id));
+    successResponse(res, { proyecto: await svc.getProyecto(parseInt(req.params.id), req.usuario.id) });
   } catch (err) {
-    res.status(404).json({ error: err.message });
+    next(err);
   }
 };
 
-const crearProyecto = async (req, res) => {
+const crearProyecto = async (req, res, next) => {
   try {
     const { titulo } = req.body;
-    if (!titulo) return res.status(400).json({ error: "titulo es requerido" });
-    res.status(201).json(await svc.crearProyecto({ duenioId: req.usuario.id, ...req.body }));
+    if (!titulo) throw new AppError("titulo es requerido", 400);
+    successResponse(res, { proyecto: await svc.crearProyecto({ duenioId: req.usuario.id, ...req.body }) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const actualizarProyecto = async (req, res) => {
+const actualizarProyecto = async (req, res, next) => {
   try {
-    res.json(await svc.actualizarProyecto(parseInt(req.params.id), req.usuario.id, req.body));
+    successResponse(res, { proyecto: await svc.actualizarProyecto(parseInt(req.params.id), req.usuario.id, req.body) });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const agregarTrabajo = async (req, res) => {
+const agregarTrabajo = async (req, res, next) => {
   try {
     const { trabajo_id, orden, depende_de } = req.body;
-    if (!trabajo_id) return res.status(400).json({ error: "trabajo_id es requerido" });
-    res.status(201).json(await svc.agregarTrabajoProyecto(
+    if (!trabajo_id) throw new AppError("trabajo_id es requerido", 400);
+    successResponse(res, { trabajo_proyecto: await svc.agregarTrabajoProyecto(
       parseInt(req.params.id), req.usuario.id, trabajo_id, orden||0, depende_de||null
-    ));
+    ) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
 // ─── HERRAMIENTAS ─────────────────────────────────────────────────────────────
 
-const getHerramientas = async (req, res) => {
+const getHerramientas = async (req, res, next) => {
   try {
     const id = req.params.trabajador_id ? parseInt(req.params.trabajador_id) : req.usuario.id;
-    res.json(await svc.getHerramientas(id));
+    successResponse(res, { herramientas: await svc.getHerramientas(id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
-const addHerramienta = async (req, res) => {
+const addHerramienta = async (req, res, next) => {
   try {
     const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ error: "nombre es requerido" });
-    res.status(201).json(await svc.addHerramienta({ trabajadorId: req.usuario.id, ...req.body }));
+    if (!nombre) throw new AppError("nombre es requerido", 400);
+    successResponse(res, { herramienta: await svc.addHerramienta({ trabajadorId: req.usuario.id, ...req.body }) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const updateHerramienta = async (req, res) => {
+const updateHerramienta = async (req, res, next) => {
   try {
-    res.json(await svc.updateHerramienta(parseInt(req.params.id), req.usuario.id, req.body));
+    successResponse(res, { herramienta: await svc.updateHerramienta(parseInt(req.params.id), req.usuario.id, req.body) });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const deleteHerramienta = async (req, res) => {
+const deleteHerramienta = async (req, res, next) => {
   try {
     await svc.deleteHerramienta(parseInt(req.params.id), req.usuario.id);
-    res.json({ mensaje: "Herramienta eliminada" });
+    successResponse(res, { mensaje: "Herramienta eliminada" });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
 // ─── VIDEOS ───────────────────────────────────────────────────────────────────
 
-const subirVideo = async (req, res) => {
+const subirVideo = async (req, res, next) => {
   try {
-    const { titulo, precio } = req.body;
-    if (!titulo) return res.status(400).json({ error: "titulo es requerido" });
-    res.status(201).json(await svc.subirVideo({ autorId: req.usuario.id, ...req.body }));
+    const { titulo } = req.body;
+    if (!titulo) throw new AppError("titulo es requerido", 400);
+    successResponse(res, { video: await svc.subirVideo({ autorId: req.usuario.id, ...req.body }) }, 201);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    next(err);
   }
 };
 
-const getMisVideos = async (req, res) => {
+const getMisVideos = async (req, res, next) => {
   try {
-    res.json(await svc.getMisVideos(req.usuario.id));
+    successResponse(res, { videos: await svc.getMisVideos(req.usuario.id) });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    next(err);
   }
 };
 
