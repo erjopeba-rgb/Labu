@@ -172,11 +172,9 @@
     function toggleDropdown(btnId, dropId, loadFn) {
         const btn  = document.getElementById(btnId);
         const drop = document.getElementById(dropId);
-        console.log('toggleDropdown:', btnId, '→ btn:', btn, 'drop:', drop);
         if (!btn || !drop) return;
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            console.log('click en', btnId);
             const isOpen = drop.classList.contains('open');
             closeAllDropdowns();
             if (!isOpen) {
@@ -199,12 +197,9 @@
             return;
         }
         App.apiRequest('/notifications').then(function(data) {
-            console.log('NOTIF RAW:', JSON.stringify(data));
             const items = Array.isArray(data) ? data : (data.data || data.notificaciones || data.items || []);
-            console.log('NOTIF ITEMS:', items, 'length:', items ? items.length : 'null');
             renderNotifications(items);
-        }).catch(function(err) {
-            console.log('NOTIF ERROR:', err);
+        }).catch(function() {
             renderNotifications([]);
         });
     }

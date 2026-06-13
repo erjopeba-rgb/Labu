@@ -86,7 +86,8 @@ const App = {
           'mis-pagos':         '/pages/mis-pagos.html',
           'configuracion':     '/pages/configuracion.html',
           'perfil-publico':    '/pages/perfil-publico.html',
-          'ayudantes':         '/pages/ayudantes.html'
+          'ayudantes':         '/pages/ayudantes.html',
+          'planner-3d':        '/pages/planner-3d.html'
           };
 
         const url = pageMap[page];
