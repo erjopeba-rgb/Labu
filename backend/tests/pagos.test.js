@@ -259,3 +259,105 @@ describe('I17 — procesarWebhook (outbox + idempotencia)', () => {
     expect(await contarDistribuciones(trabajoId)).toBe(2);
   });
 });
+
+// ─── I13: verificación de firma HMAC-SHA256 del webhook ──────────────────────
+//
+//  MP firma: x-signature: ts=<timestamp>,v1=<hmac-hex>
+//  Manifest: "id:<data.id>;request-id:<x-request-id>;ts:<timestamp>;"
+
+describe('I13 — firma HMAC del webhook (POST /api/pagos/mp/webhook)', () => {
+  const crypto = require('crypto');
+  const SECRET = 'test-secret-i13';
+
+  const firmar = (dataId, requestId, ts) =>
+    crypto.createHmac('sha256', SECRET)
+      .update(`id:${dataId};request-id:${requestId};ts:${ts};`)
+      .digest('hex');
+
+  const postWebhook = (dataId, headers = {}) => {
+    let req = request(app)
+      .post(`/api/pagos/mp/webhook?data.id=${dataId}`);
+    for (const [k, v] of Object.entries(headers)) req = req.set(k, v);
+    return req.send({ type: 'payment', data: { id: dataId } });
+  };
+
+  beforeAll(() => { process.env.MP_WEBHOOK_SECRET = SECRET; });
+  afterAll(() => { delete process.env.MP_WEBHOOK_SECRET; });
+
+  test('firma válida → 200 y el webhook se procesa (pago aprobado)', async () => {
+    const trabajoId = await crearTrabajoConOfertaAceptada('I13 firma válida');
+
+    // Pago pendiente esperando la confirmación del webhook
+    const { rows: [pago] } = await pool.query(
+      `INSERT INTO pagos (usuario_id, tipo, referencia_id, monto_total, monto_plataforma, monto_trabajador, estado, metadata)
+       VALUES ($1, 'trabajo', $2, 6000, 600, 5400, 'pendiente', $3) RETURNING *`,
+      [idDueno, trabajoId, JSON.stringify({ trabajo_id: trabajoId, trabajador_id: idTrabajador, con_seguro: false, monto: 6000 })]
+    );
+    mockMP.paymentGet.mockResolvedValue({
+      external_reference: String(pago.id), status: 'approved', status_detail: 'accredited'
+    });
+
+    const dataId = 'MP-EVT-HMAC-OK';
+    const ts = Date.now().toString();
+    const requestId = 'req-hmac-ok';
+
+    const res = await postWebhook(dataId, {
+      'x-signature':  `ts=${ts},v1=${firmar(dataId, requestId, ts)}`,
+      'x-request-id': requestId
+    });
+
+    expect(res.status).toBe(200);
+    expect(mockMP.paymentGet).toHaveBeenCalled();
+    const [pagoFinal] = await getPagos(trabajoId);
+    expect(pagoFinal.estado).toBe('aprobado');
+  });
+
+  test('firma inválida → 401 y el webhook NO se procesa', async () => {
+    const dataId = 'MP-EVT-HMAC-BAD';
+    const ts = Date.now().toString();
+
+    const res = await postWebhook(dataId, {
+      'x-signature':  `ts=${ts},v1=${'0'.repeat(64)}`,
+      'x-request-id': 'req-hmac-bad'
+    });
+
+    expect(res.status).toBe(401);
+    expect(mockMP.paymentGet).not.toHaveBeenCalled();
+    const { rows } = await pool.query(
+      `SELECT 1 FROM webhook_events WHERE payment_id = $1`, [dataId]
+    );
+    expect(rows).toHaveLength(0);
+  });
+
+  test('header x-signature ausente → 401', async () => {
+    const res = await postWebhook('MP-EVT-HMAC-SIN-HEADER', { 'x-request-id': 'req-hmac-sin' });
+
+    expect(res.status).toBe(401);
+    expect(mockMP.paymentGet).not.toHaveBeenCalled();
+  });
+
+  test('x-signature con formato inválido (sin ts/v1) → 401', async () => {
+    const res = await postWebhook('MP-EVT-HMAC-MALFORMADO', {
+      'x-signature':  'basura-sin-formato',
+      'x-request-id': 'req-hmac-malformado'
+    });
+
+    expect(res.status).toBe(401);
+    expect(mockMP.paymentGet).not.toHaveBeenCalled();
+  });
+
+  test('firma calculada sobre otro data.id → 401 (manifest no coincide)', async () => {
+    const ts = Date.now().toString();
+    const requestId = 'req-hmac-cruzado';
+    // Firma válida pero para OTRO evento: el manifest usa el data.id del request real
+    const firmaDeOtroEvento = firmar('MP-EVT-DISTINTO', requestId, ts);
+
+    const res = await postWebhook('MP-EVT-HMAC-CRUZADO', {
+      'x-signature':  `ts=${ts},v1=${firmaDeOtroEvento}`,
+      'x-request-id': requestId
+    });
+
+    expect(res.status).toBe(401);
+    expect(mockMP.paymentGet).not.toHaveBeenCalled();
+  });
+});

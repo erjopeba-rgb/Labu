@@ -69,13 +69,14 @@ describe('POST /api/offers', () => {
     expect(res.status).toBe(409);
   });
 
-  test('rechaza que el dueño oferte en su propio trabajo → error', async () => {
+  test('rechaza que el dueño oferte en su propio trabajo → 400', async () => {
     const res = await request(app)
       .post('/api/offers')
       .set('Authorization', `Bearer ${tokenDueno}`)
       .send({ trabajo_id: jobId, monto_propuesto: 3000 });
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/propio trabajo/i);
   });
 
   test('rechaza monto inválido → 400', async () => {
@@ -240,11 +241,13 @@ describe('PATCH /api/offers/:id/reject y /accept', () => {
     expect(jobRes.body.job.estado).toBe('en_negociacion');
   });
 
-  test('rechaza aceptar oferta ya aceptada → error', async () => {
+  test('rechaza aceptar oferta ya aceptada → 404', async () => {
+    // findOfertaParaAceptar solo matchea ofertas pendientes/contraofertadas:
+    // una oferta ya aceptada no se encuentra → 404
     const res = await request(app)
       .patch(`/api/offers/${ofertaParaAceptar}/accept`)
       .set('Authorization', `Bearer ${tokenDueno}`);
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBe(404);
   });
 });

@@ -2,9 +2,14 @@ const request = require('supertest');
 const { formatInTimeZone } = require('date-fns-tz');
 const app = require('./app');
 const { limpiarTablas, registrarYLogin } = require('./helpers');
-const { calcularProximoSlot } = require('../services/scheduling.service');
+const schedulingSvc = require('../services/scheduling.service');
+const { calcularProximoSlot } = schedulingSvc;
 
 const TZ = 'America/Argentina/Buenos_Aires';
+
+// I12: OSRM mockeado en toda la suite — los tests no dependen del demo público.
+// 1200 segundos = 20 minutos (obtenerTiempoViaje retorna minutos).
+const TIEMPO_VIAJE_MOCK_MIN = 20;
 
 let pool;
 
@@ -39,6 +44,7 @@ const configurarPerfil = (token) =>
 beforeAll(async () => {
   pool = require('../config/db');
   await limpiarTablas();
+  jest.spyOn(schedulingSvc, 'obtenerTiempoViaje').mockResolvedValue(TIEMPO_VIAJE_MOCK_MIN);
 });
 
 afterAll(async () => {
@@ -91,6 +97,29 @@ describe('calcularProximoSlot', () => {
     expect(typeof slot.dia_semana).toBe('number');
     expect(slot.dia_semana).toBeGreaterThanOrEqual(0);
     expect(slot.dia_semana).toBeLessThanOrEqual(6);
+  });
+
+  test('usa el tiempo de viaje de OSRM (mockeado) para correr el inicio del slot', async () => {
+    // Coordenadas de casa del trabajador y del trabajo → se activa el camino OSRM
+    await pool.query(
+      'UPDATE perfiles SET latitud = $1, longitud = $2 WHERE usuario_id = $3',
+      [-34.6037, -58.3816, trabajadorConDispId]
+    );
+    await pool.query(
+      'UPDATE trabajos SET latitud = $1, longitud = $2 WHERE id = $3',
+      [-34.6158, -58.4333, trabajoId]
+    );
+
+    schedulingSvc.obtenerTiempoViaje.mockClear();
+    const slot = await calcularProximoSlot(trabajadorConDispId, trabajoId);
+
+    expect(slot).not.toBeNull();
+    // El mock fue consultado con el medio de transporte y las coordenadas reales
+    expect(schedulingSvc.obtenerTiempoViaje).toHaveBeenCalledWith(
+      'auto', -34.6037, -58.3816, -34.6158, -58.4333
+    );
+    // Slot 09:00 + 15 min de preparación (default) + 20 min de viaje (mock) = 09:35
+    expect(slot.hora_inicio).toBe('09:35');
   });
 });
 

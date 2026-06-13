@@ -237,12 +237,13 @@ describe('POST /api/auth/reset-password', () => {
     expect(resetRes.status).toBe(200);
   });
 
-  test('rechaza token inválido → error', async () => {
+  test('rechaza token inválido → 400', async () => {
     const res = await request(app)
       .post('/api/auth/reset-password')
       .send({ token: 'token_falso_123', nueva_password: 'Password123!' });
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/inválido|expiró/i);
   });
 });
 

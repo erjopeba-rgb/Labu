@@ -8,21 +8,14 @@ const {
 } = require("../controllers/jobs.controller");
 const { verificarToken } = require("../middlewares/auth.middleware");
 const { uploadJobMedia, uploadResultadoMedia } = require("../middlewares/upload.middleware");
-const { body, validationResult } = require("express-validator");
+const { body } = require("express-validator");
+const { manejarErrores, validarIdParam } = require("../middlewares/validacion.middleware");
 
 const parsearBodyData = (req, res, next) => {
     if (req.body && req.body.data) {
         try { Object.assign(req.body, JSON.parse(req.body.data)); } catch (_) {}
     }
     next();
-};
-
-const manejarErrores = (req, res, next) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array().map(e => e.msg) });
-  }
-  next();
 };
 
 const validarCrearJob = [
@@ -56,20 +49,20 @@ router.get("/",                        verificarToken, getJobs);
 router.post("/",                       verificarToken, uploadJobMedia, parsearBodyData, validarCrearJob, createJob);
 router.get("/mis-trabajos",            verificarToken, getMyJobs);
 router.get("/asignados",               verificarToken, getTrabajosAsignados);
-router.get("/con-usuario/:userId",     verificarToken, getTrabajosConUsuario);
+router.get("/con-usuario/:userId",     verificarToken, validarIdParam("userId"), getTrabajosConUsuario);
 
-router.patch("/:id/agendar",             verificarToken, validarAgendarJob, scheduleJob);
-router.patch("/:id/cancel",              verificarToken, cancelJob);
-router.patch("/:id/iniciar",             verificarToken, validarIniciarJob, startJob);
-router.patch("/:id/completar",           verificarToken, uploadResultadoMedia, completeJob);
-router.patch("/:id/confirmar-completado",verificarToken, confirmCompletedJob);
+router.patch("/:id/agendar",             verificarToken, validarIdParam("id"), validarAgendarJob, scheduleJob);
+router.patch("/:id/cancel",              verificarToken, validarIdParam("id"), cancelJob);
+router.patch("/:id/iniciar",             verificarToken, validarIdParam("id"), validarIniciarJob, startJob);
+router.patch("/:id/completar",           verificarToken, validarIdParam("id"), uploadResultadoMedia, completeJob);
+router.patch("/:id/confirmar-completado",verificarToken, validarIdParam("id"), confirmCompletedJob);
 
-router.get("/:id/comentarios",  verificarToken, getComentarios);
-router.post("/:id/comentarios", verificarToken,
+router.get("/:id/comentarios",  verificarToken, validarIdParam("id"), getComentarios);
+router.post("/:id/comentarios", verificarToken, validarIdParam("id"),
     body("contenido").notEmpty().withMessage("El comentario no puede estar vacío").isLength({ max: 1000 }).withMessage("El comentario no puede superar los 1000 caracteres"),
     manejarErrores,
     addComentario);
 
-router.get("/:id", verificarToken, getJobById);
+router.get("/:id", verificarToken, validarIdParam("id"), getJobById);
 
 module.exports = router;

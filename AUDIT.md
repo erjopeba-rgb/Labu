@@ -360,5 +360,44 @@ El formato de respuesta y el manejo de errores son ahora uniformes en los 25 con
 3. **Frontend actualizado donde la forma cambió**: `perfil-publico.js` (portfolio → `{items}`), `mensajes.js` (conversaciones/mensajes → `{conversaciones}`/`{mensajes}`); `mi-perfil.js`, `busqueda-avanzada.js`, `marketplace.js` y `catalogo.js` ya eran defensivos (aceptan ambas formas). Los endpoints restantes que cambiaron de array a objeto no tienen consumidores en el frontend (páginas stub).
 4. **Tests actualizados al contrato nuevo**: `geolocalizacion.test.js` (`res.body.trabajadores`), `chat.test.js` (`res.body.conversaciones`/`res.body.mensajes`). El resto de suites asertaban claves que se preservan.
 5. **Hallazgo lateral**: `relaciones.service.js` no es requerido por ningún módulo (huérfano — `contactos.service.js` es la implementación viva); migrado igual, candidato a eliminarse en una limpieza futura.
-- **Pendiente del paquete (I4)**: validación declarativa con express-validator sigue solo en 5 routes; agregarla en endpoints de escritura de pagos/disputas/disponibilidad/admin queda como siguiente paso, junto con I12/I13 (tests).
+- **Pendiente del paquete (I4)**: validación declarativa con express-validator sigue solo en 5 routes; agregarla en endpoints de escritura de pagos/disputas/disponibilidad/admin queda como siguiente paso, junto con I12/I13 (tests). *(Resuelto el mismo 2026-06-12 — ver secciones I4/I12/I13 abajo.)*
 - **Validación**: `npm test` → **150/150**.
+
+---
+
+## I4 — RESUELTO (2026-06-12) — express-validator en routes de escritura
+
+Helper centralizado nuevo: `backend/middlewares/validacion.middleware.js` exporta `manejarErrores` (mismo formato `400 { errores: [...] }` que ya usaban jobs/offers/auth), `validarIdParam(nombre)` (param de ruta entero positivo — elimina los `parseInt(req.params.x)` → `NaN` que terminaban en error 500 de pg) y `REGEX_HORA` (franjas `HH:MM`).
+
+1. **Routes con cadenas declarativas nuevas** (antes validación manual desigual o inexistente):
+   - `pagos.routes.js`: `trabajo_id`/`video_id` por param; `pagar-directo` (`card_token`, `payment_method_id`, `payer_email` email, `installments` 1–24); pago por preferencia (`monto_total` positivo opcional, `con_seguro` booleano); retiros (`monto` positivo, `datos_cobro` requerido). El **webhook queda sin validación declarativa a propósito**: su contrato con MP es 200/500 y la firma HMAC filtra requests apócrifos.
+   - `disputas.routes.js`: `trabajo_id` entero, `motivo` obligatorio ≤100 (largo de la columna), `descripcion` ≤2000, `evidencia_urls` array; `:id` de evidencia validado.
+   - `disponibilidad.routes.js`: slots con `dia_semana` 0–6, `hora_inicio`/`hora_fin` con formato `HH:MM`, `tiempo_preparacion_minutos` ≥0; reservas (`oferta_id`/`trabajo_id` enteros, `slots` no vacío); confirmación de slot (`fecha_inicio` ISO8601); todos los params `:id`/`:oferta_id`.
+   - `admin.routes.js`: todos los `:id` por `validarIdParam`; `suspendido` booleano; `accion` con whitelist en reportes (`resolver|desestimar`) y retiros (`pagado|rechazado` + `nota` obligatoria solo al rechazar, vía `.if()`); `updates` array con `clave` por item; `motivo`/`resolucion` obligatorios; `resultado` de disputa con whitelist `dueno|trabajador`.
+   - `ayudantes.routes.js`: `cantidad_necesaria` entero ≥1, `pago_por_ayudante` positivo, `estado` whitelist `aceptado|rechazado`, params validados.
+   - `calificaciones.routes.js`: `puntaje` 1–5, `comentario` ≤1000, params validados.
+   - `confianza.routes.js`: `trabajador_id` entero, `titulo` ≤100, `proximo_vencimiento` ISO8601, params validados.
+2. **jobs/offers alineados al helper central**: ambos routes ya tenían el patrón; se les quitó el `manejarErrores` local duplicado y se agregó `validarIdParam` a todos los endpoints con `:id`/`:trabajo_id`/`:oferta_id`/`:userId` (un `GET /api/jobs/abc` antes llegaba a pg como `NaN` → 500; ahora 400).
+3. **Checks manuales en controllers**: se conservan como defensa en profundidad (la cadena declarativa corre antes); no se cambió comportamiento de ningún caso válido.
+
+---
+
+## I12 — RESUELTO (2026-06-12) — aserciones débiles y dependencia de red en tests
+
+1. **Status exactos** (un 500 por bug ya no pasa como "validación esperada"):
+   - `auth.test.js`: reset con token inválido → `toBe(400)` + match del mensaje (`passwordReset.service` lanza `AppError 400`).
+   - `offers.test.js`: dueño oferta en su propio trabajo → `toBe(400)` + match del mensaje; aceptar oferta ya aceptada → `toBe(404)` (documentado: `findOfertaParaAceptar` solo matchea `pendiente|contraoferta`).
+2. **`reportes.test.js` separado en 201 vs 409**: el test de motivos válidos ahora exige `201` en cada iteración (cada una usa `referencia_id` virgen); test nuevo autocontenido que crea un reporte (201) y lo repite (409) sin depender de estado de otros tests.
+3. **OSRM mockeado en `scheduling.test.js`**: `jest.spyOn(schedulingSvc, 'obtenerTiempoViaje').mockResolvedValue(20)` (20 min = 1200 s) activo en toda la suite — cero llamadas al demo público de OSRM. Para habilitar el spy, `scheduling.service.js` exporta `obtenerTiempoViaje` y los dos call-sites internos la invocan vía `module.exports.` (indirección estándar para mocks; sin cambio de comportamiento). Test nuevo que verifica que el cálculo del slot **usa** el tiempo de viaje: con coordenadas de casa y del trabajo, el slot 09:00 arranca a las 09:35 (15 min de preparación default + 20 min de viaje mockeado) y el spy recibe el medio de transporte y las coordenadas reales.
+
+---
+
+## I13 — RESUELTO (2026-06-12) — parcial: HMAC, disputas, disponibilidad
+
+Cobertura nueva priorizada sobre el camino del dinero y los flujos sin un solo test. Módulos stub (tienda, equipate, estadísticas, etc.) excluidos a propósito — no tienen lógica real.
+
+1. **Firma HMAC del webhook MP** (describe nuevo en `pagos.test.js`, 5 tests): firma válida → 200 y el pago pendiente pasa a aprobado; firma inválida → 401 sin procesar (ni `Payment.get` ni fila en `webhook_events`); header `x-signature` ausente → 401; formato sin `ts`/`v1` → 401; firma válida pero calculada sobre **otro** `data.id` → 401 (el manifest no coincide).
+2. **CRUD de disputas** (`disputas.test.js` nuevo, 13 tests): crear válida → 201 (estado `abierta`, acusado correcto según quién inicia); duplicada con activa → 409; estado no disputable → 400; tercero ajeno → 403; el trabajador también puede iniciar (acusado = dueño); validación declarativa (sin motivo / `trabajo_id` no numérico → 400); `mis-disputas` visible para ambas partes y vacío para terceros; evidencia (acumula URLs, tercero → 404, disputa resuelta → 400, `:id` no numérico → 400). **Nota**: no existe endpoint de "mensajes de disputa" en el backend (la tabla `mensajes_disputa` de la migración no tiene rutas) — lo testeable es la evidencia; si se quiere chat de disputa es una feature pendiente, no un test faltante.
+3. **Disponibilidad y reservas** (`disponibilidad.test.js` nuevo, 17 tests): GET vacío sin config; PUT guarda y GET devuelve (incluye `tiempo_preparacion_minutos`); consulta de disponibilidad ajena; crear reservas tentativas → 201; oferta ajena → 403; dueño confirma slot → 200 con liberación del resto y oferta aceptada; reserva inexistente → 404; validación declarativa (dia_semana 7, hora `25:00`, slots vacíos, ids no numéricos → 400). **Desvío respecto del pedido original**: "conflicto de reservas → 409" no existe en el diseño actual — re-crear reservas para una oferta **reemplaza** las tentativas anteriores (DELETE+INSERT, testeado), y el conflicto real de agenda lo previene el agendamiento automático (fix C1: advisory lock + detector de conflictos, ya cubierto en `scheduling.test.js`). No se inventó un 409 que el código no produce.
+- **Pendiente de I13** (cobertura aún faltante, menor prioridad): calificaciones, notificaciones, ayudantes, confianza, catálogo, búsqueda avanzada.
+- **Validación**: `npm test` → **187/187** (antes 150; 14 suites — 2 archivos nuevos).

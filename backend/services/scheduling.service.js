@@ -245,7 +245,8 @@ const calcularProximoSlot = async (trabajadorId, trabajoId) => {
                 const hayCoordsOrigen = latCasa !== null && lonCasa !== null;
                 const hayCoordsDestino = trabajo.latitud && trabajo.longitud;
                 if (hayCoordsOrigen && hayCoordsDestino) {
-                    tiempoViajeCasa = await obtenerTiempoViaje(
+                    // vía module.exports para que los tests puedan mockearla (jest.spyOn)
+                    tiempoViajeCasa = await module.exports.obtenerTiempoViaje(
                         medioTransporte,
                         latCasa, lonCasa,
                         parseFloat(trabajo.latitud), parseFloat(trabajo.longitud)
@@ -282,7 +283,7 @@ const calcularProximoSlot = async (trabajadorId, trabajoId) => {
             let tiempoViaje = 30;
             if (jobAntes && jobAntes.latitud && jobAntes.longitud
                 && trabajo.latitud && trabajo.longitud) {
-                tiempoViaje = await obtenerTiempoViaje(
+                tiempoViaje = await module.exports.obtenerTiempoViaje(
                     medioTransporte,
                     parseFloat(jobAntes.latitud), parseFloat(jobAntes.longitud),
                     parseFloat(trabajo.latitud),  parseFloat(trabajo.longitud)
@@ -434,4 +435,4 @@ const agendarTrabajo = async (trabajadorId, trabajoId) => {
     }
 };
 
-module.exports = { calcularProximoSlot, asignarSlotATrabajo, agendarTrabajo };
+module.exports = { calcularProximoSlot, asignarSlotATrabajo, agendarTrabajo, obtenerTiempoViaje };

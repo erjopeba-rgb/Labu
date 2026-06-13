@@ -80,15 +80,35 @@ describe('POST /api/reportes', () => {
     expect(res.body.mensaje).toBe('Tu reporte fue enviado, lo revisaremos');
   });
 
-  test('todos los motivos válidos son aceptados', async () => {
+  test('todos los motivos válidos crean el reporte → 201', async () => {
+    // Cada iteración usa una referencia_id distinta y sin reportes previos del
+    // dueño, por lo que la creación SIEMPRE debe ser 201 (el caso 409 de
+    // duplicado se cubre por separado en el test siguiente)
     const motivos = ['contenido_inapropiado', 'spam', 'informacion_falsa', 'otro'];
     for (let i = 0; i < motivos.length; i++) {
       const res = await request(app)
         .post('/api/reportes')
         .set('Authorization', `Bearer ${tokenDueno}`)
         .send({ tipo: 'publicacion', referencia_id: i + 100, motivo: motivos[i] });
-      // 201 o 409 si ya existe — lo que importa es que no sea 400
-      expect([201, 409]).toContain(res.status);
+      expect(res.status).toBe(201);
     }
+  });
+
+  test('repetir un reporte sobre la misma referencia → 409', async () => {
+    // Setup propio: primero se crea el reporte (201) y recién después se repite
+    const payload = { tipo: 'publicacion', referencia_id: 200, motivo: 'spam' };
+
+    const primera = await request(app)
+      .post('/api/reportes')
+      .set('Authorization', `Bearer ${tokenDueno}`)
+      .send(payload);
+    expect(primera.status).toBe(201);
+
+    const repetida = await request(app)
+      .post('/api/reportes')
+      .set('Authorization', `Bearer ${tokenDueno}`)
+      .send({ ...payload, motivo: 'otro' });
+    expect(repetida.status).toBe(409);
+    expect(repetida.body.error).toMatch(/ya reportaste/i);
   });
 });

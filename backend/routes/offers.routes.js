@@ -5,15 +5,8 @@ const {
     getMyOffers, cancelOffer, counterOffer, acceptCounter, rejectCounter
 } = require("../controllers/offers.controller");
 const { verificarToken } = require("../middlewares/auth.middleware");
-const { body, validationResult } = require("express-validator");
-
-const manejarErrores = (req, res, next) => {
-  const errores = validationResult(req);
-  if (!errores.isEmpty()) {
-    return res.status(400).json({ errores: errores.array().map(e => e.msg) });
-  }
-  next();
-};
+const { body } = require("express-validator");
+const { manejarErrores, validarIdParam } = require("../middlewares/validacion.middleware");
 
 const validarCrearOferta = [
   body("monto_propuesto")
@@ -31,13 +24,13 @@ const validarContraoferta = [
 
 router.post("/",                       verificarToken, validarCrearOferta, createOffer);
 router.get("/mis-ofertas",             verificarToken, getMyOffers);
-router.get("/detalle/:oferta_id",      verificarToken, getOfferDetail);
-router.get("/:trabajo_id",             verificarToken, getOffersByJob);
-router.patch("/:id/accept",            verificarToken, acceptOffer);
-router.patch("/:id/reject",            verificarToken, rejectOffer);
-router.patch("/:id/cancel",            verificarToken, cancelOffer);
-router.patch("/:id/counter",           verificarToken, validarContraoferta, counterOffer);
-router.patch("/:id/accept-counter",    verificarToken, acceptCounter);
-router.patch("/:id/reject-counter",    verificarToken, rejectCounter);
+router.get("/detalle/:oferta_id",      verificarToken, validarIdParam("oferta_id"), getOfferDetail);
+router.get("/:trabajo_id",             verificarToken, validarIdParam("trabajo_id"), getOffersByJob);
+router.patch("/:id/accept",            verificarToken, validarIdParam("id"), acceptOffer);
+router.patch("/:id/reject",            verificarToken, validarIdParam("id"), rejectOffer);
+router.patch("/:id/cancel",            verificarToken, validarIdParam("id"), cancelOffer);
+router.patch("/:id/counter",           verificarToken, validarIdParam("id"), validarContraoferta, counterOffer);
+router.patch("/:id/accept-counter",    verificarToken, validarIdParam("id"), acceptCounter);
+router.patch("/:id/reject-counter",    verificarToken, validarIdParam("id"), rejectCounter);
 
 module.exports = router;
