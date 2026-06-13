@@ -17,7 +17,7 @@ Plataforma que conecta personas con complejidades técnicas en su hogar con prof
 
 ```bash
 # 1. Configurar variables de entorno
-cp backend/.env.example backend/.env
+cp .env.example backend/.env
 # Completar backend/.env con tus credenciales
 
 # 2. Instalar dependencias

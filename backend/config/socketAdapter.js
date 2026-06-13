@@ -15,7 +15,7 @@ const buildAdapter = async () => {
     const { createAdapter } = require("@socket.io/redis-adapter");
     const Redis = require("ioredis");
 
-    const pub = new Redis(process.env.REDIS_URL);
+    const pub = new Redis(process.env.REDIS_URL, { connectTimeout: 3000, maxRetriesPerRequest: 2 });
     const sub = pub.duplicate();
 
     await Promise.all([

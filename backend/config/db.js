@@ -8,10 +8,13 @@ const pool = new Pool({
   database: process.env.DB_NAME,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  max: 50,
-  min: 5,
+  max: parseInt(process.env.DB_POOL_MAX || '50'),
+  min: parseInt(process.env.DB_POOL_MIN || '5'),
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
+  // DB gestionada con SSL: DB_SSL=true (rejectUnauthorized:false cubre los
+  // certificados autofirmados típicos de proveedores gestionados)
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
 });
 
 pool.query("SELECT NOW()", (err) => {

@@ -1,6 +1,6 @@
 /**
  * Fábrica de colas Bull.
- * Si REDIS_URL no está definido o Bull no puede conectar, las funciones encolarX hacen fallback directo.
+ * Si REDIS_URL no está definida o Bull no puede conectar, las funciones encolarX hacen fallback directo.
  * En NODE_ENV=test: siempre retorna null (sin colas) para no romper la suite.
  */
 
@@ -9,12 +9,13 @@ const logger = require('./logger');
 let Bull;
 try { Bull = require('bull'); } catch (_) { Bull = null; }
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
-
 const _instancias = {};
 
 const getQueue = (nombre) => {
     if (process.env.NODE_ENV === 'test') return null;
+    // Sin REDIS_URL: fallback síncrono explícito, coherente con cache.js y socketAdapter.js.
+    // Con enableOfflineQueue y sin Redis real, los jobs quedarían encolados offline para siempre.
+    if (!process.env.REDIS_URL) return null;
     if (!Bull) {
         logger.warn({ nombre }, '[queue] Bull no instalado — tareas ejecutadas síncronamente');
         return null;
@@ -22,7 +23,7 @@ const getQueue = (nombre) => {
 
     if (!(nombre in _instancias)) {
         try {
-            const q = new Bull(nombre, REDIS_URL, {
+            const q = new Bull(nombre, process.env.REDIS_URL, {
                 redis: { maxRetriesPerRequest: 3, connectTimeout: 3000, enableOfflineQueue: true }
             });
             q.on('error', (err) => {

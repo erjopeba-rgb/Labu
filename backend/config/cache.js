@@ -51,7 +51,11 @@ let redisClient = null;
 
 if (process.env.REDIS_URL) {
   const Redis = require("ioredis");
-  redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: true });
+  redisClient = new Redis(process.env.REDIS_URL, {
+    lazyConnect: true,
+    connectTimeout: 3000,
+    maxRetriesPerRequest: 2,
+  });
 
   redisClient.connect().catch((err) => {
     logger.warn({ err: err.message }, "[cache] No se pudo conectar a Redis — usando caché en memoria");

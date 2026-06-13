@@ -1,3 +1,4 @@
+const http = require("http");
 const https = require("https");
 const { formatInTimeZone, fromZonedTime } = require("date-fns-tz");
 const pool = require("../config/db");
@@ -6,6 +7,13 @@ const logger = require("../config/logger");
 // Zona horaria del negocio: todas las comparaciones de calendario se hacen en ART,
 // nunca en UTC (un trabajo a las 21:00+ ART cae en el día UTC siguiente).
 const TZ = 'America/Argentina/Buenos_Aires';
+
+// El demo público de OSRM tiene rate limiting agresivo y sin SLA — solo apto para desarrollo.
+const OSRM_URL = (process.env.OSRM_URL || 'https://router.project-osrm.org').replace(/\/$/, '');
+
+if (process.env.NODE_ENV === 'production' && !process.env.OSRM_URL) {
+    logger.warn('[scheduling] OSRM_URL no configurada — usando el demo público (rate-limited, sin SLA)');
+}
 
 const OSRM_PERFILES = {
     auto:      'driving',
@@ -32,7 +40,8 @@ const _minutosAHora = (minutos) => {
 // Intenta una sola llamada a OSRM; rechaza la promesa si falla o hay timeout.
 const _intentarOSRM = (urlStr) => {
     return new Promise((resolve, reject) => {
-        const req = https.get(urlStr, (res) => {
+        const cliente = urlStr.startsWith('https') ? https : http;
+        const req = cliente.get(urlStr, (res) => {
             let data = '';
             res.on('data', chunk => { data += chunk; });
             res.on('end', () => {
@@ -56,7 +65,7 @@ const _intentarOSRM = (urlStr) => {
 // Llama OSRM con 2 reintentos (backoff 500ms/1000ms); fallback: 30 min.
 const obtenerTiempoViaje = async (medioTransporte, lat1, lng1, lat2, lng2) => {
     const perfil = OSRM_PERFILES[medioTransporte] || 'driving';
-    const urlStr = `https://router.project-osrm.org/route/v1/${perfil}/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+    const urlStr = `${OSRM_URL}/route/v1/${perfil}/${lng1},${lat1};${lng2},${lat2}?overview=false`;
 
     for (let i = 0; i < 3; i++) {
         try {

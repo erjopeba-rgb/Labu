@@ -23,19 +23,30 @@ const VARS_OPCIONALES = [
   { nombre: 'NODE_ENV',          descripcion: 'Entorno (development/production/test)' },
   { nombre: 'JWT_EXPIRES_IN',    descripcion: 'Expiración del JWT (ej: 7d)' },
   { nombre: 'LOG_LEVEL',         descripcion: 'Nivel de log pino (debug/info/warn/error)' },
+  { nombre: 'DB_SSL',            descripcion: 'SSL hacia PostgreSQL (true para DB gestionada)' },
+  { nombre: 'DB_POOL_MIN',       descripcion: 'Mínimo del pool de PostgreSQL (default 5)' },
+  { nombre: 'DB_POOL_MAX',       descripcion: 'Máximo del pool de PostgreSQL (default 50)' },
   { nombre: 'SMTP_HOST',         descripcion: 'Host SMTP (vacío → Ethereal en dev)' },
+  { nombre: 'SMTP_PORT',         descripcion: 'Puerto SMTP (465 → secure)' },
   { nombre: 'SMTP_USER',         descripcion: 'Usuario SMTP' },
   { nombre: 'SMTP_PASS',         descripcion: 'Contraseña SMTP' },
-  { nombre: 'MP_ACCESS_TOKEN',   descripcion: 'Token de MercadoPago' },
+  { nombre: 'SMTP_FROM',         descripcion: 'Remitente de los emails' },
+  { nombre: 'MP_ACCESS_TOKEN',   descripcion: 'Token de MercadoPago (la DB tiene precedencia)' },
+  { nombre: 'MP_PUBLIC_KEY',     descripcion: 'Public key de MercadoPago (la DB tiene precedencia)' },
   { nombre: 'MP_WEBHOOK_SECRET', descripcion: 'Secret de webhook MercadoPago' },
   { nombre: 'REDIS_URL',         descripcion: 'URL de Redis (vacío → cache en memoria)' },
+  { nombre: 'OSRM_URL',          descripcion: 'Instancia OSRM (vacío → demo público, solo dev)' },
   { nombre: 'AWS_S3_BUCKET',     descripcion: 'Bucket S3 (vacío → filesystem local)' },
   { nombre: 'AWS_ACCESS_KEY_ID', descripcion: 'Access key AWS' },
   { nombre: 'AWS_SECRET_ACCESS_KEY', descripcion: 'Secret key AWS' },
   { nombre: 'AWS_REGION',        descripcion: 'Región AWS' },
-  { nombre: 'DB_BACKUP_PATH',    descripcion: 'Ruta para backups de PostgreSQL' },
-  { nombre: 'PGPASSWORD_BACKUP', descripcion: 'Contraseña para pg_dump' },
+  { nombre: 'BACKUP_S3_BUCKET',  descripcion: 'Bucket S3 para backups automáticos' },
+  { nombre: 'ADMIN_EMAIL',       descripcion: 'Email para alertas de backups fallidos' },
+  { nombre: 'BACKUP_KEEP_LAST',  descripcion: 'Backups locales a conservar (default 7)' },
+  { nombre: 'BACKUP_DIR',        descripcion: 'Directorio de backups automáticos' },
   { nombre: 'PG_DUMP_PATH',      descripcion: 'Ruta a pg_dump si no está en PATH' },
+  { nombre: 'DB_BACKUP_PATH',    descripcion: 'Directorio de backups manuales (scripts/)' },
+  { nombre: 'PGPASSWORD_BACKUP', descripcion: 'Contraseña para pg_dump/psql manuales' },
   { nombre: 'PSQL_PATH',         descripcion: 'Ruta a psql si no está en PATH' },
 ];
 
@@ -221,7 +232,7 @@ async function main() {
     if (varsIncompletas.length > 0) {
       console.log(`  ${FALLO}  Variables requeridas faltantes (${varsIncompletas.length}):`);
       varsIncompletas.forEach((v) => console.log(`       • ${v}`));
-      console.log(`       → Copiar backend/.env.example a backend/.env y completar los valores.\n`);
+      console.log(`       → Copiar .env.example (raíz del proyecto) a backend/.env y completar los valores.\n`);
     }
     if (!client) {
       console.log(`  ${FALLO}  PostgreSQL no accesible`);
