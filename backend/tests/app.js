@@ -14,6 +14,10 @@ const v1Router = require('../routes/v1.router');
 app.use('/api/v1', v1Router);
 app.use('/api',    v1Router);
 
+// 404 JSON para rutas /api desconocidas (M7) — igual que server.js
+const AppError = require('../utils/AppError');
+app.use('/api', (req, res, next) => next(new AppError('Ruta no encontrada', 404)));
+
 const errorHandler = require('../middlewares/errorHandler.middleware');
 app.use(errorHandler);
 
