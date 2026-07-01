@@ -164,6 +164,14 @@
         inyectarBoton();
         inyectarDrawer();
 
+        // Unificación de navegación (B-1): el feed es la única página con
+        // .sidebar-left (menú de escritorio). El resto no tiene menú en desktop,
+        // así que ahí el drawer pasa a ser también la navegación de escritorio
+        // (la hamburguesa deja de ocultarse en ≥1201px). Ver mobile-nav.css.
+        if (!document.querySelector('.sidebar-left')) {
+            document.body.classList.add('has-desktop-nav');
+        }
+
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') cerrar();
         });

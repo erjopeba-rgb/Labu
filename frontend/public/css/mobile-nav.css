@@ -145,8 +145,15 @@
     .mobile-nav-toggle { display: inline-flex; }
 }
 @media (min-width: 1201px) {
-    /* En desktop no debe verse nunca, aunque el JS lo haya inyectado. */
-    .mobile-nav-toggle,
-    .mobile-nav-overlay,
-    .mobile-nav-drawer { display: none !important; }
+    /* En desktop el drawer se oculta en las páginas que YA tienen menú lateral
+       (el feed). El JS marca <body> con .has-desktop-nav en las páginas que NO
+       tienen .sidebar-left (todas menos el feed): ahí la hamburguesa+drawer son
+       la navegación de escritorio (B-1 — navegación unificada). */
+    body:not(.has-desktop-nav) .mobile-nav-toggle,
+    body:not(.has-desktop-nav) .mobile-nav-overlay,
+    body:not(.has-desktop-nav) .mobile-nav-drawer { display: none !important; }
+
+    body.has-desktop-nav .mobile-nav-toggle { display: inline-flex; }
+    /* overlay y drawer conservan su CSS base (ocultos fuera de pantalla hasta
+       .open); no se les fuerza display para no romper el layout flex del drawer. */
 }

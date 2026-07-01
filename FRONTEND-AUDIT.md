@@ -94,10 +94,11 @@ AUDIT.md estimaba "~45 archivos" a nivel proyecto. **Solo el frontend tiene 72 a
 
 ### 🟠 IMPORTANTE
 
-#### B-1 · Navegación inconsistente entre páginas
+#### B-1 · Navegación inconsistente entre páginas — ✅ RESUELTO (2026-07-01) — Fase 2
 - **Archivos:** `feed.html` (14 refs a `sidebar-left`/menú), `agenda.html` (**0** refs — no tiene menú lateral), `mis-trabajos.html` (1).
 - **Descripción:** El feed trae el menú lateral completo inline; `agenda.html` **no tiene ningún menú de navegación** ni en desktop. Cada página resolvió su chrome distinto. Además del problema móvil (F1), en desktop hay inconsistencia: desde agenda no hay menú para volver a otras secciones salvo el navbar (que no tiene links).
-- **Fix sugerido:** unificar el chrome de navegación (idealmente inyectar el componente `navbar`/`sidebar-left` real en todas las páginas, o al menos garantizar que la solución de F1 esté en todas). Cerrar F1 probablemente resuelve esto de paso.
+- **Fix aplicado:** el feed es la única página con `.sidebar-left` (menú de escritorio). En el resto, la hamburguesa + drawer de B-F1 pasan a ser también la navegación de **escritorio**: `mobile-nav.js` marca `<body>` con `.has-desktop-nav` cuando no hay `.sidebar-left`, y `mobile-nav.css` deja de ocultar la hamburguesa en ≥1201px para esas páginas (el feed no cambia — su sidebar sigue cubriendo la nav). Sin tocar el markup de cada página: mismo módulo autocontenido de F1.
+- **Verificación:** Playwright — 375px sin regresión (hamburguesa visible en agenda) + desktop 1300px: hamburguesa visible y drawer navega en agenda, oculta en feed (sidebar presente). 11/11 asserts. `npm test`: 189/189.
 - **Esfuerzo:** mediano.
 
 #### B-2 · Páginas con layout multi-columna y 0 media queries
