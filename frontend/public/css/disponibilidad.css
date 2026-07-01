@@ -1018,6 +1018,25 @@
     line-height: 1.45;
 }
 
+/* ─── RESPONSIVE MÓVIL ─── */
+/* La config de disponibilidad semanal (agenda.html) apretaba los dos inputs de
+   hora en ~77px cada uno a 375px. En móvil pasamos el nombre del día a su propia
+   línea y los inputs "desde/hasta" a una segunda fila, alineados. */
+@media (max-width: 480px) {
+    .disp-day-row {
+        grid-template-columns: 28px 1fr 1fr;
+        row-gap: 0.5rem;
+    }
+    .disp-day-row > label.day-name { grid-column: 2 / 4; }   /* fila 1: día a lo ancho */
+    .disp-day-row > *:nth-child(3) { grid-column: 2; grid-row: 2; } /* desde */
+    .disp-day-row > *:nth-child(4) { grid-column: 3; grid-row: 2; } /* hasta */
+
+    /* Fila del tiempo de preparación: label y el input en columna */
+    .disp-prep-row { flex-wrap: wrap; }
+    .disp-prep-label { flex-basis: 100%; }
+}
+
+
 .dispo-week-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);

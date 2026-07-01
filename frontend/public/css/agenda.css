@@ -54,6 +54,10 @@ body {
     gap: 1.5rem;
     align-items: start;
 }
+/* Las columnas del grid deben poder encoger por debajo del min-content de su
+   contenido (calendario, filas de disponibilidad). Sin esto, en móvil el track
+   1fr se expandía a ~397px y desbordaba el viewport de 375px. */
+.agenda-layout > div { min-width: 0; }
 
 .card {
     background: var(--white);
@@ -757,6 +761,20 @@ body {
 @media (max-width: 1024px) {
     .agenda-layout { grid-template-columns: 1fr; }
 }
+@media (max-width: 640px) {
+    /* El navbar de agenda (back + logo + título + spacer de 100px) más la
+       hamburguesa móvil no entran en 375px. En móvil dejamos back + logo y
+       ocultamos el título y el spacer de centrado. */
+    .navbar { padding: 0 0.75rem; }
+    .navbar-content { justify-content: flex-start; gap: 0.75rem; }
+    .nav-title { display: none; }
+    .navbar-content > div:last-child { display: none; }
+
+    /* La cabecera del calendario (título + navegación de mes) no entra en una
+       línea a 375px: permitir wrap y achicar el ancho fijo del mes. */
+    .calendar-header { flex-wrap: wrap; gap: 0.5rem; }
+    .month-year { min-width: 110px; }
+}
 @media (max-width: 768px) {
     .agenda-layout { padding: 1rem; }
     .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
@@ -764,4 +782,7 @@ body {
     .calendar-day-header { font-size: 0.68rem; padding: 0.4rem 0.1rem; }
     .calendar-day { min-height: 50px; padding: 0.35rem 0.25rem; }
     .day-events  { display: none; }
+    /* Vista semana: en vez de comprimir 8 columnas, mantener un ancho mínimo
+       cómodo y dejar que .semana-container (overflow-x:auto) haga scroll. */
+    .semana-row { min-width: 560px; }
 }
