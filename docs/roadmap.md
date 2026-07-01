@@ -45,3 +45,32 @@ Estado: **MVP completo y auditado. Listo para deploy.**
 | I4  | Variables de entorno seguras en servidor                 | ⬜ Pendiente |
 | I5  | CDN para assets estáticos                                | ⬜ Pendiente |
 | I6  | Monitoreo y uptime                                       | ⬜ Pendiente |
+
+---
+
+## V — Vulnerabilidades pendientes (grupo B, post-lanzamiento)
+
+Advisories de `npm audit` que **no se corrigen antes del lanzamiento** por decisión evaluada
+(el vector no es alcanzable con el uso actual, o el fix implica un cambio de mayor riesgo que la
+vuln). Documentadas para no re-diagnosticarlas. **No correr `npm audit fix --force`.**
+
+| ID  | Paquete / advisory                          | Decisión                    | Estado       |
+|-----|---------------------------------------------|-----------------------------|--------------|
+| V1  | `nodemailer` v8 → v9 (raw → SSRF/file-read) | Evaluar en rama aislada     | ⬜ Pendiente |
+| V2  | `uuid` (vía `bull`/`mercadopago`)           | Esperar parche aguas arriba | ⬜ Bloqueado  |
+| V3  | `jest` tree (20 moderate, `js-yaml`)        | Ignorar (dev-only)          | ⬜ Descartado |
+
+### V1 · `nodemailer@9` — cierra la 5ª advisory
+**[Post-lanzamiento] Evaluar `nodemailer@9` en rama aislada** — cierra la 5ª advisory
+(raw → SSRF/file-read). Major v8→v9, requiere revisar `mail.service.js` y correr sus tests.
+**No urgente:** el vector no es alcanzable con el uso actual (el código usa **templates, no raw**).
+Subir un major pre-lanzamiento toca el pipeline de email (verificación de identidad +
+notificaciones), que es crítico — no vale el riesgo por una vuln que el código no puede gatillar.
+
+### V2 · `uuid` (transitiva de `bull` / `mercadopago`)
+Esperar parche aguas arriba. Forzar el fix implicaría **downgrade de `bull`** o **rewrite del SDK
+de MercadoPago** — ambos peores que la vuln. **No tocar.**
+
+### V3 · árbol de `jest` (20 moderate, `js-yaml`)
+**Dev-only, no llega a producción.** El fix disponible es un downgrade `jest 30 → 25`, que
+regresa la suite de tests. **Ignorar.**
