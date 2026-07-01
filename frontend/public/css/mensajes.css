@@ -200,12 +200,32 @@ body {
 
 .chat-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 0.5rem;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--border);
     background: var(--white);
 }
+.chat-actions { margin-left: auto; }
+
+/* Botón "Volver" — solo visible en móvil (ver media query al final) */
+.chat-back-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--dark);
+    cursor: pointer;
+    border-radius: var(--radius-full, 9999px);
+    flex-shrink: 0;
+}
+.chat-back-btn:hover { background: var(--light-gray); }
 
 .chat-user-info { display: flex; align-items: center; gap: 1rem; }
 .chat-user-info .conversation-avatar { width: 45px; height: 45px; }
@@ -376,4 +396,5 @@ body {
     .conversations-sidebar     { display: none; }
     .conversations-sidebar.mobile-show { display: flex; }
     .chat-area.mobile-hide     { display: none; }
+    .chat-back-btn             { display: inline-flex; }
 }

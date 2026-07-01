@@ -30,11 +30,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
     usuarioActual = Auth.getUser();
+    mostrarVistaLista(); // en móvil arranca mostrando la lista de conversaciones
     await cargarConversaciones();
     iniciarSocket();
     setupInputListeners();
     await manejarQueryParams();
 });
+
+// ─── VISTA MÓVIL (lista ↔ chat) ────────────────────────────────────────────────
+// Las clases mobile-show/mobile-hide solo tienen efecto en ≤768px (media query en
+// mensajes.css); en desktop son inertes y ambos paneles quedan visibles.
+
+function mostrarVistaLista() {
+    const sidebar = document.querySelector('.conversations-sidebar');
+    const chat = document.querySelector('.chat-area');
+    if (sidebar) sidebar.classList.add('mobile-show');
+    if (chat) chat.classList.add('mobile-hide');
+}
+
+function mostrarVistaChat() {
+    const sidebar = document.querySelector('.conversations-sidebar');
+    const chat = document.querySelector('.chat-area');
+    if (sidebar) sidebar.classList.remove('mobile-show');
+    if (chat) chat.classList.remove('mobile-hide');
+}
+
+function volverAListaConversaciones() {
+    mostrarVistaLista();
+}
 
 // ─── SOCKET ───────────────────────────────────────────────────────────────────
 
@@ -138,6 +161,7 @@ async function abrirConversacion(convId) {
     }
 
     unirseAConversacion(convId);
+    mostrarVistaChat(); // en móvil, pasar de la lista al panel de chat
     await cargarMensajes(convId);
     document.getElementById('chatInput').focus();
 }
@@ -371,6 +395,7 @@ function filtrarConversaciones(query) {
     });
 }
 
-window.abrirConversacion     = abrirConversacion;
-window.enviarMensaje         = enviarMensaje;
-window.filtrarConversaciones = filtrarConversaciones;
+window.abrirConversacion             = abrirConversacion;
+window.enviarMensaje                 = enviarMensaje;
+window.filtrarConversaciones         = filtrarConversaciones;
+window.volverAListaConversaciones    = volverAListaConversaciones;
