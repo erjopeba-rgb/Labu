@@ -101,10 +101,12 @@ AUDIT.md estimaba "~45 archivos" a nivel proyecto. **Solo el frontend tiene 72 a
 - **Verificación:** Playwright — 375px sin regresión (hamburguesa visible en agenda) + desktop 1300px: hamburguesa visible y drawer navega en agenda, oculta en feed (sidebar presente). 11/11 asserts. `npm test`: 189/189.
 - **Esfuerzo:** mediano.
 
-#### B-2 · Páginas con layout multi-columna y 0 media queries
+#### B-2 · Páginas con layout multi-columna y 0 media queries — ✅ RESUELTO (2026-07-01) — Fase 2
 - **Archivos:** `ayudantes.css` (0 @media; `.form-row { grid-template-columns:1fr 1fr }` fijo, línea 217), `admin.css` (0 @media; tablas anchas), `catalogo.css` (1, revisar grillas), `mis-pagos.css` (OK — usa `auto-fit minmax(190px,1fr)`).
 - **Descripción:** `ayudantes` deja un form de 2 columnas fijas que en 375px queda apretado. `admin` no es responsive pero es uso interno (baja prioridad para el lanzamiento). El resto conviene verificarlo en el navegador a 375px.
-- **Fix sugerido:** media query `≤480px` colapsando `.form-row` a una columna en `ayudantes.css`; posponer `admin` (interno).
+- **Fix aplicado:** dos media queries en `ayudantes.css` — `≤768px`: la barra de 4 tabs (etiquetas largas) pasa a scroll horizontal (`overflow-x:auto` + `white-space:nowrap`, scrollbar oculto); `≤480px`: `.form-row` colapsa a 1 columna, padding lateral reducido en layout/tarjetas, `.ayudante-card` envuelve sus acciones a una segunda fila, `.solicitud-header` con `flex-wrap`, y toast contenido al viewport. `admin` pospuesto (interno, baja prioridad).
+- **Verificación de `catalogo`:** a 375px **no desborda** (`scrollWidth=375`); su grid usa `minmax(280px,1fr)` que a ~311px de contenedor entra en una columna, y ya tenía `@media ≤600px` colapsando `.rubros-grid`. **Sin cambios necesarios.**
+- **Verificación:** Playwright a 375px — ayudantes sin desborde (`scrollWidth=375`), `.form-row` en 1 columna, `.tabs` con `overflow-x:auto`; catálogo sin desborde; desktop 1300px `.form-row` sigue en 2 columnas (sin regresión). 7/7 asserts. `npm test`: 189/189.
 - **Esfuerzo:** chico.
 
 #### B-3 · Limpieza técnica agrupada (A-M2 + A-M3 + A-M11)
