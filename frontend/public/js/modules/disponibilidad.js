@@ -221,14 +221,44 @@ async function cargarReservasConfirmadas() {
     const lista = document.getElementById('listaReservasConfirmadas');
     if (!card || !lista) return;
 
-    try {
-        const data = await App.apiRequest('/disponibilidad/reservas/confirmadas');
-        if (!data.success || !data.reservas || data.reservas.length === 0) return;
+    // Revelamos el card y mostramos estado de carga para dar feedback inmediato
+    // (antes se quedaba oculto: en blanco tanto si tardaba como si fallaba).
+    card.style.display = 'block';
+    lista.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9203;</div>' +
+        '<p>Cargando trabajos agendados...</p></div>';
 
+    let data;
+    try {
+        data = await App.apiRequest('/disponibilidad/reservas/confirmadas');
+    } catch (e) {
+        data = null;
+    }
+
+    // Estado de error (con reintentar)
+    if (!data || data.success === false) {
+        lista.innerHTML = '<div class="empty-state"><div class="empty-icon">&#9888;&#65039;</div>' +
+            '<p>No pudimos cargar tus trabajos agendados.</p>' +
+            '<button type="button" class="disp-save-btn" onclick="cargarReservasConfirmadas()">Reintentar</button></div>';
+        return;
+    }
+
+    const reservas = data.reservas || [];
+
+    // Estado vacío (con CTA al feed)
+    if (reservas.length === 0) {
+        lista.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128197;</div>' +
+            '<p>Todavía no tenés trabajos agendados.</p>' +
+            '<p style="font-size:0.85rem;color:var(--gray);">Cuando aceptes ofertas, los trabajos con fecha aparecen acá.</p>' +
+            '<button type="button" class="disp-save-btn" onclick="App.navigateTo(\'feed\')">Ver feed</button></div>';
+        return;
+    }
+
+    // Con datos: poblar eventos del calendario + lista
+    {
         // Populate calendar events for confirmed jobs
         window.eventosConfirmados = window.eventosConfirmados || {};
         window.fechasConfirmadas  = window.fechasConfirmadas  || new Set();
-        data.reservas.forEach(function(r) {
+        reservas.forEach(function(r) {
             if (!r.fecha_inicio) return;
             const fecha = r.fecha_inicio.substring(0, 10);
             window.fechasConfirmadas.add(fecha);
@@ -247,8 +277,7 @@ async function cargarReservasConfirmadas() {
         if (typeof renderProximosEventos === 'function') renderProximosEventos();
         if (typeof actualizarStats === 'function') actualizarStats();
 
-        card.style.display = 'block';
-        lista.innerHTML = data.reservas.map(function (r) {
+        lista.innerHTML = reservas.map(function (r) {
             const dia   = DIAS_SEMANA[r.dia_semana] || 'D\u00EDa ' + r.dia_semana;
             const desde = r.hora_inicio.substring(0, 5);
             const hasta = r.hora_fin.substring(0, 5);
@@ -264,10 +293,9 @@ async function cargarReservasConfirmadas() {
                     ' &bull; &#128100; ' + dueno + '</div>' +
             '</div>';
         }).join('');
-    } catch (e) {
-        // Silently ignore — tables may not exist yet
     }
 }
 
 window.toggleDispDia        = toggleDispDia;
 window.guardarDisponibilidad = guardarDisponibilidad;
+window.cargarReservasConfirmadas = cargarReservasConfirmadas;

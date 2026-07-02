@@ -113,10 +113,13 @@ AUDIT.md estimaba "~45 archivos" a nivel proyecto. **Solo el frontend tiene 72 a
 - Ver Dimensión A. Se agrupan acá para el plan porque son cambios de bajo riesgo que conviene commitear juntos por tipo.
 - **Esfuerzo:** chico (cada uno).
 
-#### B-4 · Estados de carga/vacío desiguales
+#### B-4 · Estados de carga/vacío desiguales — ✅ RESUELTO (2026-07-01) — Fase 2
 - **Archivos:** cobertura buena en `feed.js` (26 usos de patrones cargando/vacío/error), `mi-perfil.js`, `catalogo.js`, `ayudantes.js` (10 c/u). Baja cobertura: `agenda.js` (1), `configuracion.js` (1), `publicar-trabajo.js` (1), `mis-pagos.js` (1).
 - **Descripción:** No hay pantallas totalmente en blanco detectadas, pero las páginas de baja cobertura pueden mostrar vacío sin mensaje mientras cargan o si el request falla. `mis-pagos` (saldo/retiros) y `agenda` (trabajos agendados) son las más sensibles: si el request tarda o falla, el trabajador ve un blanco sin feedback.
-- **Fix sugerido:** agregar loader + estado vacío con CTA + estado de error con "Reintentar" en `mis-pagos` y `agenda` como mínimo.
+- **Fix aplicado (mis-pagos):** `cargarSaldo` muestra `…` mientras carga y, si falla, un banner `#saldoError` con botón **Reintentar** (antes fallaba en silencio y los montos quedaban en `—`). `cargarRetiros` ahora tiene loader → error-con-Reintentar → vacío-con-explicación → lista (antes un error se disfrazaba de "sin retiros"). Ambas funciones exportadas a `window` para los `onclick`; CSS `.saldo-error`/`.btn-reintentar-inline` en `mis-pagos.css`; `#saldoError` en el HTML.
+- **Fix aplicado (agenda):** `disponibilidad.js::cargarReservasConfirmadas` (card "Trabajos Agendados", solo trabajador) ya no se queda oculto: revela el card con loader, y resuelve a error-con-Reintentar / vacío-con-CTA ("Ver feed") / lista. Exportada a `window`. El path del dueño no cambia (no llama a esta función).
+- **Nota:** `agenda.js` en sí es local (localStorage); el dato de API sensible vive en `disponibilidad.js`, ahí fue el fix. Datos reales siguen renderizando (verificado con una reserva confirmada real).
+- **Verificación:** Playwright a 375px con interceptación de rutas para forzar 500 — mis-pagos: saldo/retiros muestran Reintentar y reintentar recupera; agenda: error con Reintentar en Trabajos Agendados y recuperación. 10/10 asserts. `npm test`: 189/189.
 - **Esfuerzo:** chico-mediano.
 
 ### 🟡 COSMÉTICO
@@ -156,10 +159,10 @@ Sin esto no se abre a Facebook.
 
 > Cierre de Fase 1: QA manual en viewport 375px del recorrido completo registro → feed → publicar → perfil trabajador → disponibilidad → pago → chat.
 
-### Fase 2 — Consistencia y robustez visual (IMPORTANTE) 🟠
-4. **B-1 · Unificar navegación** entre páginas (probablemente cae solo al cerrar B-F1). *(mediano)*
-5. **B-2 · Media queries faltantes** en `ayudantes` (y verificación de `catalogo`); `admin` se pospone. *(chico)*
-6. **B-4 · Estados de carga/vacío/error** en `mis-pagos` y `agenda`. *(chico-mediano)*
+### Fase 2 — Consistencia y robustez visual (IMPORTANTE) 🟠 — ✅ COMPLETA (2026-07-01)
+4. **B-1 · Unificar navegación** entre páginas (probablemente cae solo al cerrar B-F1). *(mediano)* — ✅ hamburguesa+drawer como nav de escritorio en páginas sin sidebar.
+5. **B-2 · Media queries faltantes** en `ayudantes` (y verificación de `catalogo`); `admin` se pospone. *(chico)* — ✅ tabs scroll + form 1 columna; catálogo verificado sin cambios.
+6. **B-4 · Estados de carga/vacío/error** en `mis-pagos` y `agenda`. *(chico-mediano)* — ✅ loader/error-Reintentar/vacío-CTA en saldo, retiros y trabajos agendados.
 
 ### Fase 3 — Limpieza técnica (IMPORTANTE, bajo riesgo) 🟠
 Commits separados por tipo para diffs limpios.

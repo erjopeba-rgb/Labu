@@ -120,3 +120,31 @@
 .retiro-badge-solicitado { background: #fef3c7; color: #b45309; }
 .retiro-badge-pagado     { background: #dcfce7; color: #15803d; }
 .retiro-badge-rechazado  { background: #fee2e2; color: #b91c1c; }
+
+/* ── ESTADO DE ERROR DEL SALDO (B-4) ─────────────────────── */
+.saldo-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius, 8px);
+    color: var(--danger, #b91c1c);
+    font-size: 0.9rem;
+    text-align: center;
+}
+.btn-reintentar-inline {
+    padding: 0.4rem 1rem;
+    background: var(--primary, #0084ff);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius, 8px);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-reintentar-inline:hover { opacity: 0.9; }

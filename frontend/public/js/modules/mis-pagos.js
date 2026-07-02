@@ -12,7 +12,28 @@ const RETIRO_BADGES = {
 
 let saldoActual = null;
 
+const SALDO_IDS = ['saldoRetenido', 'saldoDisponible', 'saldoEnRetiro', 'saldoRetirado'];
+
+function setSaldoTexto(txt) {
+    SALDO_IDS.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = txt; });
+}
+
+function mostrarSaldoError() {
+    const box = document.getElementById('saldoError');
+    if (!box) return;
+    box.style.display = 'block';
+    box.innerHTML = '<span>&#9888;&#65039; No pudimos cargar tu saldo.</span>' +
+        '<button type="button" class="btn-reintentar-inline" onclick="cargarSaldo()">Reintentar</button>';
+}
+
+function ocultarSaldoError() {
+    const box = document.getElementById('saldoError');
+    if (box) box.style.display = 'none';
+}
+
 async function cargarSaldo() {
+    ocultarSaldoError();
+    setSaldoTexto('…'); // estado de carga
     const data = await App.apiRequest('/pagos/saldo');
     if (data && data.disponible !== undefined) {
         saldoActual = data;
@@ -20,13 +41,36 @@ async function cargarSaldo() {
         document.getElementById('saldoDisponible').textContent = fmtMonto(data.disponible);
         document.getElementById('saldoEnRetiro').textContent   = fmtMonto(data.en_retiro);
         document.getElementById('saldoRetirado').textContent   = fmtMonto(data.retirado);
+    } else {
+        setSaldoTexto('—');
+        mostrarSaldoError();
     }
 }
 
 async function cargarRetiros() {
     const cont = document.getElementById('listaRetiros');
+
+    // Estado de carga
+    cont.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">&#9203;</div>
+            <p>Cargando retiros...</p>
+        </div>`;
+
     const data = await App.apiRequest('/pagos/retiros');
-    const retiros = data && data.retiros ? data.retiros : [];
+
+    // Estado de error (con reintentar)
+    if (!data || data.success === false) {
+        cont.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">&#9888;&#65039;</div>
+                <p>No pudimos cargar tus retiros.</p>
+                <button type="button" class="btn-primary" onclick="cargarRetiros()">Reintentar</button>
+            </div>`;
+        return;
+    }
+
+    const retiros = data.retiros ? data.retiros : [];
 
     if (!retiros.length) {
         cont.innerHTML = `
@@ -112,3 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarRetiros();
     document.getElementById('formRetiro').addEventListener('submit', solicitarRetiro);
 });
+
+// Exportar para los botones "Reintentar" de los estados de error.
+window.cargarSaldo   = cargarSaldo;
+window.cargarRetiros = cargarRetiros;
