@@ -1,4 +1,0 @@
-.calendar { background: var(--white); border-radius: var(--radius-md); padding: 1.5rem; }
-.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; }
-.calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); cursor: pointer; transition: var(--transition); }
-.calendar-day:hover { background: var(--light-gray); }
