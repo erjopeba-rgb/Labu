@@ -1,4 +1,4 @@
-﻿/**
+/**
  * notificaciones.js
  * Modulo de notificaciones - Labu
  */

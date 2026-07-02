@@ -1,4 +1,4 @@
-﻿const CONFIGS = {
+const CONFIGS = {
     success: { titulo: '¡Pago realizado con éxito!', icono: '✅', mensaje: 'Tu pago fue procesado correctamente. El trabajador fue notificado y el trabajo está en marcha.' },
     failure: { titulo: 'Pago rechazado',              icono: '❌', mensaje: 'No pudimos procesar el pago. Podés intentarlo nuevamente desde tus trabajos.' },
     pending: { titulo: 'Pago pendiente',              icono: '⏳', mensaje: 'Tu pago está siendo procesado. Te notificaremos cuando se confirme.' },

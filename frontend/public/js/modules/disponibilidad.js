@@ -1,4 +1,4 @@
-﻿/**
+/**
  * disponibilidad.js
  * Módulo de disponibilidad semanal del trabajador - Labu
  * Cargado en agenda.html para configurar disponibilidad

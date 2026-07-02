@@ -1,4 +1,4 @@
-﻿/**
+/**
  * configuracion.js
  * Modulo de configuracion de cuenta - Labu
  */

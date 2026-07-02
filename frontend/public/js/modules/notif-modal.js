@@ -1,4 +1,4 @@
-﻿/**
+/**
  * notif-modal.js — Modal contextual de notificaciones
  * Labu · Expone window.NotifModal.open(notif)
  *

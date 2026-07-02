@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FloatingChat — Labu
  * Chat flotante multi-ventana estilo Facebook.
  *

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * text-classifier.js
  * Detecta rubro y tarea a partir de texto libre usando diccionario de palabras clave.
  * Labu — sin dependencias externas.

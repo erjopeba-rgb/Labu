@@ -1,4 +1,4 @@
-﻿/**
+/**
  * agenda.js
  * Modulo de agenda/calendario - Labu
  */

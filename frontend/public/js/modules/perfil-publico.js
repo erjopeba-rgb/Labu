@@ -1,4 +1,4 @@
-﻿/**
+/**
  * perfil-publico.js
  * Carga y renderiza el perfil público de un usuario por ID (query param ?id=)
  */

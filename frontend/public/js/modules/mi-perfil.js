@@ -1,4 +1,4 @@
-﻿/**
+/**
  * mi-perfil.js
  * Modulo de perfil de usuario - Labu
  */

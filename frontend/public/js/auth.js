@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Labu — auth.js
  * Maneja login, registro y sesiones
  */

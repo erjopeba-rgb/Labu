@@ -1,4 +1,4 @@
-﻿/**
+/**
  * publicar-trabajo.js
  * Modulo para publicar trabajos - Labu
  */

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Labu — main.js
  * Controlador principal de la aplicación
  */

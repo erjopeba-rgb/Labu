@@ -1,4 +1,4 @@
-﻿/**
+/**
  * mensajes.js
  * Modulo de chat y mensajes - Labu
  */

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * mis-ofertas.js
  * Módulo de gestión de ofertas enviadas por el trabajador - Labu
  * Cubre pasos 2, 3b, 3c del flujo desde la perspectiva del trabajador.
