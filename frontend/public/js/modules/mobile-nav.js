@@ -24,7 +24,7 @@
         { icon: '&#128176;', label: 'Mis Pagos',             url: '/pages/mis-pagos.html',             role: 'trabajador' },
         { icon: '&#128172;', label: 'Mensajes',              url: '/pages/mensajes.html' },
         { icon: '&#128197;', label: 'Agenda',                url: '/pages/agenda.html' },
-        { icon: '&#128218;', label: 'Catálogo',         url: '/pages/catalogo.html' },
+        // Catálogo desactivado para el MVP (incompleto, se reactiva post-lanzamiento)
         { icon: '&#128269;', label: 'Búsqueda',         url: '/pages/busqueda-avanzada.html' },
         { icon: '&#128100;', label: 'Mi Perfil',             url: '/pages/mi-perfil.html' },
         { icon: '&#9881;&#65039;', label: 'Configuración', url: '/pages/configuracion.html' },

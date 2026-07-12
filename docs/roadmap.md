@@ -74,3 +74,9 @@ de MercadoPago** — ambos peores que la vuln. **No tocar.**
 ### V3 · árbol de `jest` (20 moderate, `js-yaml`)
 **Dev-only, no llega a producción.** El fix disponible es un downgrade `jest 30 → 25`, que
 regresa la suite de tests. **Ignorar.**
+
+---
+
+## F — Frontend post-lanzamiento
+
+- **[Post-lanzamiento] Completar y reactivar página de catálogo (desactivada del nav para el MVP)** — los archivos (`catalogo.html`, `catalogo.js`, `catalogo.css`, rutas de backend) siguen en el repo; solo se quitaron los links del sidebar del feed y del drawer mobile (`mobile-nav.js`). Para reactivar: restaurar el ítem "Catálogo" en `feed.html` y en el `MENU` de `mobile-nav.js`.
