@@ -1,6 +1,8 @@
 ﻿# Labu
 
-[![CI](https://github.com/TU_USUARIO/rtype1/actions/workflows/ci.yml/badge.svg)](https://github.com/TU_USUARIO/rtype1/actions/workflows/ci.yml)
+Desarrollo iniciado en octubre 2025; repositorio publicado en 2026.
+
+[![CI](https://github.com/erjopeba-rgb/Labu/actions/workflows/ci.yml/badge.svg)](https://github.com/erjopeba-rgb/Labu/actions/workflows/ci.yml)
 
 Plataforma que conecta personas con complejidades técnicas en su hogar con profesionales que conocen la solución. Funciona similar a Uber para servicios del hogar.
 
